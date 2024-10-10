@@ -1,0 +1,26 @@
+POST https://bdtmp.ultra-x.jp/ems_backend/users/user-login
+# POST http://localhost:4560/users/user-login
+Content-Type: application/json
+
+{
+    "email":"majedul@uxd.co.jp",
+    "password":"Test123!"
+}
+
+###
+# POST http://localhost:4560/users/add
+POST https://bdtmp.ultra-x.jp/ems_backend/users/add
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJtYWplZHVsQHV4ZC5jby5qcCIsInJvbGUiOiJzeXN0ZW1fYWRtaW4iLCJpYXQiOjE3MjgwMzEwNjYsImV4cCI6MTczNTgwNzA2Nn0.NBaRqhyeRKP4QRkQH1hPFCiPUJtvhtnDj4GbegViI34
+Content-Type: application/json
+
+{
+    "companyId":"2",
+    "firstName":"Akash",
+    "lastName":"Shaha",
+    "email":"akash@gmail.com",
+    "contact":"01235648965",
+    "position":"Software Engineer",
+    "role":"exhibitor",
+    "profileImg":"",
+    "password":"Test123!"
+}

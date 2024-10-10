@@ -1,0 +1,14 @@
+POST http://localhost:3152/exhibitions/add
+Content-Type: application/json
+
+{
+    "exhibitionTitle":"2nd Exhibition",
+    "exhibitionStartDate":"2025-01-05",
+    "exhibitionEndDate":"2025-01-10",
+    "exhibitionVenue":"Middle BAdda, Dhaka"
+}
+
+
+
+###
+POST http://localhost:3152/exhibitions/delete
