@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Md. Majedul Islam
+ * @copyright All right reserved Majedul All right reserved Md. Majedul Islam
  *
  * @description
  *
@@ -14,7 +14,65 @@ const { API_STATUS_CODE } = require('../../consts/error-status');
 const { setRejectMessage } = require('../../common/set-reject-message');
 
 
-const getExhibitorDataQuery = async (paginationData) => {
+const getExhibitorCompanyQuery = async (authData) => {
+    const _query = `
+    SELECT
+        companies_id
+    FROM 
+        user
+    WHERE
+        id = ?;
+    `;
+
+    try {
+        const [result] = await pool.query(_query, authData.id);
+        if (result.length > 0) {
+            return Promise.resolve(result[0].companies_id);
+        }
+    } catch (error) {
+        // console.log('🚀 ~ userLoginQuery ~ error:', error);
+        return Promise.reject(
+            setRejectMessage(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'operation_failed'
+            )
+        );
+    }
+}
+
+
+const getNumberOfRowsQuery = async (companyId) => {
+    const _query = `
+    SELECT count(*) AS totalRows
+    FROM
+        user
+    WHERE
+        companies_id = ? AND
+        role = ?
+
+    `;
+
+    const _values = [
+        companyId,
+        'exhibitor'
+    ];
+
+
+    try {
+        const [result] = await pool.query(_query, _values);
+        return Promise.resolve(result[0]);
+    } catch (error) {
+        // console.log('🚀 ~ userLoginQuery ~ error:', error);
+        return Promise.reject(
+            setRejectMessage(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'operation_failed'
+            )
+        );
+    }
+}
+
+const getExhibitorDataQuery = async (companyId, paginationData) => {
     const query = `
 	    SELECT
         user.id,
@@ -38,12 +96,15 @@ const getExhibitorDataQuery = async (paginationData) => {
         companies
     ON companies.id = user.companies_id
     WHERE
+        user.companies_id = ? AND
+        companies.is_active = ${1} AND
         user.role = ?
     LIMIT ?
     OFFSET ?;
     `;
 
     const values = [
+        companyId,
         'exhibitor',
         paginationData.itemsPerPage,
         paginationData.offset
@@ -66,13 +127,19 @@ const getExhibitorDataQuery = async (paginationData) => {
     }
 };
 
-const getExhibitorData = async (paginationData) => {
+const getExhibitorData = async (authData, paginationData) => {
     try {
-        const userInfo = await getExhibitorDataQuery(paginationData);
-        return Promise.resolve({
-            message: 'Exhibitor data fetched successfully',
-            user: userInfo
-        });
+        const companyId = await getExhibitorCompanyQuery(authData);
+        if (!_.isNil(companyId)) {
+            const totalRows = await getNumberOfRowsQuery(companyId);
+            const exhibitorInfo = await getExhibitorDataQuery(companyId, paginationData);
+            return Promise.resolve({
+                metadata: {
+                    totalRows: totalRows,
+                },
+                data: exhibitorInfo
+            });
+        }
     } catch (error) {
         // console.log("🚀 ~ userLogin ~ error:", error)
         return Promise.reject(

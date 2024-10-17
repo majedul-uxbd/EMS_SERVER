@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Ultra-X Asia Pacific
+ * @copyright All right reserved Majedul
  * 
  * @description 
  * 
@@ -38,7 +38,6 @@ const insertDataQuery = async (bodyData) => {
 
     try {
         const [result] = await pool.query(query, values);
-        console.log("🚀 ~ insertDataQuery ~ result:", result);
 
         if (result.affectedRows === 1) {
             return true;

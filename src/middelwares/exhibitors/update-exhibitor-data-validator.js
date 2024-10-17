@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Ultra-X Asia Pacific
+ * @copyright All right reserved Majedul
  * 
  * @description 
  * 
@@ -15,7 +15,6 @@ const {
     isValidEmail,
     isValidUserContact,
     isValidUserPosition,
-    isValidUserCompany,
 } = require("../../common/user-data-validator");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 const _ = require('lodash');
@@ -23,48 +22,50 @@ const _ = require('lodash');
 const updateExhibitorDataValidator = (req, res, next) => {
     const errors = [];
 
-    const visitor = {
+    const exhibitorData = {
+        id: req.body.id,
         firstName: req.body.firstName,
         lastName: req.body.lastName,
         email: req.body.email,
         contact: req.body.contact,
-        company: req.body.company,
         position: req.body.position,
         profileImg: req.body.profileImg,
     };
 
-    if (!_.isNil(visitor.firstName)) {
-        if (!isValidUserFirstName(visitor.firstName)) {
+    if (req.originalUrl === '/exhibitors/update-all') {
+        if (_.isNil(exhibitorData.id) || !_.isNumber(exhibitorData.id)) {
+            errors.push("Invalid exhibitor ID ");
+        }
+    } else {
+        delete exhibitorData.id;
+    }
+
+    if (!_.isNil(exhibitorData.firstName)) {
+        if (!isValidUserFirstName(exhibitorData.firstName)) {
             errors.push("Invalid user first name");
         }
     }
 
-    if (!_.isNil(visitor.lastName)) {
-        if (!isValidUserLastName(visitor.lastName)) {
+    if (!_.isNil(exhibitorData.lastName)) {
+        if (!isValidUserLastName(exhibitorData.lastName)) {
             errors.push("Invalid user last name");
         }
     }
 
-    if (!_.isNil(visitor.email)) {
-        if (!isValidEmail(visitor.email)) {
+    if (!_.isNil(exhibitorData.email)) {
+        if (!isValidEmail(exhibitorData.email)) {
             errors.push("Invalid user email address");
         }
     }
 
-    if (!_.isNil(visitor.contact)) {
-        if (!isValidUserContact(visitor.contact)) {
+    if (!_.isNil(exhibitorData.contact)) {
+        if (!isValidUserContact(exhibitorData.contact)) {
             errors.push("Invalid user contact number");
         }
     }
 
-    if (!_.isNil(visitor.company)) {
-        if (!isValidUserCompany(visitor.company)) {
-            errors.push("Invalid user company number");
-        }
-    }
-
-    if (!_.isNil(visitor.position)) {
-        if (!isValidUserPosition(visitor.position)) {
+    if (!_.isNil(exhibitorData.position)) {
+        if (!isValidUserPosition(exhibitorData.position)) {
             errors.push("Invalid user position");
         }
     }
@@ -77,7 +78,7 @@ const updateExhibitorDataValidator = (req, res, next) => {
     }
     // console.log("🚀 ~ validateAddUserData ~ user:", user)
     // return
-    req.body.visitor = visitor;
+    req.body.exhibitorData = exhibitorData;
     next();
 };
 

@@ -1,14 +1,16 @@
 {
     "name": "EMS_SERVER",
     "version": "1.0.0",
-    "description": "ULTRA_X EMS Web Server",
+    "description": "EMS Web Server",
     "main": "server.js",
     "scripts": {
-        "gen_keypair": "openssl genpkey -algorithm RSA -out private_key.pem -pkeyopt rsa_keygen_bits:2048 && openssl rsa -pubout -in private_key.pem -out public_key.pem",
         "dev": "nodemon server.js",
         "start": "node server.js"
     },
-    "author": "Jamal & Majedul",
+    "author": "Md. Majedul Islam",
+    "contributors": [
+        "Md. Majedul Islam"
+    ],
     "license": "ISC",
     "devDependencies": {
         "nodemon": "^3.0.1"
