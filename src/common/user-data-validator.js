@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Ultra-X Asia Pacific
+ * @copyright All right reserved Majedul
  *
  * @description This file is used for username, email and password validation.
  *
@@ -196,6 +196,53 @@ const isValidCompanyAddress = (address) => {
 	return true;
 }
 
+// validate project name
+const isValidProjectName = (projectName) => {
+	const USERNAME_MAX_LENGTH = 100;
+	const USERNAME_MIN_LENGTH = 3;
+	if (_.isEmpty(projectName)) {
+		return false;
+	} else {
+		if (!_.isString(projectName)) {
+			return false;
+		} else {
+			// check length
+			if (
+				projectName.length > USERNAME_MAX_LENGTH ||
+				projectName.length < USERNAME_MIN_LENGTH
+			) {
+				return false;
+			}
+		}
+	}
+	return true;
+};
+
+
+// validate project platform
+const isValidProjectPlatform = (platform) => {
+	if (_.isEmpty(platform)) {
+		return false;
+	} else {
+		if (!_.isString(platform)) {
+			return false;
+		}
+	}
+	return true;
+}
+
+// validate project platform
+const isValidDocumentTitle = (title) => {
+	if (_.isEmpty(title)) {
+		return false;
+	} else {
+		if (!_.isString(title)) {
+			return false;
+		}
+	}
+	return true;
+}
+
 module.exports = {
 	isValidUserFirstName,
 	isValidUserLastName,
@@ -206,5 +253,8 @@ module.exports = {
 	isValidUserCompany,
 	isValidUserPosition,
 	isValidWebsiteURL,
-	isValidCompanyAddress
+	isValidCompanyAddress,
+	isValidProjectName,
+	isValidProjectPlatform,
+	isValidDocumentTitle
 };

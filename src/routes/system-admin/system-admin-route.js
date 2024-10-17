@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Ultra-X Asia Pacific
+ * @copyright All right reserved Majedul
  * 
  * @description 
  * 
@@ -29,6 +29,7 @@ const { getCompanyTableData } = require('../../main/company/get-company-data');
 const { activeCompanyInfo } = require('../../main/company/active-company-data');
 const { updateCompanyInfo } = require('../../main/company/update-company-data');
 const { getActiveCompanyData } = require('../../main/company/get-active-company-data');
+const { getDocumentData } = require('../../main/document/get-document-data');
 
 systemAdminRouter.use(authenticateToken);
 
@@ -247,6 +248,30 @@ systemAdminRouter.post('/active-company-data',
                 })
             })
     });
+
+/**
+ * This API will return all document Data
+ */
+// systemAdminRouter.post('/get-document-data',
+//     isUserRoleAdmin,
+//     paginationData,
+//     async (req, res) => {
+//         getDocumentData(req.body.paginationData)
+//             .then(data => {
+//                 return res.status(API_STATUS_CODE.OK).send({
+//                     status: 'success',
+//                     message: 'Get document data successfully',
+//                     ...data
+//                 })
+//             })
+//             .catch(error => {
+//                 const { statusCode, message } = error;
+//                 return res.status(statusCode).send({
+//                     status: 'failed',
+//                     message: message,
+//                 })
+//             })
+//     });
 
 module.exports = {
     systemAdminRouter

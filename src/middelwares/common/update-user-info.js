@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Ultra-X Asia Pacific
+ * @copyright All right reserved Majedul
  * 
  * @description 
  * 
@@ -47,6 +47,37 @@ const checkUserIdValidityQuery = async (bodyData) => {
     }
 }
 
+const checkDuplicateExhibitorAdmin = async (bodyData) => {
+    const _query = `
+    SELECT 
+        role
+    FROM
+        user
+    WHERE
+        role = ?;
+`;
+
+    const values = [
+        bodyData.role
+    ];
+
+    try {
+        const [result] = await pool.query(_query, values);
+        if (result.length > 0) {
+            return true;
+        }
+        return false;
+    } catch (error) {
+        // console.log("🚀 ~ userLoginQuery ~ error:", error)
+        return Promise.reject(
+            setRejectMessage(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'operation_failed'
+            )
+        );
+    }
+};
+
 const updateUserInfoQuery = (bodyData, authData) => {
     const tableName = [];
     if (bodyData.role === 'visitor') {
@@ -87,6 +118,14 @@ const updateUserInfoQuery = (bodyData, authData) => {
         _values.push(bodyData.contact);
     }
 
+    if (bodyData.company) {
+        if (_values.length > 0) {
+            _query += ', ';
+        }
+        _query += 'company = ? ';
+        _values.push(bodyData.company);
+    }
+
     if (bodyData.position) {
         if (_values.length > 0) {
             _query += ', ';
@@ -118,10 +157,19 @@ const updateUserInfoQuery = (bodyData, authData) => {
 };
 
 const updateUserInfo = async (bodyData, authData) => {
+    console.log("🚀 ~ updateUserInfo ~ bodyData:", bodyData)
     const epochTimestamp = Math.floor(new Date().getTime() / 1000);
 
     bodyData = { ...bodyData, updated_at: epochTimestamp }
     try {
+        if (bodyData.role === 'exhibitor_admin') {
+            const isDuplicateExhibitorAdmin = await checkDuplicateExhibitorAdmin(bodyData);
+            if (isDuplicateExhibitorAdmin) {
+                return Promise.reject(
+                    setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Exhibitor Admin role has already exist')
+                );
+            }
+        }
         const isUserAvailable = await checkUserIdValidityQuery(bodyData);
         if (isUserAvailable) {
             const [_query, values] = await updateUserInfoQuery(bodyData, authData);
@@ -135,7 +183,7 @@ const updateUserInfo = async (bodyData, authData) => {
             }
         } else {
             return Promise.reject(
-                setRejectMessage(API_STATUS_CODE.BAD_REQUEST, "User not found")
+                setRejectMessage(API_STATUS_CODE.BAD_REQUEST, "Can't update inactive user information")
             )
         }
     } catch (error) {

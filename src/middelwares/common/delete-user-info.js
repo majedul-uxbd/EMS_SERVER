@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Ultra-X Asia Pacific
+ * @copyright All right reserved Majedul
  * 
  * @description 
  * 
@@ -88,15 +88,11 @@ const deleteUserInfo = async (userData) => {
             const isUserDelete = await deleteUserInfoQuery(userData);
             if (isUserDelete) {
                 return Promise.resolve('User deleted successfully');
-            } else {
-                return Promise.reject(
-                    setRejectMessage(API_STATUS_CODE.BAD_REQUEST, "User not found")
-                )
             }
         }
         else {
             return Promise.reject(
-                setRejectMessage(API_STATUS_CODE.BAD_REQUEST, "User not found")
+                setRejectMessage(API_STATUS_CODE.BAD_REQUEST, "Can't delete user inactive user")
             )
         }
     } catch (error) {

@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Ultra-X Asia Pacific
+ * @copyright All right reserved Majedul
  *
  * @description
  *
@@ -15,11 +15,14 @@ const { API_STATUS_CODE } = require("../../consts/error-status");
 const validateExhibitionsBodyData = (req, res, next) => {
 	const errors = [];
 	const bodyData = {
+		id: req.body.id,
 		exhibitionTitle,
 		exhibitionStartDate,
 		exhibitionEndDate,
 		exhibitionVenue,
 	} = req.body;
+
+
 
 	if (_.isNil(bodyData)) {
 		// console.log({ bodyData })
@@ -28,6 +31,15 @@ const validateExhibitionsBodyData = (req, res, next) => {
 			message: "invalid-data"
 		})
 	}
+
+	if (req.originalUrl === "/exhibitions/update") {
+		if (_.isNil(bodyData.id) || !_.isNumber(bodyData.id)) {
+			errors.push("Invalid exhibition ID ");
+		}
+	} else {
+		delete bodyData.id;
+	}
+
 	if (!_.isNil(bodyData.exhibitionTitle)) {
 		if (!_.isString(bodyData.exhibitionTitle)) {
 			errors.push('invalid-exhibition-title');
@@ -55,6 +67,7 @@ const validateExhibitionsBodyData = (req, res, next) => {
 			message: errors
 		})
 	}
+
 	req.body.bodyData = bodyData;
 	next();
 };

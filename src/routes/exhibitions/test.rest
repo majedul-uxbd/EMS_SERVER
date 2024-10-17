@@ -1,4 +1,4 @@
-POST http://localhost:3152/exhibitions/add
+POST http://localhost:4560/exhibitions/add
 Content-Type: application/json
 
 {

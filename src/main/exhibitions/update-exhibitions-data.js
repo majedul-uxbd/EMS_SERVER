@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Ultra-X Asia Pacific
+ * @copyright All right reserved Majedul
  * 
  * @description 
  * 
@@ -14,45 +14,36 @@ const { setRejectMessage } = require("../../common/set-reject-message");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
 
-const updateUserInfoQuery = (bodyData, userData) => {
+const updateUserInfoQuery = (bodyData) => {
 
-    let _query = `UPDATE user SET `;
+    let _query = `UPDATE exhibitions SET `;
     const _values = [];
 
-    if (bodyData.firstName) {
-        _query += 'f_name = ? ';
-        _values.push(bodyData.firstName);
+    if (bodyData.exhibitionTitle) {
+        _query += 'exhibitions_title = ? ';
+        _values.push(bodyData.exhibitionTitle);
     }
 
-    if (bodyData.lastName) {
+    if (bodyData.exhibitionStartDate) {
         if (_values.length > 0) {
             _query += ', ';
         }
-        _query += 'l_name = ? ';
-        _values.push(bodyData.lastName);
+        _query += 'exhibition_start_date = ? ';
+        _values.push(bodyData.exhibitionStartDate);
     }
-    if (bodyData.email) {
+    if (bodyData.exhibitionEndDate) {
         if (_values.length > 0) {
             _query += ', ';
         }
-        _query += 'email = ? ';
-        _values.push(bodyData.email);
+        _query += 'exhibition_end_date = ? ';
+        _values.push(bodyData.exhibitionEndDate);
     }
-
-    if (bodyData.contact) {
+    if (bodyData.exhibitionVenue) {
         if (_values.length > 0) {
             _query += ', ';
         }
-        _query += 'contact_no = ? ';
-        _values.push(bodyData.contact);
-    }
-
-    if (bodyData.position) {
-        if (_values.length > 0) {
-            _query += ', ';
-        }
-        _query += 'position = ? ';
-        _values.push(bodyData.position);
+        _query += 'exhibition_venue = ? ';
+        _values.push(bodyData.exhibitionVenue);
     }
 
     if (_values.length > 0) {
@@ -61,23 +52,26 @@ const updateUserInfoQuery = (bodyData, userData) => {
     }
 
     _query += 'WHERE id  =?';
-    _values.push(userData.id);
+    _values.push(bodyData.id);
 
     return [_query, _values];
 };
 
-const updateExhibitorData = async (bodyData, userData) => {
+const updateExhibitionData = async (bodyData, userData) => {
     const epochTimestamp = Math.floor(new Date().getTime() / 1000);
 
     bodyData = { ...bodyData, updated_at: epochTimestamp }
     try {
-        const [_query, values] = await updateUserInfoQuery(bodyData, userData);
+        const [_query, values] = await updateUserInfoQuery(bodyData);
         const [isUpdateUser] = await pool.query(_query, values);
         if (isUpdateUser.affectedRows > 0) {
-            return Promise.resolve();
+            return Promise.resolve({
+                status: 'success',
+                message: 'Exhibition data updated successfully'
+            });
         } else {
             return Promise.reject(
-                setRejectMessage(API_STATUS_CODE.BAD_REQUEST, "Failed to update user information")
+                setRejectMessage(API_STATUS_CODE.BAD_REQUEST, "Failed to update exhibitions information")
             )
         }
     } catch (error) {
@@ -90,5 +84,5 @@ const updateExhibitorData = async (bodyData, userData) => {
 
 
 module.exports = {
-    updateExhibitorData
+    updateExhibitionData
 }

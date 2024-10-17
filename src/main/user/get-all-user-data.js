@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Ultra-X Asia Pacific
+ * @copyright All right reserved Majedul
  * 
  * @description 
  * 
@@ -24,7 +24,8 @@ const getNumberOfRowsQuery = async (userData, paginationData) => {
         companies
     ON companies.id = user.companies_id
     WHERE
-        companies.is_active = ${1}
+        companies.is_active = ${1} AND
+        user.is_user_active = ${1}
 
     `;
 
@@ -75,7 +76,8 @@ const getUserDataQuery = async (userData, paginationData) => {
         companies
     ON companies.id = user.companies_id
     WHERE
-        companies.is_active = ${1}
+        companies.is_active = ${1} AND
+        user.is_user_active = ${1}
     `;
 
     if (userData.role === 'exhibitor' || userData.role === 'exhibitor_admin') {

@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Ultra-X Asia Pacific
+ * @copyright All right reserved Majedul
  * 
  * @description 
  * 
@@ -175,7 +175,6 @@ const addExhibitor = async (exhibitor) => {
         const isDuplicateEmail = await checkDuplicateEmail(exhibitor.email);
         const isDuplicateExhibitorAdmin = await checkDuplicateExhibitorAdmin(exhibitor);
         const isCompanyActive = await checkIsCompanyActive(exhibitor.companyId);
-        console.log("🚀 ~ addExhibitor ~ isCompanyActive:", isCompanyActive)
 
         if (isDuplicateEmail) {
             return Promise.reject(
@@ -188,11 +187,14 @@ const addExhibitor = async (exhibitor) => {
             );
         }
         _password = await bcrypt.hash(exhibitor.password, 10);
-        const visitorData = { ...exhibitor, password: _password, createdAt: epochTimestamp };
+        const exhibitorData = { ...exhibitor, password: _password, createdAt: epochTimestamp };
 
-        const insertedData = await insertUserQuery(visitorData, isCompanyActive);
+        const insertedData = await insertUserQuery(exhibitorData, isCompanyActive);
         if (insertedData) {
-            return Promise.resolve()
+            return Promise.resolve({
+                status: 'success',
+                message: 'Exhibitor created successfully',
+            })
         }
     } catch (error) {
         // console.log("🚀 ~ addUser ~ error:", error)

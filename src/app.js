@@ -31,6 +31,9 @@ const { systemAdminRouter } = require('./routes/system-admin/system-admin-route'
 const { visitorsRouter } = require('./routes/visitors/visitors-route');
 const { exhibitorsRouter } = require('./routes/exhibitors/exhibitors-route');
 const { companiesRouter } = require('./routes/companies/companies-route');
+const { organizerRouter } = require('./routes/organizer/organizer-route');
+const { fileUploadRouter } = require('./routes/file-upload/file-upload-route');
+const { projectRouter } = require('./routes/project/project-route');
 
 app.get('/status', (req, res) => {
   res.json({
@@ -46,6 +49,9 @@ app.use('/exhibitions', exhibitionsRouter);
 app.use('/system-admin', systemAdminRouter);
 app.use('/exhibitors', exhibitorsRouter);
 app.use('/companies', companiesRouter);
+app.use('/organizer', organizerRouter);
+app.use('/uploader', fileUploadRouter);
+app.use('/project', projectRouter);
 
 // Define your static file paths
 const staticFilePath = path.join(__dirname, '/../uploads');

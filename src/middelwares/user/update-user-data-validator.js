@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Ultra-X Asia Pacific
+ * @copyright All right reserved Majedul
  * 
  * @description 
  * 
@@ -16,6 +16,7 @@ const {
     isValidUserContact,
     isValidUserPosition,
     isValidUserRole,
+    isValidUserCompany,
 } = require("../../common/user-data-validator");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 const _ = require('lodash');
@@ -67,6 +68,16 @@ const updateUserDataValidator = (req, res, next) => {
         if (!isValidUserContact(user.contact)) {
             errors.push("Invalid user contact number");
         }
+    }
+
+    if (user.role === 'visitor') {
+        if (!_.isNil(user.company)) {
+            if (!isValidUserCompany(user.company)) {
+                errors.push("Invalid company name");
+            }
+        }
+    } else {
+        delete user.company;
     }
 
     if (!_.isNil(user.position)) {

@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Md. Majedul Islam
+ * @copyright All right reserved Majedul All right reserved Md. Majedul Islam
  * 
  * @description This middleware is used for getting data from database and paginate these data.
  * 
