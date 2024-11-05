@@ -113,7 +113,7 @@ commonRouter.post('/generate-id-card',
         let y_axis_2 = 560;
         const currentPathName = path.join(process.cwd());
         let ppImagePath = path.join(currentPathName, '/src/common/utilities/images/pp.jpeg');
-        let bgImagePath = path.join(currentPathName, '/src/common/utilities/images/test.jpeg');
+        let bgImagePath = path.join(currentPathName, '/src/common/utilities/images/2nd-bg.jpeg');
         const fullName = user.f_name + '_' + user.l_name;
 
         const doc = new PDFDocument({

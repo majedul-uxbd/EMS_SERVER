@@ -163,28 +163,29 @@ visitorsRouter.post(
 	async (req, res) => {
 		const { data } = req.body;
 
-
 		if (!Array.isArray(data)) {
 			return res.status(API_STATUS_CODE.BAD_REQUEST).send({
 				status: "failed",
 				message: "Data is required and must be an array",
 			});
 		}
-		generatePDFReport(data)
-			.then((filePath) => {
-				return res.status(API_STATUS_CODE.OK).send({
-					status: "success",
-					message: "PDF report generated successfully",
-					filePath,
-				});
-			})
-			.catch((error) => {
-				const { statusCode, message } = error;
-				return res.status(statusCode).send({
-					status: "failed",
-					message: message,
-				});
+
+		try {
+			const pdfBuffer = await generatePDFReport(data);
+
+			// Set response headers for PDF
+			res.setHeader('Content-Type', 'application/pdf');
+			res.setHeader('Content-Disposition', 'inline; filename=List_of_Requested_Documents.pdf');
+
+			// Send the PDF buffer directly
+			return res.status(API_STATUS_CODE.OK).send(pdfBuffer);
+		} catch (error) {
+			const { statusCode, message } = error;
+			return res.status(statusCode).send({
+				status: "failed",
+				message: message,
 			});
+		}
 	}
 );
 

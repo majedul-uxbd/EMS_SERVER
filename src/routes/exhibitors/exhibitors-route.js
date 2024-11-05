@@ -245,8 +245,14 @@ exhibitorsRouter.post(
 	async (req, res) => {
 		try {
 			const data = req.body;
-			const pdfFilePath = await generateRequestedVisitorPDF(data);
-			res.status(API_STATUS_CODE.OK).sendFile(pdfFilePath);
+			const pdfBuffer = await generateRequestedVisitorPDF(data);
+
+			// Set response headers for PDF
+			res.setHeader('Content-Type', 'application/pdf');
+			res.setHeader('Content-Disposition', 'inline; filename=Interested_Visitor_List.pdf');
+
+			// Send the PDF buffer directly
+			res.status(API_STATUS_CODE.OK).send(pdfBuffer);
 		} catch (error) {
 			console.error("Error generating PDF report:", error);
 			res.status(API_STATUS_CODE.INTERNAL_SERVER_ERROR).json({
