@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Majedul
+ * @copyright All right reserved Ultra-X Asia Pacific
  * 
  * @description 
  * 
@@ -14,6 +14,7 @@ const _ = require('lodash');
 const { API_STATUS_CODE } = require("../../consts/error-status");
 const { pool } = require("../../../database/db");
 const { setRejectMessage } = require("../../common/set-reject-message");
+const { format } = require('date-fns');
 
 
 const checkIsCompanyActive = async (id) => {
@@ -167,8 +168,11 @@ const insertUserQuery = async (user, isCompanyActive) => {
     }
 };
 
+/**
+ * @description This function is used to create new exhibitor or organizer
+ */
 const addExhibitor = async (exhibitor) => {
-    const epochTimestamp = Math.floor(new Date().getTime() / 1000);
+    const createdAt = new Date();
 
     let _password;
     try {
@@ -187,7 +191,7 @@ const addExhibitor = async (exhibitor) => {
             );
         }
         _password = await bcrypt.hash(exhibitor.password, 10);
-        const exhibitorData = { ...exhibitor, password: _password, createdAt: epochTimestamp };
+        const exhibitorData = { ...exhibitor, password: _password, createdAt: createdAt };
 
         const insertedData = await insertUserQuery(exhibitorData, isCompanyActive);
         if (insertedData) {

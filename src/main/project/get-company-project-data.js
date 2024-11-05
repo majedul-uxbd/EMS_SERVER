@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Majedul
+ * @copyright All right reserved Ultra-X Asia Pacific
  * 
  * @description 
  * 
@@ -15,17 +15,51 @@ const { setRejectMessage } = require("../../common/set-reject-message");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
 
-const getNumberOfRowsQuery = async (bodyData) => {
+const getProjectCompanyId = async(authData)=>{
+    const _query = `
+    SELECT
+        companies_id
+    FROM
+        user
+    WHERE
+        id = ?;
+    `;
+    try {
+        const [result] = await pool.query(_query, authData.id);
+        if(result.length>0){
+        return Promise.resolve(result[0].companies_id);
+        }
+    } catch (error) {
+        // console.log('🚀 ~ userLoginQuery ~ error:', error);
+        return Promise.reject(
+            setRejectMessage(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'operation_failed'
+            )
+        );
+    }
+}
+
+
+const getNumberOfRowsQuery = async (companyId) => {
     const _query = `
     SELECT count(*) AS totalRows
-    FROM
-        projects
+      FROM
+        projects AS project
+    LEFT JOIN
+        user AS created_by_user 
+    ON 
+        project.created_by = created_by_user.id
+    LEFT JOIN
+        user AS updated_by_user 
+    ON 
+        project.updated_by = updated_by_user.id
     WHERE
-        companies_id = ?
+        project.companies_id = ?
     `;
 
     try {
-        const [result] = await pool.query(_query, bodyData.companyId);
+        const [result] = await pool.query(_query, companyId);
         return Promise.resolve(result[0]);
     } catch (error) {
         // console.log('🚀 ~ userLoginQuery ~ error:', error);
@@ -39,9 +73,11 @@ const getNumberOfRowsQuery = async (bodyData) => {
 }
 
 
-const getProjectDataQuery = async (bodyData, paginationData) => {
+const getProjectDataQuery = async (companyId, paginationData) => {
     const _query = `
     SELECT
+        project.id,
+        project.companies_id,
         project.project_name,
         project.project_platform,
         created_by_user.f_name AS created_by_user_f_name,
@@ -67,7 +103,7 @@ const getProjectDataQuery = async (bodyData, paginationData) => {
     `;
 
     const _values = [
-        bodyData.companyId,
+        companyId,
         paginationData.itemsPerPage,
         paginationData.offset
     ]
@@ -86,22 +122,16 @@ const getProjectDataQuery = async (bodyData, paginationData) => {
     }
 }
 
-
-const getCompanyProjectData = async (bodyData, paginationData) => {
+/**
+ * @description This function is used to get project data based on company ID
+ */
+const getCompanyProjectData = async (authData,paginationData) => {
     try {
-        if (!_.isNil(bodyData.companyId)) {
-            if (!_.isNumber(bodyData.companyId)) {
-                return Promise.reject(
-                    setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Company ID must be number')
-                )
-            }
-        } else {
-            return Promise.reject(
-                setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Company ID is required')
-            )
-        }
-        const totalRows = await getNumberOfRowsQuery(bodyData);
-        const documentData = await getProjectDataQuery(bodyData, paginationData);
+        const companyId = await getProjectCompanyId(authData)
+        
+        const totalRows = await getNumberOfRowsQuery(companyId);
+        const documentData = await getProjectDataQuery(companyId, paginationData);
+        
         return Promise.resolve({
             metadata: {
                 totalRows: totalRows,

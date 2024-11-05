@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Majedul
+ * @copyright All right reserved Ultra-X Asia Pacific
  * 
  * @description 
  * 
@@ -11,6 +11,7 @@
 
 const { pool } = require("../../../database/db");
 const _ = require('lodash');
+const { format } = require('date-fns');
 
 const { setRejectMessage } = require("../../common/set-reject-message");
 const { API_STATUS_CODE } = require("../../consts/error-status");
@@ -128,10 +129,13 @@ const updateUserInfoQuery = (exhibitorData) => {
     return [_query, _values];
 };
 
+/**
+ * @description This function is used to update exhibitor
+ */
 const updateAllExhibitorData = async (exhibitorData, authData) => {
-    const epochTimestamp = Math.floor(new Date().getTime() / 1000);
+    const updatedAt = new Date();
 
-    exhibitorData = { ...exhibitorData, updated_at: epochTimestamp }
+    exhibitorData = { ...exhibitorData, updated_at: updatedAt }
     try {
         const companyId = await getExhibitorCompanyQuery(authData);
         if (!_.isNil(companyId)) {

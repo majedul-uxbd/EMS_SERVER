@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Majedul
+ * @copyright All right reserved Ultra-X Asia Pacific
  * 
  * @description 
  * 
@@ -12,18 +12,19 @@
 const express = require('express');
 const projectRouter = express.Router();
 
-const authenticateToken = require('../../middelwares/jwt');
+const authenticateToken = require('../../middlewares/jwt');
 const { isUserRoleAdminOrExhibitorAdminOrExhibitor } = require('../../common/utilities/check-user-role');
 const { createProjectData } = require('../../main/project/create-project');
 const { API_STATUS_CODE } = require('../../consts/error-status');
 const { updateProjectData } = require('../../main/project/update-project-data');
-const { checkUserIdValidity } = require('../../middelwares/check-user-id-validity');
+const { checkUserIdValidity } = require('../../middlewares/check-user-id-validity');
 const { deleteProjectData } = require('../../main/project/delete-project data');
 const { getAllProjectData } = require('../../main/project/get-all-project-data');
 const { getProjectData } = require('../../main/project/get-project-data');
-const { paginationData } = require('../../middelwares/common/pagination-data');
+const { paginationData } = require('../../middlewares/common/pagination-data');
 const { getDocumentData } = require('../../main/document/get-document-data');
 const { getCompanyProjectData } = require('../../main/project/get-company-project-data');
+const { deleteDocumentData } = require('../../main/document/delete-document-data');
 
 projectRouter.use(authenticateToken);
 
@@ -150,13 +151,13 @@ projectRouter.post('/get-project',
 
 
 /**
- * Get Document data based on project id
+ * Get project data based on company id
  */
 projectRouter.post('/get-company-project',
     isUserRoleAdminOrExhibitorAdminOrExhibitor,
     paginationData,
     async (req, res) => {
-        getCompanyProjectData(req.body, req.body.paginationData)
+        getCompanyProjectData(req.auth, req.body.paginationData)
             .then(data => {
                 return res.status(API_STATUS_CODE.OK).send({
                     status: 'success',
@@ -196,6 +197,28 @@ projectRouter.post('/get-document',
                 })
             })
     });
+
+/**
+ * Delete Document data 
+ */
+projectRouter.post('/delete-document',
+    isUserRoleAdminOrExhibitorAdminOrExhibitor,
+    async (req, res) => {
+        deleteDocumentData(req.body)
+            .then(data => {
+                return res.status(API_STATUS_CODE.OK).send({
+                    status: data.status,
+                    message: data.message
+                })
+            })
+            .catch(error => {
+                const { statusCode, message } = error;
+                return res.status(statusCode).send({
+                    status: 'failed',
+                    message: message,
+                })
+            })
+    })
 
 
 module.exports = {

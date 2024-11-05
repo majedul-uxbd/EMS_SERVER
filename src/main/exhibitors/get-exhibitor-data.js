@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Majedul All right reserved Md. Majedul Islam
+ * @copyright All right reserved Md. Majedul Islam
  *
  * @description
  *
@@ -46,15 +46,17 @@ const getNumberOfRowsQuery = async (companyId) => {
     SELECT count(*) AS totalRows
     FROM
         user
+    LEFT JOIN
+        companies
+    ON user.companies_id = companies.id
     WHERE
-        companies_id = ? AND
-        role = ?
-
+        user.companies_id = ? AND
+        companies.is_active = ${1} AND
+        (user.role = 'exhibitor' OR user.role = 'exhibitor_admin');
     `;
 
     const _values = [
         companyId,
-        'exhibitor'
     ];
 
 
@@ -94,22 +96,20 @@ const getExhibitorDataQuery = async (companyId, paginationData) => {
         user
     LEFT JOIN
         companies
-    ON companies.id = user.companies_id
+    ON user.companies_id = companies.id
     WHERE
         user.companies_id = ? AND
         companies.is_active = ${1} AND
-        user.role = ?
+        (user.role = 'exhibitor' OR user.role = 'exhibitor_admin')
     LIMIT ?
     OFFSET ?;
     `;
 
     const values = [
         companyId,
-        'exhibitor',
         paginationData.itemsPerPage,
         paginationData.offset
     ];
-
 
     try {
         const [result] = await pool.query(query, values);
@@ -127,6 +127,9 @@ const getExhibitorDataQuery = async (companyId, paginationData) => {
     }
 };
 
+/**
+ * @description This function is used to get exhibitor data
+ */
 const getExhibitorData = async (authData, paginationData) => {
     try {
         const companyId = await getExhibitorCompanyQuery(authData);

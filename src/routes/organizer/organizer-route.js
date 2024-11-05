@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Majedul
+ * @copyright All right reserved Ultra-X Asia Pacific
  *
  * @description
  *
@@ -13,9 +13,9 @@ const express = require('express');
 const organizerRouter = express.Router();
 
 
-const authenticateToken = require('../../middelwares/jwt');
+const authenticateToken = require('../../middlewares/jwt');
 const { isUserRoleAdmin } = require('../../common/utilities/check-user-role');
-const { validateOrganizerData } = require('../../middelwares/organizer/validate-organizer-data');
+const { validateOrganizerData } = require('../../middlewares/organizer/validate-organizer-data');
 const { addOrganizerData } = require('../../main/organizer/add-organizer-data');
 const { API_STATUS_CODE } = require('../../consts/error-status');
 

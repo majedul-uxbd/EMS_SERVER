@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Majedul
+ * @copyright All right reserved Ultra-X Asia Pacific
  * 
  * @description 
  * 
@@ -12,7 +12,6 @@
 const { pool } = require("../../../database/db");
 const { setRejectMessage } = require("../../common/set-reject-message");
 const { API_STATUS_CODE } = require("../../consts/error-status");
-
 
 const updateUserInfoQuery = (bodyData, userData) => {
 
@@ -67,9 +66,9 @@ const updateUserInfoQuery = (bodyData, userData) => {
 };
 
 const updateVisitorData = async (bodyData, userData) => {
-    const epochTimestamp = Math.floor(new Date().getTime() / 1000);
+    const updatedAt = new Date();
 
-    bodyData = { ...bodyData, updated_at: epochTimestamp }
+    bodyData = { ...bodyData, updated_at: updatedAt }
     try {
         const [_query, values] = await updateUserInfoQuery(bodyData, userData);
         const [isUpdateUser] = await pool.query(_query, values);

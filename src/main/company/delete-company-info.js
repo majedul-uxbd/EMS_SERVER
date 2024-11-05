@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Majedul
+ * @copyright All right reserved Ultra-X Asia Pacific
  * 
  * @description 
  * 
@@ -92,18 +92,56 @@ const disableUserOfTheCompany = async (companyData) => {
 }
 
 
-const deleteCompanyInfo = async (companyData) => {
+/**
+ * @description Checks if the user is a system admin trying to delete his own company.
+ */
+const isSystemAdminDeletingOwnCompany = async (authData, companyData) => {
+    const _query = `
+    SELECT
+        companies_id
+    FROM 
+        user
+    WHERE
+        id = ?;
+    `;
+
+    try {
+        const [result] = await pool.query(_query, authData.id);
+        if (result[0].companies_id == companyData.id) {
+            return true;
+        }
+        return false;
+    } catch (error) {
+        return res.status(API_STATUS_CODE.BAD_REQUEST).send({
+            status: "failed",
+            message: "Operation failed",
+        });
+    }
+};
+
+
+/**
+ * @description This function will delete company information
+ */
+const deleteCompanyInfo = async (companyData, authData) => {
     // console.log("🚀 ~ deleteUserInfo ~ userData:", userData)
     try {
         const isCompanyAvailable = await checkCompanyIdValidityQuery(companyData);
         if (isCompanyAvailable) {
+            if (authData.role === 'system_admin') {
+                const isMatch = await isSystemAdminDeletingOwnCompany(authData, companyData);
+                if (isMatch) {
+                    return Promise.reject(
+                        setRejectMessage(API_STATUS_CODE.FORBIDDEN, "System admin cannot delete their own company")
+                    );
+                }
+            }
             const isCompanyDelete = await deleteCompanyInfoQuery(companyData);
             if (isCompanyDelete) {
                 const isUserDeactivated = await disableUserOfTheCompany(companyData);
                 return Promise.resolve({
                     status: "success",
                     message: "Company deleted successfully",
-                    de_active_user: isUserDeactivated.affectedRows + " users"
                 });
             } else {
                 return Promise.reject(

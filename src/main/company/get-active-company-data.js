@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Majedul
+ * @copyright All right reserved Ultra-X Asia Pacific
  * 
  * @description 
  * 
@@ -38,7 +38,7 @@ const getCompanyDataQuery = async () => {
         const [result] = await pool.query(_query);
         return Promise.resolve(result);
     } catch (error) {
-        console.log('🚀 ~ userLoginQuery ~ error:', error);
+        // console.log('🚀 ~ userLoginQuery ~ error:', error);
         return Promise.reject(
             setRejectMessage(
                 API_STATUS_CODE.INTERNAL_SERVER_ERROR,
@@ -48,6 +48,9 @@ const getCompanyDataQuery = async () => {
     }
 }
 
+/**
+ * @description This function will return active company account information
+ */
 const getActiveCompanyData = async () => {
     try {
         const result = await getCompanyDataQuery();

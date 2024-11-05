@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Majedul
+ * @copyright All right reserved Ultra-X Asia Pacific
  * 
  * @description 
  * 
@@ -13,14 +13,20 @@ const express = require('express');
 const exhibitionsRouter = express.Router();
 
 const { addExhibitionsInfo } = require('../../main/exhibitions/add-exhibitions-info');
-const { validateExhibitionsBodyData } = require('../../middelwares/exhibitions/validate-exhibitions-body-data');
+const { validateExhibitionsBodyData } = require('../../middlewares/exhibitions/validate-exhibitions-body-data');
 const { API_STATUS_CODE } = require('../../consts/error-status');
 const { isUserRoleAdmin } = require('../../common/utilities/check-user-role');
-const { updateExhibitionData } = require('../../main/exhibitions/update-exhibitions-data');
-const authenticateToken = require('../../middelwares/jwt');
+const { getExhibitionData } = require('../../main/exhibitions/get-exhibitions-data');
+const authenticateToken = require('../../middlewares/jwt');
+const { deleteExhibitionsData } = require('../../main/exhibitions/delete-exhibitions-data');
+const { paginationData } = require('../../middlewares/common/pagination-data');
 
 exhibitionsRouter.use(authenticateToken);
 
+
+/**
+ * THrough this API admin can create exhibitions
+ */
 exhibitionsRouter.post('/add',
     isUserRoleAdmin,
     validateExhibitionsBodyData,
@@ -28,9 +34,57 @@ exhibitionsRouter.post('/add',
 
         addExhibitionsInfo(req.body.bodyData)
             .then(data => {
+                return res.status(API_STATUS_CODE.OK).send({
+                    status: data.status,
+                    message: data.message
+                })
+            })
+            .catch(error => {
+                const { statusCode, message } = error;
+                return res.status(statusCode).send({
+                    status: 'failed',
+                    message: message,
+                })
+            });
+    });
+
+/**
+ * TODO: Need to work on this API. This is not running API
+ */
+// exhibitionsRouter.post('/update',
+//     isUserRoleAdmin,
+//     validateExhibitionsBodyData,
+//     async (req, res) => {
+
+//         updateExhibitionData(req.body.bodyData)
+//             .then(data => {
+//                 return res.status(API_STATUS_CODE.CREATED).send({
+//                     status: data.status,
+//                     message: data.message
+//                 })
+//             })
+//             .catch(error => {
+//                 const { statusCode, message } = error;
+//                 return res.status(statusCode).send({
+//                     status: 'failed',
+//                     message: message,
+//                 })
+//             });
+//     });
+
+
+/**
+ * Through this API admin can delete exhibitions data
+ */
+exhibitionsRouter.post('/delete',
+    isUserRoleAdmin,
+    async (req, res) => {
+
+        deleteExhibitionsData(req.body)
+            .then(data => {
                 return res.status(API_STATUS_CODE.CREATED).send({
-                    status: 'success',
-                    message: data
+                    status: data.status,
+                    message: data.message
                 })
             })
             .catch(error => {
@@ -43,16 +97,20 @@ exhibitionsRouter.post('/add',
     });
 
 
-exhibitionsRouter.post('/update',
+/**
+* Through this API admin can see all exhibitions data
+*/
+exhibitionsRouter.post('/get-exhibition-data',
     isUserRoleAdmin,
-    validateExhibitionsBodyData,
+    paginationData,
     async (req, res) => {
 
-        updateExhibitionData(req.body.bodyData)
+        getExhibitionData(req.body.paginationData)
             .then(data => {
                 return res.status(API_STATUS_CODE.CREATED).send({
-                    status: data.status,
-                    message: data.message
+                    status: 'success',
+                    message: 'Get exhibitions data successfully',
+                    ...data
                 })
             })
             .catch(error => {

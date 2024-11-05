@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Majedul
+ * @copyright All right reserved Ultra-X Asia Pacific
  * 
  * @description 
  * 
@@ -97,9 +97,10 @@ const enableUserOfTheCompany = async (companyData) => {
     }
 }
 
-
+/**
+ * @description This function will active company account
+ */
 const activeCompanyInfo = async (companyData) => {
-    // console.log("🚀 ~ deleteUserInfo ~ userData:", userData)
     try {
         const isCompanyAvailable = await checkCompanyIdValidityQuery(companyData);
         if (isCompanyAvailable) {

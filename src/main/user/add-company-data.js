@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Majedul
+ * @copyright All right reserved Ultra-X Asia Pacific
  * 
  * @description 
  * 
@@ -12,6 +12,8 @@
 const bcrypt = require("bcrypt");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 const { pool } = require("../../../database/db");
+const { format } = require('date-fns');
+
 const { setRejectMessage } = require("../../common/set-reject-message");
 
 
@@ -86,14 +88,17 @@ const insertCompanyDataQuery = async (companyData) => {
 };
 
 const addCompanyData = async (companyData) => {
-    const epochTimestamp = Math.floor(new Date().getTime() / 1000);
+    const createdAt = new Date();
 
     try {
-        companyData = { ...companyData, createdAt: epochTimestamp };
+        companyData = { ...companyData, createdAt: createdAt };
 
         const insertedData = await insertCompanyDataQuery(companyData);
         if (insertedData) {
-            return Promise.resolve('Company created successfully')
+            return Promise.resolve({
+                status: 'success',
+                message: 'Company created successfully'
+            })
         }
     } catch (error) {
         // console.log("🚀 ~ addUser ~ error:", error)

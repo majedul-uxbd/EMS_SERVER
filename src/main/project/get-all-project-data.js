@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Majedul
+ * @copyright All right reserved Ultra-X Asia Pacific
  * 
  * @description 
  * 
@@ -15,7 +15,7 @@ const { API_STATUS_CODE } = require("../../consts/error-status");
 
 
 
-const getNumberOfRowsQuery = async (companyId) => {
+const getNumberOfRowsQuery = async () => {
     const _query = `
     SELECT count(*) AS totalRows
     FROM
@@ -66,6 +66,7 @@ const getProjectDataQuery = async (paginationData) => {
         company.address,
         company.email,
         document.title,
+        document.file_name,
         document.file_path
     FROM
         projects AS project
@@ -104,7 +105,9 @@ const getProjectDataQuery = async (paginationData) => {
     }
 }
 
-
+/**
+ * @description This function is used to get all project data
+ */
 const getAllProjectData = async (paginationData) => {
     try {
         const totalRows = await getNumberOfRowsQuery();

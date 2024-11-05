@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Majedul
+ * @copyright All right reserved Ultra-X Asia Pacific
  * 
  * @description 
  * 
@@ -17,7 +17,7 @@ const errorCheck = (err, req, res, next) => {
       return res.status(500).send({
         err,
         status: "failed",
-        message: "file-upload-error",
+        message: "Failed to upload file",
       });
     } else {
       return res.send(err?.message);

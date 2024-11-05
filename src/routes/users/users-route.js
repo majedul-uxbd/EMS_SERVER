@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Majedul
+ * @copyright All right reserved Ultra-X Asia Pacific
  *
  * @description
  *
@@ -12,19 +12,23 @@
 const express = require('express');
 const usersRouter = express.Router();
 
-const { loginUserValidation } = require('../../middelwares/user/login-data-validator');
+const { loginUserValidation } = require('../../middlewares/user/login-data-validator');
 const { userLogin } = require('../../main/user/user-login');
 const { getUserData } = require('../../main/user/get-user-data');
 const { API_STATUS_CODE } = require('../../consts/error-status');
-const authenticateToken = require('../../middelwares/jwt');
-const { validateUserData } = require('../../middelwares/user/user-data-validator');
+const authenticateToken = require('../../middlewares/jwt');
+const { validateUserData } = require('../../middlewares/user/user-data-validator');
 const { addUser } = require('../../main/user/add-user');
-const { checkUserIdValidity } = require('../../middelwares/check-user-id-validity');
-const { updateUserDataValidator } = require('../../middelwares/user/update-user-data-validator');
+const { checkUserIdValidity } = require('../../middlewares/check-user-id-validity');
+const { updateUserDataValidator } = require('../../middlewares/user/update-user-data-validator');
 const { isUserRoleAdminOrExhibitorAdmin } = require('../../common/utilities/check-user-role');
 const { updatePersonalInfo } = require('../../main/user/update-personal-data');
 const { deletePersonalData } = require('../../main/user/delete-personal-data');
 
+
+/**
+ * Through this API, user can login into the system
+ */
 usersRouter.post(
 	'/user-login',
 	loginUserValidation,
@@ -47,30 +51,36 @@ usersRouter.post(
 	}
 );
 
-usersRouter.post(
-	'/add',
-	authenticateToken,
-	isUserRoleAdminOrExhibitorAdmin,
-	validateUserData,
-	async (req, res) => {
-		// console.log("🚀 ~ req.body.user:", req.body.user)
-		addUser(req.body.user)
-			.then((data) => {
-				return res.status(API_STATUS_CODE.ACCEPTED).send({
-					status: 'success',
-					message: 'User created successfully',
-				});
-			})
-			.catch((error) => {
-				const { statusCode, message } = error;
-				return res.status(statusCode).send({
-					status: 'failed',
-					message: message,
-				});
-			});
-	}
-);
+/**
+ * This API will create a new user
+ */
+// usersRouter.post(
+// 	'/add',
+// 	authenticateToken,
+// 	isUserRoleAdminOrExhibitorAdmin,
+// 	validateUserData,
+// 	async (req, res) => {
 
+// 		addUser(req.body.user)
+// 			.then((data) => {
+// 				return res.status(API_STATUS_CODE.ACCEPTED).send({
+// 					status: data.status,
+// 					message: data.message,
+// 				});
+// 			})
+// 			.catch((error) => {
+// 				const { statusCode, message } = error;
+// 				return res.status(statusCode).send({
+// 					status: 'failed',
+// 					message: message,
+// 				});
+// 			});
+// 	}
+// );
+
+/**
+ * This API will get user and visitor own data
+ */
 usersRouter.get(
 	'/get-my-user-data',
 	authenticateToken,
@@ -93,16 +103,19 @@ usersRouter.get(
 	}
 );
 
+/**
+ * This API will update user and visitor own data
+ */
 usersRouter.post('/update',
 	authenticateToken,
 	checkUserIdValidity,
 	updateUserDataValidator,
 	async (req, res) => {
-		updatePersonalInfo(req.body.user, req.body.userData)
+		updatePersonalInfo(req.body.user, req.auth)
 			.then(data => {
 				return res.status(API_STATUS_CODE.OK).send({
-					status: 'success',
-					message: "User updated successfully"
+					status: data.status,
+					message: data.message
 				})
 			})
 			.catch(error => {

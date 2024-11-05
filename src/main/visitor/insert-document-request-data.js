@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Majedul
+ * @copyright All right reserved Ultra-X Asia Pacific
  * 
  * @description 
  * 
@@ -12,13 +12,14 @@
 const { pool } = require("../../../database/db");
 const { setRejectMessage } = require("../../common/set-reject-message");
 const { API_STATUS_CODE } = require("../../consts/error-status");
+const { format } = require('date-fns');
 
 
 
 /**
  * This function will check whether the project and the company is exist or not.
  */
-const checkIsDocumentExist = async (scannerData) => {
+const checkIsProjectExist = async (scannerData) => {
     const _query = `
     SELECT
         id
@@ -124,17 +125,16 @@ const insertScannerData = async (authData, scannerData) => {
     }
 }
 
-
+/**
+ * @description This function is used to send the request of visitors to the exhibitor to see the project documents
+ */
 const insertDocumentRequestData = async (authData, scannerData) => {
-    const epochTimestamp = Math.floor(new Date().getTime() / 1000);
-    if (authData.role === 'exhibitor' || authData.role === 'exhibitor_admin') {
-        scannerData = { ...scannerData, isApproved: '1', createdAt: epochTimestamp };
-    } else {
-        scannerData = { ...scannerData, isApproved: '2', createdAt: epochTimestamp };
-    }
+    const createdAt = new Date();
+
+    scannerData = { ...scannerData, isApproved: '1', createdAt: createdAt };
     try {
-        const isDocumentExist = await checkIsDocumentExist(scannerData);
-        if (isDocumentExist) {
+        const isProjectExist = await checkIsProjectExist(scannerData);
+        if (isProjectExist) {
             const isAlreadyRequested = await checkIsProjectAlreadyRequested(authData, scannerData);
             if (isAlreadyRequested) {
                 return Promise.reject(
@@ -156,6 +156,7 @@ const insertDocumentRequestData = async (authData, scannerData) => {
             )
         }
     } catch (error) {
+        console.log("🚀 ~ insertDocumentRequestData ~ error:", error)
         return Promise.reject(
             setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, 'Internal server error')
         )

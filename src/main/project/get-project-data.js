@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Majedul
+ * @copyright All right reserved Ultra-X Asia Pacific
  * 
  * @description 
  * 
@@ -43,6 +43,7 @@ const getProjectDataQuery = async (companyId) => {
     const _query = `
     SELECT
         id,
+        companies_id,
         project_name,
         project_platform,
         created_by,
@@ -64,7 +65,9 @@ const getProjectDataQuery = async (companyId) => {
     }
 };
 
-
+/**
+ * @description This function is used to get project data based on user company ID for Dropdown
+ */
 const getProjectData = async (authData) => {
     try {
         const companyId = await getCompanyId(authData);
@@ -73,7 +76,7 @@ const getProjectData = async (authData) => {
             return Promise.resolve(projectData);
         } else {
             return Promise.reject(
-                setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Failed to get project data')
+                setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'No')
             );
         }
     } catch (error) {
