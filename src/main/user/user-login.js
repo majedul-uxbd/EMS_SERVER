@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Majedul All right reserved Md. Majedul Islam
+ * @copyright All right reserved Md. Majedul Islam
  *
  * @description
  *
@@ -89,6 +89,9 @@ const visitorsLoginQuery = async (email) => {
     }
 };
 
+/**
+ * @description This function will generate a unique user token
+ */
 const generateToken = (userInfo) => {
     const token = jwt.sign(
         {
@@ -105,6 +108,10 @@ const generateToken = (userInfo) => {
     return token;
 };
 
+
+/**
+ * @description This function is used to login the user
+ */
 const userLogin = async (user) => {
     let userInfo;
 

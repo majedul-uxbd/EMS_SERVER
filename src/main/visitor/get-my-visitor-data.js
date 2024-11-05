@@ -1,70 +1,77 @@
 /**
- * @author Md. Majedul Islam <https://github.com/majedul-uxbd>
+ * @author Md. Majedul Islam <https://github.com/majedul-uxbd> 
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Majedul All right reserved Md. Majedul Islam
- *
- * @description
- *
+ * @copyright All right reserved Ultra-X Asia Pacific
+ * 
+ * @description 
+ * 
  */
-const _ = require('lodash');
-const { pool } = require('../../../database/db');
-const { API_STATUS_CODE } = require('../../consts/error-status');
-const { setRejectMessage } = require('../../common/set-reject-message');
 
+const { pool } = require("../../../database/db");
+const { API_STATUS_CODE } = require("../../consts/error-status");
+const { setRejectMessage } = require("../../common/set-reject-message");
 
-const getVisitorDataQuery = async (id) => {
-    const query = `
-	SELECT
+// Query to get all attendance data
+const getVisitorOwnData = async (authData) => {
+	const _query = `
+	SELECT 
 		f_name,
-        l_name,
-        email,
-        company,
-        contact_no,
-        position,
-        role,
-        profile_img
-	FROM
-		visitors
+		l_name,
+		email,
+		contact_no,
+		company,
+		position,
+		profile_img,
+		created_at,
+		updated_at
+	FROM 
+		visitors 
 	WHERE
-		id = ?
-    AND
-        is_user_active = ${1};
-	`;
-    const values = [id];
+	  id = ?;
+  `;
 
-    try {
-        const [result] = await pool.query(query, values);
-        if (result.length > 0) {
-            return Promise.resolve(result);
-        }
-    } catch (error) {
-        // console.log('🚀 ~ userLoginQuery ~ error:', error);
-        return Promise.reject(
-            setRejectMessage(
-                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-                'operation_failed'
-            )
-        );
-    }
+	try {
+		const [result] = await pool.query(_query, authData.id);
+		if (result.length > 0) {
+			return Promise.resolve(result);
+		} else {
+			return Promise.reject(
+				setRejectMessage(API_STATUS_CODE.NOT_FOUND, "No data found")
+			);
+		}
+	} catch (error) {
+		return Promise.reject(
+			setRejectMessage(
+				API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+				"Operation failed"
+			)
+		);
+	}
 };
 
-const getVisitorData = async (visitor) => {
-
-    try {
-        const userInfo = await getVisitorDataQuery(visitor.id);
-        return Promise.resolve({
-            message: 'Visitor data fetched successfully',
-            user: userInfo
-        });
-    } catch (error) {
-        // console.log("🚀 ~ userLogin ~ error:", error)
-        return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, 'Internal Server Error')
-        );
-    }
+/**
+ * @description This function is used to get visitor own information
+ */
+const getVisitorData = async (authData) => {
+	try {
+		const attendanceData = await getVisitorOwnData(authData);
+		return Promise.resolve({
+			message: "Attendance data fetched successfully",
+			data: attendanceData,
+		});
+	} catch (error) {
+		// console.error("🚀 ~ getAllAttendanceData ~ error:", error);
+		return Promise.reject(
+			setRejectMessage(
+				API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+				"Internal Server Error"
+			)
+		);
+	}
 };
+
 module.exports = {
-    getVisitorData,
+	getVisitorData,
 };

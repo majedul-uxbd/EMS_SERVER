@@ -3,19 +3,17 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Majedul
+ * @copyright All right reserved Ultra-X Asia Pacific
  * 
  * @description 
  * 
  */
+
 const path = require("path");
 const multer = require("multer");
+const { documentDir } = require("./upload-file-const-value");
 
-//upload folder destination
-const UPLOAD_FOLDER = path.join(__dirname, "../../../uploaded-file");
-//path normalize
-const normalize_path_folder = path.normalize(UPLOAD_FOLDER);
-
+const normalize_path_folder = path.normalize(documentDir);
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {

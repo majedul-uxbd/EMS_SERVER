@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Majedul
+ * @copyright All right reserved Ultra-X Asia Pacific
  * 
  * @description 
  * 
@@ -11,6 +11,8 @@
 
 const bcrypt = require("bcrypt");
 const _ = require('lodash');
+const { format } = require('date-fns');
+
 const { API_STATUS_CODE } = require("../../consts/error-status");
 const { pool } = require("../../../database/db");
 const { setRejectMessage } = require("../../common/set-reject-message");
@@ -132,7 +134,7 @@ const insertUserQuery = async (organizerData, isCompanyActive) => {
 };
 
 const addOrganizerData = async (organizer) => {
-    const epochTimestamp = Math.floor(new Date().getTime() / 1000);
+    const createdAt = new Date();
 
     let _password;
     try {
@@ -144,7 +146,7 @@ const addOrganizerData = async (organizer) => {
             );
         }
         _password = await bcrypt.hash(organizer.password, 10);
-        const organizerData = { ...organizer, password: _password, createdAt: epochTimestamp };
+        const organizerData = { ...organizer, password: _password, createdAt: createdAt };
 
         const insertedData = await insertUserQuery(organizerData, isCompanyActive);
         if (insertedData) {

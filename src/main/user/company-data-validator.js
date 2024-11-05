@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Majedul
+ * @copyright All right reserved Ultra-X Asia Pacific
  * 
  * @description 
  * 
@@ -13,7 +13,9 @@ const { isValidWebsiteURL, isValidUserCompany, isValidCompanyAddress, isValidEma
 const { API_STATUS_CODE } = require("../../consts/error-status");
 const _ = require('lodash');
 
-
+/**
+ * @description This function will validate company information 
+ */
 const companyDataValidator = (req, res, next) => {
     const errors = [];
     const companyData = {

@@ -2,7 +2,7 @@
 
 `REST API` for **EMS** Web Application
 
-## Contributor Information
+## Author & Contributor Information
 
 ```js
 /**

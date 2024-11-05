@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Majedul
+ * @copyright All right reserved Ultra-X Asia Pacific
  * 
  * @description 
  * 
@@ -12,11 +12,13 @@
 const { pool } = require("../../../database/db");
 const { setRejectMessage } = require("../../common/set-reject-message");
 const { API_STATUS_CODE } = require("../../consts/error-status");
+const { format } = require('date-fns');
 
 
-const updateUserInfoQuery = (bodyData, userData) => {
+
+const updateUserInfoQuery = (bodyData, authData) => {
     const tableName = [];
-    if (userData.role === 'visitor') {
+    if (authData.role === 'visitor') {
         tableName.push('visitors');
     }
     else {
@@ -38,13 +40,13 @@ const updateUserInfoQuery = (bodyData, userData) => {
         _query += 'l_name = ? ';
         _values.push(bodyData.lastName);
     }
-    if (bodyData.email) {
-        if (_values.length > 0) {
-            _query += ', ';
-        }
-        _query += 'email = ? ';
-        _values.push(bodyData.email);
-    }
+    // if (bodyData.email) {
+    //     if (_values.length > 0) {
+    //         _query += ', ';
+    //     }
+    //     _query += 'email = ? ';
+    //     _values.push(bodyData.email);
+    // }
 
     if (bodyData.contact) {
         if (_values.length > 0) {
@@ -52,6 +54,16 @@ const updateUserInfoQuery = (bodyData, userData) => {
         }
         _query += 'contact_no = ? ';
         _values.push(bodyData.contact);
+    }
+
+    if (authData.role === 'visitor') {
+        if (bodyData.company) {
+            if (_values.length > 0) {
+                _query += ', ';
+            }
+            _query += 'company = ? ';
+            _values.push(bodyData.company);
+        }
     }
 
     if (bodyData.position) {
@@ -62,7 +74,7 @@ const updateUserInfoQuery = (bodyData, userData) => {
         _values.push(bodyData.position);
     }
 
-    if (userData.role === 'system_admin') {
+    if (authData.role === 'system_admin') {
 
         if (bodyData.role) {
             if (_values.length > 0) {
@@ -79,27 +91,33 @@ const updateUserInfoQuery = (bodyData, userData) => {
     }
 
     _query += 'WHERE id  =?';
-    _values.push(userData.id);
+    _values.push(authData.id);
 
     return [_query, _values];
 };
 
-const updatePersonalInfo = async (bodyData, userData) => {
-    const epochTimestamp = Math.floor(new Date().getTime() / 1000);
+/**
+ * This function is used to update user data
+ */
+const updatePersonalInfo = async (bodyData, authData) => {
+    const updatedAt = new Date();
 
-    bodyData = { ...bodyData, updated_at: epochTimestamp }
+    bodyData = { ...bodyData, updated_at: updatedAt }
     try {
-        const [_query, values] = await updateUserInfoQuery(bodyData, userData);
+        const [_query, values] = await updateUserInfoQuery(bodyData, authData);
         const [isUpdateUser] = await pool.query(_query, values);
         if (isUpdateUser.affectedRows > 0) {
-            return Promise.resolve();
+            return Promise.resolve({
+                status: 'success',
+                message: 'User info updated successfully'
+            });
         } else {
             return Promise.reject(
                 setRejectMessage(API_STATUS_CODE.BAD_REQUEST, "Failed to update user information")
             )
         }
     } catch (error) {
-        // console.log("🚀 ~ updateUserInfo ~ error:", error)
+        console.log("🚀 ~ updateUserInfo ~ error:", error)
         return Promise.reject(
             setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, "Internal Server Error")
         )

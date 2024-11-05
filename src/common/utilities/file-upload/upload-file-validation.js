@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Majedul
+ * @copyright All right reserved Ultra-X Asia Pacific
  * 
  * @description 
  * 
@@ -12,7 +12,7 @@
 
 const multer = require("multer");
 // const { storage } = require("../nameStorage/storage-filename-modifiers");
-const { uploadFileSize } = require("./file-size-type-define");
+const { uploadFileSize } = require("./upload-file-const-value");
 const { storage } = require("./storage-filename-modifiers");
 
 const uploadFileValidator = multer({

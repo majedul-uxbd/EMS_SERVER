@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Majedul All right reserved Md. Majedul Islam
+ * @copyright All right reserved Md. Majedul Islam
  *
  * @description
  *
@@ -62,7 +62,6 @@ const getVisitorDataQuery = async (id) => {
 		f_name,
         l_name,
         email,
-        password,
         company,
         contact_no,
         position,
@@ -90,6 +89,9 @@ const getVisitorDataQuery = async (id) => {
 	}
 };
 
+/**
+ * This function is used to  get visitor and user information
+ */
 const getUserData = async (user) => {
 	let userInfo;
 

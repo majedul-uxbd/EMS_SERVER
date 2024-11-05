@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Majedul
+ * @copyright All right reserved Ultra-X Asia Pacific
  *
  * @description This file is used for username, email and password validation.
  *
@@ -98,14 +98,13 @@ const isValidPassword = (password) => {
 	// - At least one special character among @$!%*?&
 	// - Minimum length of 8 characters
 	// - Maximum length of 60 characters
-	const passwordRegex =
-		/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,60}$/;
+	// const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,60}$/;
 	if (_.isEmpty(password)) {
 		return false;
-	} else {
-		if (!passwordRegex.test(password)) {
-			return false;
-		}
+		// } else {
+		// 	if (!passwordRegex.test(password)) {
+		// 		return false;
+		// 	}
 	}
 	return true;
 };

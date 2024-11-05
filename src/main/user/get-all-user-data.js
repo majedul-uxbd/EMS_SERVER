@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Majedul
+ * @copyright All right reserved Ultra-X Asia Pacific
  * 
  * @description 
  * 
@@ -105,6 +105,9 @@ const getUserDataQuery = async (userData, paginationData) => {
     }
 }
 
+/**
+ * This function will return all user data 
+ */
 const getAllUserTableData = async (userData, paginationData) => {
     try {
         const totalRows = await getNumberOfRowsQuery(userData, paginationData);

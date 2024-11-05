@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Majedul
+ * @copyright All right reserved Ultra-X Asia Pacific
  * 
  * @description 
  * 
@@ -11,6 +11,7 @@
 
 const { pool } = require('../../../database/db');
 const _ = require('lodash');
+
 const { setRejectMessage } = require("../../common/set-reject-message");
 const { API_STATUS_CODE } = require('../../consts/error-status');
 
@@ -60,18 +61,19 @@ const updateProjectDataQuery = async (authData, projectData) => {
     }
 }
 
-
+/**
+ * @description This function is used to update project data
+ */
 const updateProjectData = async (authData, projectData) => {
     if (_.isNil(projectData.id)) {
         return Promise.reject(
             setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Project ID is required')
         );
     }
-    const epochTimestamp = Math.floor(new Date().getTime() / 1000);
-
+    const updatedAt = new Date();
 
     try {
-        projectData = { ...projectData, updatedAt: epochTimestamp };
+        projectData = { ...projectData, updatedAt: updatedAt };
         const isUpdateData = await updateProjectDataQuery(authData, projectData);
         if (isUpdateData) {
             return Promise.resolve({

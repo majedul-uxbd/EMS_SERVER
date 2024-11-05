@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Majedul
+ * @copyright All right reserved Ultra-X Asia Pacific
  * 
  * @description 
  * 
@@ -11,6 +11,7 @@
 
 const { pool } = require("../../../database/db");
 const _ = require('lodash');
+const { format } = require('date-fns');
 
 const { setRejectMessage } = require("../../common/set-reject-message");
 const { API_STATUS_CODE } = require("../../consts/error-status");
@@ -58,7 +59,7 @@ const checkExhibitorIsExistOrNotQuery = async (companyId, authData) => {
     const _values = [
         authData.id,
         companyId,
-        'exhibitor'
+        authData.role,
     ]
     try {
         const [result] = await pool.query(_query, _values);
@@ -75,35 +76,6 @@ const checkExhibitorIsExistOrNotQuery = async (companyId, authData) => {
     }
 }
 
-
-// const checkExhibitorEmailIsExistOrNotQuery = async (exhibitorData) => {
-
-//     const _query = `
-//     SELECT
-//         id
-//     FROM
-//         user
-//     WHERE
-//         email = ?;
-//     `;
-
-//     const _values = [
-//         exhibitorData.email
-//     ]
-//     try {
-//         const [result] = await pool.query(_query, _values);
-//         if (result.length > 0) {
-//             return true;
-//         }
-//         return false;
-//     } catch (error) {
-//         // console.log("🚀 ~ getUserData ~ error:", error)
-//         return res.status(API_STATUS_CODE.BAD_REQUEST).send({
-//             status: "failed",
-//             message: "Operation failed",
-//         });
-//     }
-// }
 
 const updateUserInfoQuery = (exhibitorData, authData) => {
 
@@ -157,10 +129,13 @@ const updateUserInfoQuery = (exhibitorData, authData) => {
     return [_query, _values];
 };
 
+/**
+ * @description This function is used to update exhibitor own data
+ */
 const updateExhibitorData = async (exhibitorData, authData) => {
-    const epochTimestamp = Math.floor(new Date().getTime() / 1000);
+    const updatedAt = new Date();
 
-    exhibitorData = { ...exhibitorData, updated_at: epochTimestamp }
+    exhibitorData = { ...exhibitorData, updated_at: updatedAt }
     try {
         const companyId = await getExhibitorCompanyQuery(authData);
         if (!_.isNil(companyId)) {

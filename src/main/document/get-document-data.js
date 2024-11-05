@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Majedul
+ * @copyright All right reserved Ultra-X Asia Pacific
  * 
  * @description 
  * 
@@ -18,7 +18,11 @@ const getNumberOfRowsQuery = async (bodyData) => {
     const _query = `
     SELECT count(*) AS totalRows
     FROM
-        documents
+        documents AS doc
+    LEFT JOIN
+        user
+    ON
+        doc.uploaded_by = user.id
     WHERE
         project_id = ?;
     `;
@@ -40,13 +44,20 @@ const getNumberOfRowsQuery = async (bodyData) => {
 const getDocumentDataQuery = async (bodyData, paginationData) => {
     const _query = `
     SELECT
-        project_id,
-        title,
-        file_path,
-        created_at,
-        updated_at
+        doc.project_id,
+        doc.title,
+        doc.file_name,
+        doc.file_path,
+        user.f_name as uploaded_by_f_name,
+        user.l_name as uploaded_by_l_name,
+        doc.created_at,
+        doc.updated_at
     FROM
-        documents
+        documents AS doc
+    LEFT JOIN
+        user
+    ON
+        doc.uploaded_by = user.id
     WHERE
         project_id = ?
     LIMIT ?
@@ -72,6 +83,9 @@ const getDocumentDataQuery = async (bodyData, paginationData) => {
     }
 }
 
+/**
+ * @description This function is used to get document data based on project ID 
+ */
 const getDocumentData = async (bodyData, paginationData) => {
     try {
         const totalRows = await getNumberOfRowsQuery(bodyData);

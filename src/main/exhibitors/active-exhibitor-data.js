@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Majedul
+ * @copyright All right reserved Ultra-X Asia Pacific
  * 
  * @description 
  * 
@@ -104,7 +104,9 @@ const activeUserInfoQuery = async (exhibitorData) => {
     }
 }
 
-
+/**
+ * @description This function is used to active exhibitor
+ */
 const activeExhibitorData = async (authData, exhibitorData) => {
     try {
         const companyId = await getExhibitorCompanyQuery(authData);

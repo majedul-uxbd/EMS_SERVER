@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Majedul
+ * @copyright All right reserved Ultra-X Asia Pacific
  * 
  * @description 
  * 
@@ -58,10 +58,13 @@ const updateCompanyInfoQuery = (bodyData) => {
     return [_query, _values];
 };
 
+/**
+ * @description This function will update company account information
+ */
 const updateCompanyInfo = async (bodyData) => {
-    const epochTimestamp = Math.floor(new Date().getTime() / 1000);
+    const createdAt = new Date();
 
-    bodyData = { ...bodyData, updated_at: epochTimestamp }
+    bodyData = { ...bodyData, updated_at: createdAt }
     try {
         const [_query, values] = await updateCompanyInfoQuery(bodyData);
 

@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Majedul
+ * @copyright All right reserved Ultra-X Asia Pacific
  * 
  * @description 
  * 
@@ -109,8 +109,10 @@ const getApprovedProjectDataQuery = async (authData, bodyData, paginationData) =
         project.project_name,
         project.project_platform,
         document.title,
+        document.file_name,
         document.file_path,
-        a_document.is_approved
+        a_document.is_approved,
+        a_document.created_at
     FROM
         approved_document AS a_document
     LEFT JOIN companies AS company
@@ -148,7 +150,9 @@ const getApprovedProjectDataQuery = async (authData, bodyData, paginationData) =
     }
 }
 
-
+/**
+ * @description This function is used to see the visitors of their approved, rejected and pending requests
+ */
 const getRequestedDocumentData = async (authData, bodyData, paginationData) => {
     try {
         const totalRows = await getNumberOfRowsQuery(authData, bodyData);

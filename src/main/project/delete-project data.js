@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Majedul
+ * @copyright All right reserved Ultra-X Asia Pacific
  * 
  * @description 
  * 
@@ -63,7 +63,9 @@ const deleteProjectDataQuery = async (projectId) => {
     }
 }
 
-
+/**
+ * @description This function is used to delete project data
+ */
 const deleteProjectData = async (projectData) => {
     try {
         const isValidProjectId = await checkProjectIdValidity(projectData.id);

@@ -3,7 +3,7 @@
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
- * @copyright All right reserved Majedul
+ * @copyright All right reserved Ultra-X Asia Pacific
  * 
  * @description 
  * 
@@ -79,6 +79,9 @@ const getCompanyDataQuery = async (paginationData) => {
     }
 }
 
+/**
+ * @description This function will get all company account information
+ */
 const getCompanyTableData = async (paginationData) => {
     try {
         const totalRows = await getNumberOfRowsQuery();
