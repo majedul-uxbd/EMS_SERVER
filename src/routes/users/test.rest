@@ -9,7 +9,7 @@ Content-Type: application/json
 
 ###
 # POST http://localhost:4560/users/add
-POST https://bdtmp.ultra-x.jp/ems_backend/users/add
+POST https://bdtmp.ultra-x.jp/ems_backend/system-admin/add
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJtYWplZHVsQHV4ZC5jby5qcCIsInJvbGUiOiJzeXN0ZW1fYWRtaW4iLCJpYXQiOjE3MjgwMzEwNjYsImV4cCI6MTczNTgwNzA2Nn0.NBaRqhyeRKP4QRkQH1hPFCiPUJtvhtnDj4GbegViI34
 Content-Type: application/json
 

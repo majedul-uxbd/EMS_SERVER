@@ -15,43 +15,6 @@ const { setRejectMessage } = require("../../common/set-reject-message");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
 
-const getAttendedUserDataQuery = async (bodyData) => {
-    const _query = `
-        SELECT
-            COUNT(attendances.visitors_id) AS attended_visitor_count,
-            COUNT(attendances.exhibitor_id) AS attended_exhibitor_count
-        FROM
-            attendances
-        LEFT JOIN exhibition_days
-        ON
-            attendances.exhibition_days_id = exhibition_days.id
-        LEFT JOIN
-            exhibitions
-            ON exhibitions.id = exhibition_days.exhibitions_id
-        WHERE
-            exhibitions.id = ?;
-    `;
-
-    const _values = [
-        bodyData.exhibitionID
-    ];
-
-
-    try {
-        const [result] = await pool.query(_query, _values);
-        return Promise.resolve(result[0]);
-    } catch (error) {
-        // console.log('🚀 ~ userLoginQuery ~ error:', error);
-        return Promise.reject(
-            setRejectMessage(
-                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-                'operation_failed'
-            )
-        );
-    }
-}
-
-
 const getEventDetailsQuery = async (bodyData) => {
     const _query = `
         SELECT
@@ -89,19 +52,11 @@ const getEventDetailsQuery = async (bodyData) => {
 const getExhibitionDataQuery = async (bodyData) => {
     const _query = `
         SELECT
-            exhibitions.exhibitions_title,
-            exhibitions.exhibition_dates,
-            exhibitions.exhibition_venue,
-            COUNT(ehc.company_id) AS enrolled_company_count,
-            COUNT(ehv.visitor_id) AS enrolled_visitor_count
+            exhibitions_title,
+            exhibition_dates,
+            exhibition_venue
         FROM
             exhibitions
-        LEFT JOIN exhibitions_has_companies AS ehc
-        ON
-            exhibitions.id = ehc.exhibition_id
-        LEFT JOIN
-            exhibitions_has_visitor AS ehv
-            ON exhibitions.id = ehv.exhibition_id
         WHERE
             exhibitions.id = ?
         ;
@@ -128,17 +83,15 @@ const getExhibitionDataQuery = async (bodyData) => {
 
 
 /**
- * @description This function is used to get all exhibitions data 
+ * @description This function is used to get all exhibitions data eor visitor and exhibitor
  */
 const getExhibitionData = async (bodyData) => {
 
     try {
         let exhibitionInfo = await getExhibitionDataQuery(bodyData);
-        let eventDetails = await getEventDetailsQuery(bodyData);
-        const attendedUserInfo = await getAttendedUserDataQuery(bodyData);
-        exhibitionInfo = { ...exhibitionInfo, ...attendedUserInfo, eventDetails }
+        const eventDetails = await getEventDetailsQuery(bodyData);
+        exhibitionInfo = { ...exhibitionInfo, eventDetails };
         return Promise.resolve({
-            // data: { exhibitionInfo, attendedUserInfo }
             data: exhibitionInfo
         });
     } catch (error) {

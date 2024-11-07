@@ -1,3 +1,15 @@
+/**
+ * @author Md. Majedul Islam <https://github.com/majedul-uxbd> 
+ * Software Engineer,
+ * Ultra-X BD Ltd.
+ *
+ * @copyright All right reserved Ultra-X Asia Pacific
+ * 
+ * @description 
+ * 
+ */
+
+
 const nodemailer = require('nodemailer');
 const { emailAccount } = require('../config');
 

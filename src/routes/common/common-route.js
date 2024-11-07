@@ -24,6 +24,9 @@ const { verifyUserOtp } = require('../../main/common/verify-user-otp');
 const { resetUserPassword } = require('../../main/common/reset-user-password');
 const { checkIfFileSavePathExist } = require('../../common/utilities/file-upload/check-file-path-exist');
 const { idCardDir } = require('../../common/utilities/file-upload/upload-file-const-value');
+const { getUpcomingExhibitions } = require('../../main/common/get-upcoming-exhibitions');
+const { isUserRoleExhibitorOrVisitor } = require('../../common/utilities/check-user-role');
+const { getExhibitionData } = require('../../main/common/get-exhibition-data');
 
 // commonRouter.use(authenticateToken);
 
@@ -89,9 +92,62 @@ commonRouter.post('/reset-password', async (req, res) => {
                 message: message,
             })
         })
-})
+});
 
 
+/**
+* Through this API visitor and exhibitor can see all exhibitions data
+*/
+commonRouter.post('/get-exhibition-data',
+    authenticateToken,
+    isUserRoleExhibitorOrVisitor,
+    async (req, res) => {
+
+        getExhibitionData(req.body)
+            .then(data => {
+                return res.status(API_STATUS_CODE.OK).send({
+                    status: 'success',
+                    message: 'Get exhibitions data successfully',
+                    ...data
+                })
+            })
+            .catch(error => {
+                const { statusCode, message } = error;
+                return res.status(statusCode).send({
+                    status: 'failed',
+                    message: message,
+                })
+            });
+    });
+
+
+
+/**
+ * @description This API is used to see upcoming events information
+ */
+commonRouter.get('/upcoming-exhibitions',
+    authenticateToken,
+    async (req, res) => {
+        getUpcomingExhibitions()
+            .then(data => {
+                return res.status(API_STATUS_CODE.OK).send({
+                    status: 'success',
+                    message: 'Get Upcoming Exhibitions Successfully',
+                    ...data
+                })
+            })
+            .catch(error => {
+                const { statusCode, message } = error;
+                return res.status(statusCode).send({
+                    status: 'failed',
+                    message: message,
+                })
+            })
+    })
+
+/**
+ * @description This API is used for generate user ID Card
+ */
 commonRouter.post('/generate-id-card',
     authenticateToken,
     checkIfFileSavePathExist,
@@ -199,7 +255,6 @@ commonRouter.post('/generate-id-card',
             doc.image(path.join(currentPathName, '/src/common/utilities/images/left_side_pic.png'),
                 4, 4, { width: 291, height: 414 });
 
-
             // 1st logo
             doc.image(path.join(currentPathName, '/src/common/utilities/images/UXBD_logo.jpg'),
                 96, 435, { width: 100, height: 100 });
@@ -231,8 +286,6 @@ commonRouter.post('/generate-id-card',
                 .strokeOpacity(0.5)
                 .stroke('black');
             doc.stroke();
-
-
 
             // User Name1
             doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Bold.ttf'))
@@ -306,10 +359,6 @@ commonRouter.post('/generate-id-card',
                     align: 'center',
                 });
 
-
-
-
-
             //user Profile picture
             const centerX_1 = 58;
             const centerY_1 = 606;
@@ -377,11 +426,6 @@ commonRouter.post('/generate-id-card',
                 .stroke('black')
                 .fill('black');
 
-
-
-
-
-
             const codeText = `
            {
                id:${user.id},
@@ -423,7 +467,7 @@ commonRouter.post('/generate-id-card',
                         console.log("ID Card generated and downloaded successfully");
                     }
                 });
-            }, 1000); // 3000 ms = 3 seconds
+            }, 2000); // 2000 ms = 2 seconds
         } catch (error) {
             console.log(error)
             return res.status(400).send({

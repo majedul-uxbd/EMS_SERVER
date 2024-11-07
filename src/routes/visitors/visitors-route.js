@@ -25,6 +25,7 @@ const { insertDocumentRequestData } = require("../../main/visitor/insert-documen
 const { getRequestedDocumentData } = require("../../main/document/get-requested-document-data");
 const { generatePDFReport } = require("../../main/document/visitors_document-list");
 const { paginationData } = require("../../middlewares/common/pagination-data");
+const { enrollVisitorInExhibition } = require("../../main/visitor/enrole-visitor-in-exhibition");
 
 /**
  * Through this API, visitors can register themselves
@@ -186,6 +187,32 @@ visitorsRouter.post(
 				message: message,
 			});
 		}
+	}
+);
+
+
+/**
+ * Through this API, visitor can enroll in an exhibition
+ */
+visitorsRouter.post(
+	"/enroll-visitor",
+	authenticateToken,
+	isUserRoleVisitor,
+	async (req, res) => {
+		enrollVisitorInExhibition(req.auth, req.body)
+			.then((data) => {
+				return res.status(API_STATUS_CODE.OK).send({
+					status: data.status,
+					message: data.message,
+				});
+			})
+			.catch((error) => {
+				const { statusCode, message } = error;
+				return res.status(statusCode).send({
+					status: "failed",
+					message: message,
+				});
+			});
 	}
 );
 

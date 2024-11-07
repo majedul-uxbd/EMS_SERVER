@@ -12,7 +12,6 @@
 const bcrypt = require("bcrypt");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 const { pool } = require("../../../database/db");
-const { format } = require('date-fns');
 
 const { setRejectMessage } = require("../../common/set-reject-message");
 const { generateRandomString } = require("../../common/utilities/generate-random-string");
@@ -150,7 +149,7 @@ const addUser = async (user) => {
             })
         }
     } catch (error) {
-        console.log("🚀 ~ addUser ~ error:", error)
+        // console.log("🚀 ~ addUser ~ error:", error)
         return Promise.reject(
             setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, 'Internal Server Error'))
     }

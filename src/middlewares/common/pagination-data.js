@@ -1,3 +1,5 @@
+const { API_STATUS_CODE } = require("../../consts/error-status");
+
 /**
  * @author Md. Majedul Islam,
  * Software Engineer,
@@ -40,7 +42,7 @@ const paginationData = (req, res, next) => {
     // console.log('errors: ', errors);
     // return
     if (errors.length >= 1) {
-        return res.status(406).send({
+        return res.status(API_STATUS_CODE.NOT_ACCEPTABLE).send({
             status: "failed",
             message: "invalid-pagination-data",
             errors: errors
