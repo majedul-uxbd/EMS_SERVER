@@ -12,7 +12,6 @@
 const bcrypt = require("bcrypt");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 const { pool } = require("../../../database/db");
-const { format } = require('date-fns');
 
 const { setRejectMessage } = require("../../common/set-reject-message");
 

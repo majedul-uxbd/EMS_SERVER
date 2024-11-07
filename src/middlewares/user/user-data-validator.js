@@ -19,6 +19,9 @@ const {
 } = require("../../common/user-data-validator");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
+/**
+ * @description This function is used to validate user data
+ */
 const validateUserData = (req, res, next) => {
     const errors = [];
     if (!req.body.companyId) {

@@ -36,6 +36,12 @@ const {
     checkDuplicateEmail,
     checkDuplicateExhibitorAdmin,
     checkIsCompanyActive } = require('../../main/company/add-company-and-exhibitor');
+const { addUser } = require('../../main/user/add-user');
+const { validateUserData } = require('../../middlewares/user/user-data-validator');
+const { getExhibitionData } = require('../../main/exhibitions/get-exhibitions-data');
+const { getExhibition } = require('../../main/exhibitions/get-exhibitions');
+
+
 systemAdminRouter.use(authenticateToken);
 
 
@@ -169,58 +175,61 @@ systemAdminRouter.post('/update',
  * Through this API, admin can create company accounts
  */
 // Route to create company and exhibitor
-systemAdminRouter.post('/add-company-with-exhibitor', checkUserIdValidity, isUserRoleAdmin, async (req, res) => {
-    try {
-        const { companyData, exhibitor } = req.body;
+systemAdminRouter.post('/add-company-with-exhibitor',
+    checkUserIdValidity,
+    isUserRoleAdmin,
+    async (req, res) => {
+        try {
+            const { companyData, exhibitor } = req.body;
 
-        // Step 1: Create the Company
-        const companyResult = await addCompanyData(companyData);
-        if (companyResult.status !== 'success') {
-            return res.status(API_STATUS_CODE.BAD_REQUEST).send({
+            // Step 1: Create the Company
+            const companyResult = await addCompanyData(companyData);
+            if (companyResult.status !== 'success') {
+                return res.status(API_STATUS_CODE.BAD_REQUEST).send({
+                    status: 'failed',
+                    message: 'Failed to create company',
+                });
+            }
+            const newCompanyId = companyResult.companyId;
+
+            // Step 2: Create the Exhibitor for the newly created company
+            exhibitor.companyId = newCompanyId;  // Ensure exhibitor is tied to new company
+            const exhibitorResult = await addExhibitor(exhibitor);
+
+            if (exhibitorResult.status !== 'success') {
+                return res.status(API_STATUS_CODE.BAD_REQUEST).send({
+                    status: 'failed',
+                    message: 'Failed to create exhibitor',
+                });
+            }
+            const newExhibitorId = exhibitorResult.exhibitorId;
+
+            // Step 3: Update Company with Assigned Exhibitor
+            const updateResult = await updateAssignedExhibitor(newCompanyId, newExhibitorId);
+
+            if (!updateResult) {
+                return res.status(API_STATUS_CODE.BAD_REQUEST).send({
+                    status: 'failed',
+                    message: 'Failed to update assigned exhibitor',
+                });
+            }
+
+            // Success response
+            return res.status(API_STATUS_CODE.OK).send({
+                status: 'success',
+                message: 'Company and Exhibitor created successfully',
+                companyId: newCompanyId,
+                exhibitorId: newExhibitorId,
+            });
+
+        } catch (error) {
+            const { statusCode, message } = error;
+            return res.status(statusCode || API_STATUS_CODE.INTERNAL_SERVER_ERROR).send({
                 status: 'failed',
-                message: 'Failed to create company',
+                message: message || 'Internal Server Error',
             });
         }
-        const newCompanyId = companyResult.companyId;
-
-        // Step 2: Create the Exhibitor for the newly created company
-        exhibitor.companyId = newCompanyId;  // Ensure exhibitor is tied to new company
-        const exhibitorResult = await addExhibitor(exhibitor);
-
-        if (exhibitorResult.status !== 'success') {
-            return res.status(API_STATUS_CODE.BAD_REQUEST).send({
-                status: 'failed',
-                message: 'Failed to create exhibitor',
-            });
-        }
-        const newExhibitorId = exhibitorResult.exhibitorId;
-
-        // Step 3: Update Company with Assigned Exhibitor
-        const updateResult = await updateAssignedExhibitor(newCompanyId, newExhibitorId);
-
-        if (!updateResult) {
-            return res.status(API_STATUS_CODE.BAD_REQUEST).send({
-                status: 'failed',
-                message: 'Failed to update assigned exhibitor',
-            });
-        }
-
-        // Success response
-        return res.status(API_STATUS_CODE.OK).send({
-            status: 'success',
-            message: 'Company and Exhibitor created successfully',
-            companyId: newCompanyId,
-            exhibitorId: newExhibitorId,
-        });
-
-    } catch (error) {
-        const { statusCode, message } = error;
-        return res.status(statusCode || API_STATUS_CODE.INTERNAL_SERVER_ERROR).send({
-            status: 'failed',
-            message: message || 'Internal Server Error',
-        });
-    }
-});
+    });
 
 systemAdminRouter.post('/add-company',
     checkUserIdValidity,
@@ -385,6 +394,57 @@ systemAdminRouter.post('/active-company-data',
 //                 })
 //             })
 //     });
+
+
+/**
+* Through this API admin can see all exhibitions
+*/
+systemAdminRouter.get('/get-exhibition',
+    isUserRoleAdmin,
+    async (req, res) => {
+
+        getExhibition()
+            .then(data => {
+                return res.status(API_STATUS_CODE.OK).send({
+                    status: 'success',
+                    message: 'Get exhibitions successfully',
+                    ...data
+                })
+            })
+            .catch(error => {
+                const { statusCode, message } = error;
+                return res.status(statusCode).send({
+                    status: 'failed',
+                    message: message,
+                })
+            });
+    });
+
+
+/**
+* Through this API admin can see all exhibitions data
+*/
+systemAdminRouter.post('/get-exhibition-data',
+    isUserRoleAdmin,
+    async (req, res) => {
+
+        getExhibitionData(req.body)
+            .then(data => {
+                return res.status(API_STATUS_CODE.OK).send({
+                    status: 'success',
+                    message: 'Get exhibitions data successfully',
+                    ...data
+                })
+            })
+            .catch(error => {
+                const { statusCode, message } = error;
+                return res.status(statusCode).send({
+                    status: 'failed',
+                    message: message,
+                })
+            });
+    });
+
 
 module.exports = {
     systemAdminRouter

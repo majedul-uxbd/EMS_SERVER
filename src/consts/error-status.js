@@ -90,7 +90,7 @@ const API_STATUS_CODE = {
     CONFLICT: 409,
 
     /**
-     * 409 Conflict
+     * 406 Not Acceptable
      * 
      * This response is sent when the server doesn’t find any content that conforms to the criteria given by 
      * the user agent in the Accept header sent in the request.
