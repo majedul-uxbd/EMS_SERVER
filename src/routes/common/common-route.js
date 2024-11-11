@@ -170,7 +170,7 @@ commonRouter.post('/generate-id-card',
         const currentPathName = path.join(process.cwd());
         let ppImagePath = path.join(currentPathName, '/src/common/utilities/images/pp.jpeg');
         let bgImagePath = path.join(currentPathName, '/src/common/utilities/images/2nd-bg.jpeg');
-        const fullName = user.f_name + '_' + user.l_name;
+        const fullName = user.f_name + ' ' + user.l_name;
 
         const doc = new PDFDocument({
             size: 'A4',
@@ -461,6 +461,7 @@ commonRouter.post('/generate-id-card',
             setTimeout(() => {
                 res.download(fileFullPath, (downloadErr) => {
                     if (downloadErr) {
+                        console.log('🚀 ~ file: common-route.js:464 ~ res.download ~ downloadErr:', downloadErr);
                         console.error("Failed to download user ID card");
                         return res.status(500).send("Error downloading file");
                     } else {

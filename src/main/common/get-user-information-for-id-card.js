@@ -75,7 +75,7 @@ const getExhibitionsDate = async (authData) => {
             exhibitions AS exhibition
         LEFT JOIN exhibitions_has_visitor AS ev
         ON
-            exhibition.id = ev.exhibitions_id
+            exhibition.id = ev.exhibition_id
         WHERE
             ev.visitor_id = ?;
     `;
@@ -98,6 +98,7 @@ const getUserInformationForIdCard = async (req, res, next) => {
     try {
         const userInfo = await getUserInformation(authUser);
         const exhibitionData = await getExhibitionsDate(authUser);
+        console.log('🚀 ~ file: get-user-information-for-id-card.js:101 ~ getUserInformationForIdCard ~ exhibitionData:', exhibitionData);
         if (userInfo && exhibitionData) {
             req.body.user = userInfo;
             req.body.exhibitionData = exhibitionData;
