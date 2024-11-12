@@ -27,10 +27,10 @@ const { resetUserPassword } = require('../../main/common/reset-user-password');
 const { checkIfFileSavePathExist } = require('../../common/utilities/file-upload/check-file-path-exist');
 const { idCardDir } = require('../../common/utilities/file-upload/upload-file-const-value');
 const { getUpcomingExhibitions } = require('../../main/common/get-upcoming-exhibitions');
-const { isUserRoleExhibitorOrVisitor } = require('../../common/utilities/check-user-role');
-const { getExhibitionData } = require('../../main/common/get-exhibition-data');
+const { isUserRoleExhibitorOrVisitor, isUserRoleOrganizerOrExhibitorOrVisitor } = require('../../common/utilities/check-user-role');
+const { getExhibitionDataForUsers } = require('../../main/common/get-exhibition-data');
 const { checkIfUserIsEnrolledInAExhibition } = require('../../middlewares/common/check-if-user-enroll-in-exhibition');
-const { userInfo } = require('os');
+const { getExhibitionData } = require('../../main/exhibitions/get-exhibitions-data');
 
 // commonRouter.use(authenticateToken);
 
@@ -148,6 +148,33 @@ commonRouter.get('/upcoming-exhibitions',
                 })
             })
     })
+
+
+/**
+ * This API is used to get exhibition information for organizer, exhibitor and visitor
+ */
+commonRouter.post(
+    '/get-exhibitions',
+    authenticateToken,
+    isUserRoleOrganizerOrExhibitorOrVisitor,
+    async (req, res) => {
+        getExhibitionDataForUsers(req.auth)
+            .then((data) => {
+                return res.status(API_STATUS_CODE.ACCEPTED).send({
+                    status: 'success',
+                    message: 'Get exhibitions information successfully',
+                    ...data
+                });
+            })
+            .catch((error) => {
+                const { statusCode, message } = error;
+                return res.status(statusCode).send({
+                    status: 'failed',
+                    message: message,
+                });
+            });
+    }
+);
 
 /**
  * @description This API is used for generate user ID Card
@@ -357,14 +384,11 @@ commonRouter.post('/generate-id-card',
                 });
 
             //user Profile picture
-            console.log('🚀 ~ file: common-route.js:361 ~ user:', user);
             if (_.isEmpty(user.profile_img)) {
                 profileImgUrl = ppImagePath;
-                console.log('🚀if:', profileImgUrl);
 
             } else {
                 profileImgUrl = user.profile_img;
-                console.log('🚀else:', profileImgUrl);
             }
             const centerX_1 = 58;
             const centerY_1 = 620;
@@ -412,104 +436,69 @@ commonRouter.post('/generate-id-card',
                     align: 'center',
                 });
 
+            if (!_.isNil(eventDetails)) {
+                const startX = 305;
+                const baseY = 160;
+                const shape1Height = 42;
+                const shape2Height = 82;
+                const shape3Height = 102;
+                const shapeWidth = 285;
+                const spacing = 5;
 
-            const startX = 305;
-            const baseY = 160;
-            const shape1Height = 42;
-            const shape2Height = 82;
-            const shape3Height = 102;
-            const shapeWidth = 285;
-            const spacing = 5;
+                // Determine shape height based on the length of eventDetails
+                let shapeHeight;
+                if (eventDetails.length >= 1 && eventDetails.length <= 2) {
+                    shapeHeight = shape1Height;
+                } else if (eventDetails.length >= 3 && eventDetails.length <= 4) {
+                    shapeHeight = shape2Height;
+                } else if (eventDetails.length >= 5 && eventDetails.length <= 6) {
+                    shapeHeight = shape3Height;
+                }
 
-            // Determine shape height based on the length of eventDetails
-            let shapeHeight;
-            if (eventDetails.length >= 1 && eventDetails.length <= 2) {
-                shapeHeight = shape1Height;
-            } else if (eventDetails.length >= 3 && eventDetails.length <= 4) {
-                shapeHeight = shape2Height;
-            } else if (eventDetails.length >= 5 && eventDetails.length <= 6) {
-                shapeHeight = shape3Height;
-            }
+                // Loop through eventDetails in chunks of 2
+                for (let i = 0; i < eventDetails.length; i += 2) {
+                    // Calculate y position for each rectangle
+                    const currentY = baseY + Math.floor(i / 2) * (shapeHeight + spacing);
 
-            // Loop through eventDetails in chunks of 2
-            for (let i = 0; i < eventDetails.length; i += 2) {
-                // Calculate y position for each rectangle
-                const currentY = baseY + Math.floor(i / 2) * (shapeHeight + spacing);
+                    // Draw rectangle for the current group
+                    doc.rect(startX, currentY, shapeWidth, shapeHeight)
+                        .fill('#f2f2f2')
+                        .lineWidth(1)
+                        .stroke('black');
 
-                // Draw rectangle for the current group
-                doc.rect(startX, currentY, shapeWidth, shapeHeight)
-                    .fill('#f2f2f2')
-                    .lineWidth(1)
-                    .stroke('black');
+                    // Display text for up to two events within the same rectangle
+                    for (let j = 0; j < 2 && i + j < eventDetails.length; j++) {
+                        const event = eventDetails[i + j];
+                        const dayDate = format(event.exhibition_date, 'yyyy-MM-dd');
+                        const dayInfo = `${event.exhibition_day}: ${dayDate}`;
 
-                // Display text for up to two events within the same rectangle
-                for (let j = 0; j < 2 && i + j < eventDetails.length; j++) {
-                    const event = eventDetails[i + j];
-                    const dayDate = format(event.exhibition_date, 'yyyy-MM-dd');
-                    const dayInfo = `${event.exhibition_day}: ${dayDate}`;
+                        // Adjust the horizontal position (startX) for each event in the rectangle
+                        doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Bold.ttf'))
+                            .fontSize(9)
+                            .fillColor('black')
+                            .text(dayInfo, startX + j * 150, currentY + 8, {
+                                width: 141,
+                                align: 'center',
+                            });
 
-                    // Adjust the horizontal position (startX) for each event in the rectangle
-                    doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Bold.ttf'))
-                        .fontSize(9)
-                        .fillColor('black')
-                        .text(dayInfo, startX + j * 150, currentY + 8, {
-                            width: 141,
-                            align: 'center',
-                        });
+                        doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Bold.ttf'))
+                            .fontSize(7)
+                            .fillColor('black')
+                            .text(event.title, startX + j * 150, currentY + 23, {
+                                width: 141,
+                                align: 'center',
+                            });
 
-                    doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Bold.ttf'))
-                        .fontSize(7)
-                        .fillColor('black')
-                        .text(event.title, startX + j * 150, currentY + 23, {
-                            width: 141,
-                            align: 'center',
-                        });
-
-                    doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Bold.ttf'))
-                        .fontSize(7)
-                        .fillColor('black')
-                        .text(event.descriptions, startX + j * 150, currentY + 40, {
-                            width: 141,
-                            align: 'center',
-                        });
+                        doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Bold.ttf'))
+                            .fontSize(7)
+                            .fillColor('black')
+                            .text(event.descriptions, startX + j * 150, currentY + 40, {
+                                width: 141,
+                                align: 'center',
+                            });
+                    }
                 }
             }
-
-            // // Exhibition Information Body1
-            // doc.rect(305, 165, 285, 80)
-            // doc.fill('#e0f2fe')
-            // doc.lineWidth(1)
-            //     // .strokeOpacity(1)
-            //     .stroke('black')
-            //     .fill('black');
-
-            // // Day 1 information
-            // const day1Date = format(eventDetails[0].exhibition_date, 'yyyy-MM-dd')
-            // const day1 = `${eventDetails[0].exhibition_day}: ${day1Date}`;
-            // console.log({ day1 })
-            // doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Bold.ttf'))
-            //     .fontSize(7)
-            //     .fillColor('black')
-            //     .text(day1, 441, 135, {
-            //         width: 141,
-            //         align: 'center',
-            //     });
-
-            // Exhibition Information Body2
-            // doc.rect(305, 250, 285, 80)
-            // doc.fill('#f0fdf4')
-            // doc.lineWidth(1)
-            //     // .strokeOpacity(1)
-            //     .stroke('black')
-            //     .fill('black');
-
-            // // Exhibition Information Body3
-            // doc.rect(305, 335, 285, 80)
-            // doc.fill('#e5e5e5')
-            // doc.lineWidth(1)
-            //     // .strokeOpacity(1)
-            //     .stroke('black')
-            //     .fill('black');
 
             const codeText = `
            {
