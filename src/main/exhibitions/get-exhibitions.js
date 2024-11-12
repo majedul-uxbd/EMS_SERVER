@@ -46,10 +46,10 @@ const getExhibitionDataQuery = async (paginationData) => {
 /**
  * @description This function is used to get all exhibitions information 
  */
-const getExhibition = async (paginationData) => {
+const getExhibition = async () => {
 
     try {
-        const exhibitionInfo = await getExhibitionDataQuery(paginationData);
+        const exhibitionInfo = await getExhibitionDataQuery();
         return Promise.resolve({
             data: exhibitionInfo
         });

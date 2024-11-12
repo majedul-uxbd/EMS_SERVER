@@ -34,6 +34,10 @@ const { getDocumentData } = require('../../main/document/get-document-data');
 const {
     addCompanyWithExhibitor } = require('../../main/company/add-company-and-exhibitor');
 const { addUser } = require('../../main/user/add-user');
+const { getExhibition } = require('../../main/exhibitions/get-exhibitions');
+const { getExhibitionData } = require('../../main/exhibitions/get-exhibitions-data');
+const { getEventDate } = require('../../main/exhibitions/get-event-date');
+const { addEventDetails } = require('../../main/exhibitions/add-event-details');
 systemAdminRouter.use(authenticateToken);
 
 
@@ -374,7 +378,6 @@ systemAdminRouter.post('/active-company-data',
 systemAdminRouter.get('/get-exhibition',
     isUserRoleAdmin,
     async (req, res) => {
-
         getExhibition()
             .then(data => {
                 return res.status(API_STATUS_CODE.OK).send({
@@ -406,6 +409,55 @@ systemAdminRouter.post('/get-exhibition-data',
                     status: 'success',
                     message: 'Get exhibitions data successfully',
                     ...data
+                })
+            })
+            .catch(error => {
+                const { statusCode, message } = error;
+                return res.status(statusCode).send({
+                    status: 'failed',
+                    message: message,
+                })
+            });
+    });
+
+
+/**
+* Through this API admin can see exhibitions date and days
+*/
+systemAdminRouter.post('/get-event-date',
+    isUserRoleAdmin,
+    async (req, res) => {
+
+        getEventDate(req.body)
+            .then(data => {
+                return res.status(API_STATUS_CODE.OK).send({
+                    status: 'success',
+                    message: 'Get event data successfully',
+                    ...data
+                })
+            })
+            .catch(error => {
+                const { statusCode, message } = error;
+                return res.status(statusCode).send({
+                    status: 'failed',
+                    message: message,
+                })
+            });
+    });
+
+
+/**
+* Through this API admin can add event details
+*/
+systemAdminRouter.post('/add-event-details',
+    isUserRoleAdmin,
+    async (req, res) => {
+
+        addEventDetails(req.body)
+            .then(data => {
+                return res.status(API_STATUS_CODE.OK).send({
+                    status: data.status,
+                    message: data.message,
                 })
             })
             .catch(error => {

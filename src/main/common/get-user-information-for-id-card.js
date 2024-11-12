@@ -13,6 +13,32 @@
 const { pool } = require('../../../database/db');
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
+
+const getEventDetails = async (bodyData) => {
+    const _query = `
+        select
+            exhibition_date,
+            exhibition_day,
+            title,
+            descriptions
+        FROM
+            event_details
+        WHERE
+            exhibitions_id = ?;
+    `;
+
+    try {
+        const [result] = await pool.query(_query, bodyData.exhibitionId);
+        if (result.length > 0) {
+            return result
+        }
+        return null;
+    } catch (error) {
+        // console.log("🚀 ~ getUserInformation ~ error:", error)
+        return error;
+    }
+}
+
 const getUserInformation = async (authData) => {
     let _query;
     const _query1 = `
@@ -22,7 +48,8 @@ const getUserInformation = async (authData) => {
         l_name,
         role,
         company AS company_name,
-        position
+        position,
+        profile_img
     FROM
         visitors
     WHERE
@@ -36,7 +63,8 @@ const getUserInformation = async (authData) => {
         users.l_name,
         users.role,
         company.name AS company_name,
-        users.position
+        users.position,
+        users.profile_img
     FROM
         user AS users
     LEFT JOIN
@@ -57,35 +85,32 @@ const getUserInformation = async (authData) => {
         if (result.length > 0) {
             return result[0]
         }
-        return false;
+        return null;
     } catch (error) {
         // console.log("🚀 ~ getUserInformation ~ error:", error)
         return error;
     }
 };
 
-//TODO:
-const getExhibitionsDate = async (authData) => {
+
+const getExhibitionsDate = async (bodyData) => {
     const _query = `
         SELECT
-            exhibition.exhibitions_title,
-            exhibition.exhibition_dates,
-            exhibition.exhibition_venue
+            exhibitions_title,
+            exhibition_dates,
+            exhibition_venue
         FROM
-            exhibitions AS exhibition
-        LEFT JOIN exhibitions_has_visitor AS ev
-        ON
-            exhibition.id = ev.exhibitions_id
+            exhibitions 
         WHERE
-            ev.visitor_id = ?;
+            id = ?;
     `;
 
     try {
-        const [result] = await pool.query(_query, authData.id);
+        const [result] = await pool.query(_query, bodyData.exhibitionId);
         if (result.length > 0) {
             return result[0]
         }
-        return false;
+        return null;
     } catch (error) {
         // console.log("🚀 ~ getUserInformation ~ error:", error)
         return error;
@@ -94,21 +119,21 @@ const getExhibitionsDate = async (authData) => {
 
 
 const getUserInformationForIdCard = async (req, res, next) => {
-    const authUser = req.auth;
+    const authData = req.auth;
+    const bodyData = req.body;
+
     try {
-        const userInfo = await getUserInformation(authUser);
-        const exhibitionData = await getExhibitionsDate(authUser);
-        if (userInfo && exhibitionData) {
-            req.body.user = userInfo;
-            req.body.exhibitionData = exhibitionData;
-            next();
-        }
-        else {
-            return res.status(API_STATUS_CODE.BAD_REQUEST).send({
-                status: 'failed',
-                message: 'User is not found or not enrolled any exhibition'
-            })
-        }
+
+        const userInfo = await getUserInformation(authData);
+        const exhibitionData = await getExhibitionsDate(bodyData);
+        const eventDetails = await getEventDetails(bodyData);
+
+        req.body.user = userInfo;
+        req.body.exhibitionData = exhibitionData;
+        req.body.eventDetails = eventDetails;
+        // console.log({ userInfo, exhibitionData, eventDetails });
+        next();
+
     } catch (error) {
         // console.log("🚀 ~ getUserInformationForIdCard ~ error:", error)
         return res.status(API_STATUS_CODE.INTERNAL_SERVER_ERROR).send({

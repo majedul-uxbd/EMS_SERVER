@@ -97,7 +97,7 @@ const deleteUserInfo = async (userData) => {
         }
         else {
             return Promise.reject(
-                setRejectMessage(API_STATUS_CODE.BAD_REQUEST, "No user found or user in sot active")
+                setRejectMessage(API_STATUS_CODE.BAD_REQUEST, "No user found or user in not active")
             )
         }
     } catch (error) {

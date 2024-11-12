@@ -1,7 +1,7 @@
 {
     "name": "EMS_SERVER",
     "version": "1.0.0",
-    "description": "ULTRA_X EMS Web Server",
+    "description": "Event Management Web Server",
     "main": "server.js",
     "scripts": {
         "dev": "nodemon server.js",
