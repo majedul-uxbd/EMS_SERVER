@@ -68,6 +68,21 @@ const isUserRoleExhibitorAdmin = (req, res, next) => {
 };
 
 /**
+ *This function will check whether the user role is Organizer or not
+ */
+const isUserRoleOrganizer = (req, res, next) => {
+	const userData = req.auth;
+	if (userData.role === userRole.ORGANIZER) {
+		next();
+	} else {
+		return res.status(API_STATUS_CODE.NOT_ACCEPTABLE).send({
+			status: "failed",
+			message: "User role is not allowed for the request",
+		});
+	}
+};
+
+/**
  *This function will check whether the user role is Exhibitor or not
  */
 const isUserRoleExhibitor = (req, res, next) => {
@@ -186,7 +201,7 @@ const isUserRoleAdminOrExhibitorAdminOrExhibitor = (req, res, next) => {
 };
 
 /**
- *This function will check if the user role is Exhibitor Admin or Exhibitor
+ *This function will check if the user role is Exhibitor Admin or Exhibitor or visitor
  */
 const isUserRoleExhibitorAdminOrExhibitorOrVisitor = (req, res, next) => {
 	const userData = req.auth;
@@ -204,10 +219,32 @@ const isUserRoleExhibitorAdminOrExhibitorOrVisitor = (req, res, next) => {
 	}
 };
 
+
+/**
+ *This function will check if the user role is Organizer or Exhibitor or visitor
+ */
+const isUserRoleOrganizerOrExhibitorOrVisitor = (req, res, next) => {
+	const userData = req.auth;
+	if (
+		userData.role === userRole.ORGANIZER ||
+		userData.role === userRole.EXHIBITOR_ADMIN ||
+		userData.role === userRole.EXHIBITOR ||
+		userData.role === userRole.VISITOR
+	) {
+		next();
+	} else {
+		return res.status(API_STATUS_CODE.NOT_ACCEPTABLE).send({
+			status: "failed",
+			message: "User role is not allowed for the request",
+		});
+	}
+};
+
 module.exports = {
 	isUserRoleAdmin,
 	isUserRoleExhibitorAdminOrExhibitor,
 	isUserRoleExhibitorAdmin,
+	isUserRoleOrganizer,
 	isUserRoleExhibitor,
 	isUserRoleVisitor,
 	isUserRoleExhibitorOrVisitor,
@@ -216,4 +253,5 @@ module.exports = {
 	isUserRoleAdminOrVisitor,
 	isUserRoleAdminOrExhibitorAdminOrExhibitor,
 	isUserRoleExhibitorAdminOrExhibitorOrVisitor,
+	isUserRoleOrganizerOrExhibitorOrVisitor
 };
