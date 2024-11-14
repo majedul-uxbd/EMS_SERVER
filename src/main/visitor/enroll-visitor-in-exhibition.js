@@ -14,30 +14,6 @@ const { setRejectMessage } = require("../../common/set-reject-message");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
 
-// const checkUserCompanyIsValid = async (bodyData) => {
-
-//     const _query = `
-//         SELECT
-//             id
-//         FROM
-//             companies
-//         WHERE
-//             id = ? AND
-//             is_active = ${1}
-//     `;
-
-//     try {
-//         const [result] = await pool.query(_query, bodyData.companyId);
-//         if (result.length > 0) {
-//             return true;
-//         }
-//         return false;
-//     } catch (error) {
-//         return Promise.reject(error);
-//     }
-// };
-
-
 const checkIfVisitorAlreadyEnrolled = async (authData) => {
 
     const _query = `
@@ -95,7 +71,7 @@ const insertEnrollData = async (authData, bodyData) => {
 
 
 /**
- * @description
+ * @description This function is used to insert visitor enroll data into the database
  */
 const enrollVisitorInExhibition = async (authData, bodyData) => {
     try {
@@ -114,7 +90,7 @@ const enrollVisitorInExhibition = async (authData, bodyData) => {
         }
 
     } catch (error) {
-        console.log('🚀 ~ file: enroll-company-in-exhibitions.js:127 ~ error:', error);
+        // console.log('🚀 ~ file: enroll-company-in-exhibitions.js:127 ~ error:', error);
         return Promise.reject(
             setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, 'Internal server error')
         );

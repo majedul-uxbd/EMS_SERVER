@@ -101,7 +101,9 @@ const exhibitionDataForVisitor = async (authData) => {
     }
 }
 
-
+/**
+ * @description 
+ */
 const getExhibitionDataForUsers = async (authData) => {
     const userRole = authData.role;
     const today = new Date();
@@ -116,7 +118,7 @@ const getExhibitionDataForUsers = async (authData) => {
                 // Check if any date matches today or if the first date is in the future
                 const hasMatchingOrUpcomingDate = dates.some(date => {
                     const exhibitionDate = new Date(date);
-                    return exhibitionDate.toDateString() === today.toDateString() || exhibitionDate >= today;
+                    return exhibitionDate >= today;
                 });
                 return hasMatchingOrUpcomingDate;
             });

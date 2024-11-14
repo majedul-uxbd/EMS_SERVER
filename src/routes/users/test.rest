@@ -1,9 +1,9 @@
-POST https://bdtmp.ultra-x.jp/ems_backend/users/user-login
-# POST http://localhost:4560/users/user-login
+# POST https://bdtmp.ultra-x.jp/ems_backend/users/user-login
+POST http://localhost:4560/users/user-login
 Content-Type: application/json
 
 {
-    "email":"majedul@gmail.com",
+    "email":"exhibitor@gmail.com",
     "password":"Test123!"
 }
 

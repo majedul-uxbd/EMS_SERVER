@@ -127,10 +127,30 @@ const getUserInformationForIdCard = async (req, res, next) => {
         const userInfo = await getUserInformation(authData);
         const exhibitionData = await getExhibitionsDate(bodyData);
         const eventDetails = await getEventDetails(bodyData);
-
-        req.body.user = userInfo;
-        req.body.exhibitionData = exhibitionData;
-        req.body.eventDetails = eventDetails;
+        if (userInfo) {
+            req.body.user = userInfo;
+        } else {
+            return res.status(API_STATUS_CODE.BAD_REQUEST).send({
+                status: 'failed',
+                message: 'User data is not found'
+            })
+        }
+        if (exhibitionData) {
+            req.body.exhibitionData = exhibitionData;
+        } else {
+            return res.status(API_STATUS_CODE.BAD_REQUEST).send({
+                status: 'failed',
+                message: 'Exhibition data is not found'
+            })
+        }
+        if (eventDetails) {
+            req.body.eventDetails = eventDetails;
+        } else {
+            return res.status(API_STATUS_CODE.BAD_REQUEST).send({
+                status: 'failed',
+                message: 'Event data is not found'
+            })
+        }
         // console.log({ userInfo, exhibitionData, eventDetails });
         next();
 
