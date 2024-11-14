@@ -153,7 +153,7 @@ commonRouter.get('/upcoming-exhibitions',
 /**
  * This API is used to get exhibition information for organizer, exhibitor and visitor
  */
-commonRouter.post(
+commonRouter.get(
     '/get-exhibitions',
     authenticateToken,
     isUserRoleOrganizerOrExhibitorOrVisitor,
@@ -436,67 +436,53 @@ commonRouter.post('/generate-id-card',
                     align: 'center',
                 });
 
-            if (!_.isNil(eventDetails)) {
-                const startX = 305;
-                const baseY = 160;
-                const shape1Height = 42;
-                const shape2Height = 82;
-                const shape3Height = 102;
-                const shapeWidth = 285;
-                const spacing = 5;
+            const startX = 305;
+            const baseY = 160;
+            const shapeHeight = 80;
+            const shapeWidth = 285;
+            const spacing = 5;
 
-                // Determine shape height based on the length of eventDetails
-                let shapeHeight;
-                if (eventDetails.length >= 1 && eventDetails.length <= 2) {
-                    shapeHeight = shape1Height;
-                } else if (eventDetails.length >= 3 && eventDetails.length <= 4) {
-                    shapeHeight = shape2Height;
-                } else if (eventDetails.length >= 5 && eventDetails.length <= 6) {
-                    shapeHeight = shape3Height;
-                }
+            // Loop through eventDetails in chunks of 2
+            for (let i = 0; i < eventDetails.length; i += 2) {
+                // Calculate y position for each rectangle
+                const currentY = baseY + Math.floor(i / 2) * (shapeHeight + spacing);
 
-                // Loop through eventDetails in chunks of 2
-                for (let i = 0; i < eventDetails.length; i += 2) {
-                    // Calculate y position for each rectangle
-                    const currentY = baseY + Math.floor(i / 2) * (shapeHeight + spacing);
+                // Draw rectangle for the current group
+                doc.rect(startX, currentY, shapeWidth, shapeHeight)
+                    .fill('#f2f2f2')
+                    .lineWidth(1)
+                    .stroke('black');
 
-                    // Draw rectangle for the current group
-                    doc.rect(startX, currentY, shapeWidth, shapeHeight)
-                        .fill('#f2f2f2')
-                        .lineWidth(1)
-                        .stroke('black');
+                // Display text for up to two events within the same rectangle
+                for (let j = 0; j < 2 && i + j < eventDetails.length; j++) {
+                    const event = eventDetails[i + j];
+                    const dayDate = format(event.exhibition_date, 'yyyy-MM-dd');
+                    const dayInfo = `${event.exhibition_day}: ${dayDate}`;
 
-                    // Display text for up to two events within the same rectangle
-                    for (let j = 0; j < 2 && i + j < eventDetails.length; j++) {
-                        const event = eventDetails[i + j];
-                        const dayDate = format(event.exhibition_date, 'yyyy-MM-dd');
-                        const dayInfo = `${event.exhibition_day}: ${dayDate}`;
+                    // Adjust the horizontal position (startX) for each event in the rectangle
+                    doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Bold.ttf'))
+                        .fontSize(9)
+                        .fillColor('black')
+                        .text(dayInfo, startX + j * 150, currentY + 8, {
+                            width: 140,
+                            align: 'center',
+                        });
 
-                        // Adjust the horizontal position (startX) for each event in the rectangle
-                        doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Bold.ttf'))
-                            .fontSize(9)
-                            .fillColor('black')
-                            .text(dayInfo, startX + j * 150, currentY + 8, {
-                                width: 141,
-                                align: 'center',
-                            });
+                    doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Bold.ttf'))
+                        .fontSize(7)
+                        .fillColor('black')
+                        .text(event.title, startX + j * 150, currentY + 23, {
+                            width: 140,
+                            align: 'center',
+                        });
 
-                        doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Bold.ttf'))
-                            .fontSize(7)
-                            .fillColor('black')
-                            .text(event.title, startX + j * 150, currentY + 23, {
-                                width: 141,
-                                align: 'center',
-                            });
-
-                        doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Bold.ttf'))
-                            .fontSize(7)
-                            .fillColor('black')
-                            .text(event.descriptions, startX + j * 150, currentY + 40, {
-                                width: 141,
-                                align: 'center',
-                            });
-                    }
+                    doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Bold.ttf'))
+                        .fontSize(7)
+                        .fillColor('black')
+                        .text(event.descriptions, startX + j * 150, currentY + 40, {
+                            width: 140,
+                            align: 'center',
+                        });
                 }
             }
 
@@ -542,7 +528,7 @@ commonRouter.post('/generate-id-card',
                         console.log("ID Card generated and downloaded successfully");
                     }
                 });
-            }, 2000); // 2000 ms = 2 seconds
+            }, 1000); // 2000 ms = 2 seconds
         } catch (error) {
             console.log(error)
             return res.status(400).send({

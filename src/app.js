@@ -27,7 +27,7 @@ app.use(express.json({ limit: "50mb" }));
 // Routes
 const { usersRouter } = require("./routes/users/users-route");
 const { exhibitionsRouter } = require("./routes/exhibitions/exhibitions-route");
-const { systemAdminRouter} = require("./routes/system-admin/system-admin-route");
+const { systemAdminRouter } = require("./routes/system-admin/system-admin-route");
 const { visitorsRouter } = require("./routes/visitors/visitors-route");
 const { exhibitorsRouter } = require("./routes/exhibitors/exhibitors-route");
 const { companiesRouter } = require("./routes/companies/companies-route");

@@ -25,7 +25,7 @@ const { insertDocumentRequestData } = require("../../main/visitor/insert-documen
 const { getRequestedDocumentData } = require("../../main/document/get-requested-document-data");
 const { generatePDFReport } = require("../../main/document/visitors_document-list");
 const { paginationData } = require("../../middlewares/common/pagination-data");
-const { enrollVisitorInExhibition } = require("../../main/visitor/enrole-visitor-in-exhibition");
+const { enrollVisitorInExhibition } = require("../../main/visitor/enroll-visitor-in-exhibition");
 
 /**
  * Through this API, visitors can register themselves

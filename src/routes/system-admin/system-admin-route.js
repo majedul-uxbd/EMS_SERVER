@@ -376,9 +376,9 @@ systemAdminRouter.post('/active-company-data',
 * Through this API admin can see all exhibitions
 */
 systemAdminRouter.get('/get-exhibition',
-    isUserRoleAdmin,
+    // isUserRoleAdmin,
     async (req, res) => {
-        getExhibition()
+        getExhibition(req.auth)
             .then(data => {
                 return res.status(API_STATUS_CODE.OK).send({
                     status: 'success',
@@ -400,7 +400,7 @@ systemAdminRouter.get('/get-exhibition',
 * Through this API admin can see all exhibitions data
 */
 systemAdminRouter.post('/get-exhibition-data',
-    isUserRoleAdmin,
+    // isUserRoleAdmin,
     async (req, res) => {
 
         getExhibitionData(req.body)
@@ -425,7 +425,7 @@ systemAdminRouter.post('/get-exhibition-data',
 * Through this API admin can see exhibitions date and days
 */
 systemAdminRouter.post('/get-event-date',
-    isUserRoleAdmin,
+    // isUserRoleAdminO,
     async (req, res) => {
 
         getEventDate(req.body)

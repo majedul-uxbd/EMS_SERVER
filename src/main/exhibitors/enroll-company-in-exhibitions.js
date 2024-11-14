@@ -14,6 +14,24 @@ const { setRejectMessage } = require("../../common/set-reject-message");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
 
+const getCompanyIdQuery = async (authData) => {
+    const _query = `
+        SELECT
+            companies_id
+        FROM
+            user
+        WHERE
+            id = ?;
+        `;
+    try {
+        const [result] = await pool.query(_query, authData.id);
+        return result[0].companies_id;
+    } catch (error) {
+        return Promise.reject(error);
+    }
+}
+
+
 const checkUserCompanyIsValid = async (bodyData) => {
 
     const _query = `
@@ -103,6 +121,9 @@ const insertEnrollData = async (authData, bodyData) => {
  */
 const enrollCompanyInExhibition = async (authData, bodyData) => {
     try {
+        const companyId = await getCompanyIdQuery(authData);
+        bodyData = { ...bodyData, companyId: companyId };
+
         const isValidCompany = await checkUserCompanyIsValid(bodyData);
         if (isValidCompany) {
             const isAlreadyEnrolled = await checkIfCompanyAlreadyEnrolled(bodyData);
