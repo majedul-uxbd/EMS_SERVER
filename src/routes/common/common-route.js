@@ -17,6 +17,8 @@ const path = require("path");
 const fs = require("fs");
 const PDFDocument = require('pdfkit');
 const qr = require('qr-image');
+const _ = require('lodash');
+const { format } = require('date-fns');
 const { getUserInformationForIdCard } = require('../../main/common/get-user-information-for-id-card');
 const { checkEmailAndSendOtp } = require('../../main/common/check-email-and-send-otp');
 const { API_STATUS_CODE } = require('../../consts/error-status');
@@ -25,8 +27,10 @@ const { resetUserPassword } = require('../../main/common/reset-user-password');
 const { checkIfFileSavePathExist } = require('../../common/utilities/file-upload/check-file-path-exist');
 const { idCardDir } = require('../../common/utilities/file-upload/upload-file-const-value');
 const { getUpcomingExhibitions } = require('../../main/common/get-upcoming-exhibitions');
-const { isUserRoleExhibitorOrVisitor } = require('../../common/utilities/check-user-role');
-const { getExhibitionData } = require('../../main/common/get-exhibition-data');
+const { isUserRoleExhibitorOrVisitor, isUserRoleOrganizerOrExhibitorOrVisitor } = require('../../common/utilities/check-user-role');
+const { getExhibitionDataForUsers } = require('../../main/common/get-exhibition-data');
+const { checkIfUserIsEnrolledInAExhibition } = require('../../middlewares/common/check-if-user-enroll-in-exhibition');
+const { getExhibitionData } = require('../../main/exhibitions/get-exhibitions-data');
 
 // commonRouter.use(authenticateToken);
 
@@ -145,16 +149,45 @@ commonRouter.get('/upcoming-exhibitions',
             })
     })
 
+
+/**
+ * This API is used to get exhibition information for organizer, exhibitor and visitor
+ */
+commonRouter.get(
+    '/get-exhibitions',
+    authenticateToken,
+    isUserRoleOrganizerOrExhibitorOrVisitor,
+    async (req, res) => {
+        getExhibitionDataForUsers(req.auth)
+            .then((data) => {
+                return res.status(API_STATUS_CODE.ACCEPTED).send({
+                    status: 'success',
+                    message: 'Get exhibitions information successfully',
+                    ...data
+                });
+            })
+            .catch((error) => {
+                const { statusCode, message } = error;
+                return res.status(statusCode).send({
+                    status: 'failed',
+                    message: message,
+                });
+            });
+    }
+);
+
 /**
  * @description This API is used for generate user ID Card
  */
 commonRouter.post('/generate-id-card',
     authenticateToken,
-    checkIfFileSavePathExist,
+    checkIfUserIsEnrolledInAExhibition,
     getUserInformationForIdCard,
+    checkIfFileSavePathExist,
     async (req, res) => {
         const user = req.body.user;
         const exhibitionData = req.body.exhibitionData;
+        const eventDetails = req.body.eventDetails;
         const filePath = idCardDir;
         const visitorBgColor = '#1e3a8a';
         const organizerBgColor = '#164e63';
@@ -163,14 +196,15 @@ commonRouter.post('/generate-id-card',
         let userRole = "";
         let position = "";
         let companyName = "";
+        let profileImgUrl = "";
         let x_axis_1 = 108;
-        let y_axis_1 = 560;
+        let y_axis_1 = 580;
         let x_axis_2 = 404;
-        let y_axis_2 = 560;
+        let y_axis_2 = 580;
         const currentPathName = path.join(process.cwd());
-        let ppImagePath = path.join(currentPathName, '/src/common/utilities/images/pp.jpeg');
+        let ppImagePath = path.join(currentPathName, '/src/common/utilities/images/pp.png');
         let bgImagePath = path.join(currentPathName, '/src/common/utilities/images/2nd-bg.jpeg');
-        const fullName = user.f_name + '_' + user.l_name;
+        const fullName = user.f_name + ' ' + user.l_name;
 
         const doc = new PDFDocument({
             size: 'A4',
@@ -193,39 +227,27 @@ commonRouter.post('/generate-id-card',
         switch (user.role) {
             case 'visitor':
                 color = visitorBgColor;
-                userRole = 'Visitor';
+                userRole = 'VISITOR';
                 position = user.position;
                 companyName = user.company_name;
-                if (textHeight > 15) {
-                    y_axis = 235;
-                }
                 break;
             case 'exhibitor':
                 color = exhibitorBgColor;
-                userRole = 'Exhibitor';
+                userRole = 'EXHIBITOR';
                 position = user.position;
                 companyName = user.company_name;
-                if (textHeight > 15) {
-                    y_axis = 235;
-                }
                 break;
             case 'exhibitor_admin':
                 color = exhibitorBgColor;
-                userRole = 'Exhibitor';
+                userRole = 'EXHIBITOR';
                 position = user.position;
                 companyName = user.company_name;
-                if (textHeight > 15) {
-                    y_axis = 235;
-                }
                 break;
             case 'organizer':
                 color = organizerBgColor;
-                userRole = 'Organizer';
+                userRole = 'ORGANIZER';
                 position = user.position;
                 companyName = user.company_name;
-                if (textHeight > 15) {
-                    y_axis = 235;
-                }
                 break;
             default:
                 return res.status(400).send({
@@ -251,37 +273,39 @@ commonRouter.post('/generate-id-card',
             doc.rect(300, 422, 290, 413);
             doc.fill(color);
 
-            // 1st logo
+            // 1st image
             doc.image(path.join(currentPathName, '/src/common/utilities/images/left_side_pic.png'),
                 4, 4, { width: 291, height: 414 });
 
             // 1st logo
             doc.image(path.join(currentPathName, '/src/common/utilities/images/UXBD_logo.jpg'),
-                96, 435, { width: 100, height: 100 });
+                100, 435, { width: 100, height: 100 });
+
             // 2nd logo
             doc.image(path.join(currentPathName, '/src/common/utilities/images/UXBD_logo.jpg'),
-                396, 435, { width: 100, height: 100 });
+                395, 435, { width: 100, height: 100 });
 
             // User Information Body1
-            doc.roundedRect(17, 547, 264, 115, 2)
+            doc.roundedRect(17, 575, 264, 90, 2)
                 .lineWidth(5)
                 .fillAndStroke("white");
 
             // User Information Body2
-            doc.roundedRect(313, 547, 264, 115, 2)
+            doc.roundedRect(313, 575, 264, 90, 2)
                 .lineWidth(5)
                 .fillAndStroke("white");
 
             // Vertical line1
-            doc.moveTo(100, 570);
-            doc.lineTo(100, 570 + 75);
+            doc.moveTo(100, 585);
+            doc.lineTo(100, 585 + 70);
             doc.lineWidth(1.5)
                 .strokeOpacity(0.5)
                 .stroke('black');
             doc.stroke();
+
             // Vertical line2
-            doc.moveTo(400, 570);
-            doc.lineTo(400, 570 + 75);
+            doc.moveTo(400, 585);
+            doc.lineTo(400, 585 + 70);
             doc.lineWidth(1.5)
                 .strokeOpacity(0.5)
                 .stroke('black');
@@ -307,19 +331,19 @@ commonRouter.post('/generate-id-card',
 
             // User Role1
             doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Bold.ttf'))
-                .fontSize(9)
-                .fillColor('#0370cb')
-                .text(userRole, x_axis_1, y_axis_1 + 20, {
-                    width: 171,
+                .fontSize(20)
+                .fillColor('#ffffff')
+                .text(userRole, 0, 538, {
+                    width: 300,
                     align: 'center',
                 });
 
             // User Role2
             doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Bold.ttf'))
-                .fontSize(9)
-                .fillColor('#0370cb')
-                .text(userRole, x_axis_2, y_axis_2 + 20, {
-                    width: 171,
+                .fontSize(20)
+                .fillColor('#ffffff')
+                .text(userRole, 295, 538, {
+                    width: 300,
                     align: 'center',
                 });
 
@@ -327,7 +351,7 @@ commonRouter.post('/generate-id-card',
             doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Regular.ttf'))
                 .fontSize(9)
                 .fillColor('black')
-                .text(position, x_axis_1, y_axis_1 + 43, {
+                .text(position, x_axis_1, y_axis_1 + 28, {
                     width: 171,
                     align: 'center'
                 });
@@ -336,7 +360,7 @@ commonRouter.post('/generate-id-card',
             doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Regular.ttf'))
                 .fontSize(9)
                 .fillColor('black')
-                .text(position, x_axis_2, y_axis_2 + 43, {
+                .text(position, x_axis_2, y_axis_2 + 28, {
                     width: 171,
                     align: 'center'
                 });
@@ -345,7 +369,7 @@ commonRouter.post('/generate-id-card',
             doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Regular.ttf'))
                 .fontSize(9)
                 .fillColor('black')
-                .text(companyName, x_axis_1, y_axis_1 + 70, {
+                .text(companyName, x_axis_1, y_axis_1 + 55, {
                     width: 171,
                     align: 'center',
                 });
@@ -354,26 +378,28 @@ commonRouter.post('/generate-id-card',
             doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Regular.ttf'))
                 .fontSize(9)
                 .fillColor('black')
-                .text(companyName, x_axis_2, y_axis_1 + 70, {
+                .text(companyName, x_axis_2, y_axis_1 + 55, {
                     width: 171,
                     align: 'center',
                 });
 
             //user Profile picture
+            if (_.isEmpty(user.profile_img)) {
+                profileImgUrl = ppImagePath;
+
+            } else {
+                profileImgUrl = user.profile_img;
+            }
             const centerX_1 = 58;
-            const centerY_1 = 606;
+            const centerY_1 = 620;
             const centerX_2 = 358;
-            const centerY_2 = 606;
+            const centerY_2 = 620;
             const radius = 35;
             doc.image(bgImagePath, 300, 4, { width: 290, height: 150 });
-            // Define the path for the circular clipping
-            // doc.circle(centerX_1, centerY_1, radius).clip();
-            // Add the image inside the circular clipping path
-            doc.image(ppImagePath, centerX_1 - radius, centerY_1 - radius, { width: radius * 2, height: radius * 2 });
-            // Define the path for the circular clipping
-            // doc.circle(centerX_2, centerY_2, radius).clip();
-            // Add the image inside the circular clipping path
-            doc.image(ppImagePath, centerX_2 - radius, centerY_2 - radius, { width: radius * 2, height: radius * 2 });
+
+            doc.image(profileImgUrl, centerX_1 - radius, centerY_1 - radius, { width: radius * 2, height: radius * 2 });
+
+            doc.image(profileImgUrl, centerX_2 - radius, centerY_2 - radius, { width: radius * 2, height: radius * 2 });
 
             // Exhibition Title
             doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Bold.ttf'))
@@ -410,21 +436,55 @@ commonRouter.post('/generate-id-card',
                     align: 'center',
                 });
 
-            // Exhibition Information Body1
-            doc.rect(305, 165, 285, 120)
-            doc.fill('#e0f2fe')
-            doc.lineWidth(1)
-                // .strokeOpacity(1)
-                .stroke('black')
-                .fill('black');
+            const startX = 305;
+            const baseY = 160;
+            const shapeHeight = 80;
+            const shapeWidth = 285;
+            const spacing = 5;
 
-            // Exhibition Information Body2
-            doc.rect(305, 290, 285, 120)
-            doc.fill('#e5e5e5')
-            doc.lineWidth(1)
-                // .strokeOpacity(1)
-                .stroke('black')
-                .fill('black');
+            // Loop through eventDetails in chunks of 2
+            for (let i = 0; i < eventDetails.length; i += 2) {
+                // Calculate y position for each rectangle
+                const currentY = baseY + Math.floor(i / 2) * (shapeHeight + spacing);
+
+                // Draw rectangle for the current group
+                doc.rect(startX, currentY, shapeWidth, shapeHeight)
+                    .fill('#f2f2f2')
+                    .lineWidth(1)
+                    .stroke('black');
+
+                // Display text for up to two events within the same rectangle
+                for (let j = 0; j < 2 && i + j < eventDetails.length; j++) {
+                    const event = eventDetails[i + j];
+                    const dayDate = format(event.exhibition_date, 'yyyy-MM-dd');
+                    const dayInfo = `${event.exhibition_day}: ${dayDate}`;
+
+                    // Adjust the horizontal position (startX) for each event in the rectangle
+                    doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Bold.ttf'))
+                        .fontSize(9)
+                        .fillColor('black')
+                        .text(dayInfo, startX + j * 150, currentY + 8, {
+                            width: 140,
+                            align: 'center',
+                        });
+
+                    doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Bold.ttf'))
+                        .fontSize(7)
+                        .fillColor('black')
+                        .text(event.title, startX + j * 150, currentY + 23, {
+                            width: 140,
+                            align: 'center',
+                        });
+
+                    doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Bold.ttf'))
+                        .fontSize(7)
+                        .fillColor('black')
+                        .text(event.descriptions, startX + j * 150, currentY + 40, {
+                            width: 140,
+                            align: 'center',
+                        });
+                }
+            }
 
             const codeText = `
            {
@@ -433,9 +493,9 @@ commonRouter.post('/generate-id-card',
            }`;
             const qrImage = qr.imageSync(codeText, { type: 'png', ec_level: 'H', margin: 3 });
             //QR code image1
-            doc.image(qrImage, 80, 675, { width: 140, height: 140 });
+            doc.image(qrImage, 80, 685, { width: 140, height: 140 });
             //QR code image2
-            doc.image(qrImage, 380, 675, { width: 140, height: 140 });
+            doc.image(qrImage, 380, 685, { width: 140, height: 140 });
             // Vertical dotted line
             doc.moveTo(298, 5);
             doc.lineTo(297, 838);
@@ -461,13 +521,14 @@ commonRouter.post('/generate-id-card',
             setTimeout(() => {
                 res.download(fileFullPath, (downloadErr) => {
                     if (downloadErr) {
+                        console.log('🚀 ~ file: common-route.js:464 ~ res.download ~ downloadErr:', downloadErr);
                         console.error("Failed to download user ID card");
                         return res.status(500).send("Error downloading file");
                     } else {
                         console.log("ID Card generated and downloaded successfully");
                     }
                 });
-            }, 2000); // 2000 ms = 2 seconds
+            }, 1000); // 2000 ms = 2 seconds
         } catch (error) {
             console.log(error)
             return res.status(400).send({

@@ -14,7 +14,7 @@ const path = require("path");
 const { imageDir, documentDir, idCardDir } = require("./upload-file-const-value");
 
 /**
- * @description This function is used to check the file saved directory is exist. If not then create the path
+ * @description This function is used to check the file save directory is exist. If not then create the path
  */
 const checkIfFileSavePathExist = async (req, res, next) => {
     let UPLOAD_FOLDER;

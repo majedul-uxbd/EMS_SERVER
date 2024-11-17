@@ -18,6 +18,7 @@ const { API_STATUS_CODE } = require('../../consts/error-status');
 const { isUserRoleAdmin } = require('../../common/utilities/check-user-role');
 const authenticateToken = require('../../middlewares/jwt');
 const { deleteExhibitionsData } = require('../../main/exhibitions/delete-exhibitions-data');
+const { deleteEventData } = require('../../main/exhibitions/delete-event-data');
 
 exhibitionsRouter.use(authenticateToken);
 
@@ -95,6 +96,28 @@ exhibitionsRouter.post('/delete',
     });
 
 
+/**
+* Through this API admin can delete exhibitions data
+*/
+exhibitionsRouter.post('/delete-event',
+    isUserRoleAdmin,
+    async (req, res) => {
+
+        deleteEventData(req.body)
+            .then(data => {
+                return res.status(API_STATUS_CODE.CREATED).send({
+                    status: data.status,
+                    message: data.message
+                })
+            })
+            .catch(error => {
+                const { statusCode, message } = error;
+                return res.status(statusCode).send({
+                    status: 'failed',
+                    message: message,
+                })
+            });
+    });
 
 
 module.exports = {
