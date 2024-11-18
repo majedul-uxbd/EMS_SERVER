@@ -36,6 +36,7 @@ const { fileUploadRouter } = require("./routes/file-upload/file-upload-route");
 const { projectRouter } = require("./routes/project/project-route");
 const { attendanceRouter } = require("./routes/attendances/attendance-route");
 const { commonRouter } = require("./routes/common/common-route");
+const { dashboardRouter } = require("./routes/admin-dashboard/dashboard-route");
 
 
 // Middleware
@@ -50,6 +51,7 @@ app.use("/uploader", fileUploadRouter);
 app.use("/project", projectRouter);
 app.use("/attendances", attendanceRouter);
 app.use("/common", commonRouter);
+app.use("/dashboard", dashboardRouter);
 
 // app.get("/status", (req, res) => {
 //   res.json({

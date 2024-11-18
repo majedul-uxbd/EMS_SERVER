@@ -31,8 +31,10 @@ const { updateCompanyInfo } = require('../../main/company/update-company-data');
 const { getActiveCompanyData } = require('../../main/company/get-active-company-data');
 const { validateUserData } = require('../../middlewares/user/user-data-validator');
 const { getDocumentData } = require('../../main/document/get-document-data');
-const {
-    addCompanyWithExhibitor } = require('../../main/company/add-company-and-exhibitor');
+const { addCompanyWithExhibitor } = require('../../main/company/add-company-and-exhibitor');
+const { getPendingCompanyExhibitorData } = require('../../main/company/show_pending _requestOfCompany_ExhibitorCreation');
+const { approvePendingRequest } = require('../../main/company/approve_company_and_exhibitor');
+const { disapprovePendingRequest } = require('../../main/company/disapprove-company')
 const { addUser } = require('../../main/user/add-user');
 const { getExhibition } = require('../../main/exhibitions/get-exhibitions');
 const { getExhibitionData } = require('../../main/exhibitions/get-exhibitions-data');
@@ -299,6 +301,74 @@ systemAdminRouter.post('/get-company-data',
                     message: message,
                 })
             })
+    });
+
+/**
+* Through this API, admin can get company and exhibitor creation request
+*/
+systemAdminRouter.post('/get-pending-company-and-exhibitor-creation',
+    isUserRoleAdmin,
+    paginationData,
+    async (req, res) => {
+        getPendingCompanyExhibitorData(req.body.paginationData)
+            .then(data => {
+                return res.status(API_STATUS_CODE.OK).send({
+                    status: 'success',
+                    message: 'Pending Company Exhibitor data retrieved successfully',
+                    ...data
+                });
+            })
+            .catch(error => {
+                const { statusCode, message } = error;
+                return res.status(statusCode).send({
+                    status: 'failed',
+                    message: message,
+                });
+            });
+    }
+);
+systemAdminRouter.post('/approve-pending-request-company_and_exhibitor',
+    isUserRoleAdmin,
+    async (req, res) => {
+        const { companyId } = req.body;
+
+        approvePendingRequest(companyId)
+            .then(() => {
+                return res.status(API_STATUS_CODE.OK).send({
+                    status: 'success',
+                    message: 'Company request approved successfully',
+                });
+            })
+            .catch(error => {
+                const { statusCode, message } = error;
+                return res.status(statusCode).send({
+                    status: 'failed',
+                    message: message,
+                });
+            });
+    }
+);
+
+
+systemAdminRouter.post('/disapprove-pending-request',
+    isUserRoleAdmin,
+    async (req, res) => {
+        const { companyId } = req.body;
+
+        disapprovePendingRequest(companyId)
+            .then(() => {
+                return res.status(API_STATUS_CODE.OK).send({
+                    status: 'success',
+                    message: "Company disapproved and deleted successfully"
+                });
+            })
+            .catch(error => {
+                const { statusCode, message } = error;
+                return res.status(statusCode).send({
+                    status: 'failed',
+                    message: message,
+                });
+            });
     });
 
 /**

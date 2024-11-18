@@ -35,9 +35,9 @@ const getUserEnrollInformationQuery = async (authData) => {
 
     const query2 = `
         SELECT
-            ex.id,
+            ex.id AS exhibition_id,
             ex.exhibition_dates,
-            u.id
+            u.id AS user_id
         FROM
             exhibitions AS ex
         LEFT JOIN
