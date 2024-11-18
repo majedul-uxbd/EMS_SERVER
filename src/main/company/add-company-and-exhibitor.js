@@ -1,10 +1,7 @@
-
 const bcrypt = require("bcrypt");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 const { pool } = require("../../../database/db");
 const { generateRandomString } = require("../../common/utilities/generate-random-string");
-const { sendMail } = require("../../helpers/send-mail");
-const { FRONTEND_URL, USER_LOGIN } = require("../../config");
 const setRejectMessage = (statusCode, message) => ({ statusCode, message });
 
 const addCompanyWithExhibitor = async (companyData, exhibitor) => {
@@ -29,31 +26,7 @@ const addCompanyWithExhibitor = async (companyData, exhibitor) => {
             throw setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Failed to create exhibitor');
         }
 
-        // Step 3: Send Email to Company with Exhibitor Info
-        const loginUrl = `${FRONTEND_URL}/${USER_LOGIN}`;
-        await sendMail(
-            companyData.email,
-            `EMS support@eventmanagement.com`,
-            `<div style="background-color: #f4f4f4; padding: 30px; font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-                <div style="max-width: 600px; margin: auto; background-color: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
-                    <h2 style="color: #1e3a8a; text-align: center; margin-bottom: 20px;">New Exhibitor Admin Created</h2>
-                    <p>Hello ${companyData.companyName},</p>
-                    <p style="font-size: 15px;">An exhibitor admin has been successfully created for your company. Here are the details:</p>
-                    <div style="text-align: center; margin: 20px 0;">
-                        <p style="font-size: 15px;"><strong>Name:</strong> ${exhibitor.firstName} ${exhibitor.lastName}</p>
-                        <p style="font-size: 15px;"><strong>Email:</strong> ${exhibitor.email}</p>
-                        <p style="font-size: 15px;"><strong>Password:</strong> ${exhibitorPassword}</p>
-                    </div>
-                    <p style="font-size: 15px; color: #d9534f; text-align: center; font-weight: bold;">Please ask the exhibitor to change the password after logging in for security purposes.</p>
-                    <p style="font-size: 15px; text-align: center;">The exhibitor can log in by clicking the button below:</p>
-                    <div style="text-align: center; margin: 20px 0;">
-                        <a href="${loginUrl}" style="display: inline-block; padding: 12px 25px; background-color: #1e3a8a; color: #ffffff; text-decoration: none; border-radius: 5px; font-weight: bold;">Login to Your Account</a>
-                    </div>
-                    <p style="font-size: 14px;">If you have any questions, please contact our support team.</p>
-                    <p style="font-size: 14px;">Best Regards,<br>The Event Management Team</p>
-                </div>
-            </div>`
-        );
+        // Step 3: (Removed email sending logic)
 
         await connection.commit();
         return {

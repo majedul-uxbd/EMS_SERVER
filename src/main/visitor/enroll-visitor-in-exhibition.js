@@ -90,7 +90,7 @@ const enrollVisitorInExhibition = async (authData, bodyData) => {
         }
 
     } catch (error) {
-        // console.log('🚀 ~ file: enroll-company-in-exhibitions.js:127 ~ error:', error);
+        console.log('🚀 ~ file: enroll-company-in-exhibitions.js:127 ~ error:', error);
         return Promise.reject(
             setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, 'Internal server error')
         );
