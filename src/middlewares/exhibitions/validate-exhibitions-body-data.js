@@ -20,9 +20,9 @@ const validateExhibitionsBodyData = (req, res, next) => {
 	const errors = [];
 	const bodyData = {
 		id: req.body.id,
-		exhibitionTitle,
-		exhibitionDates,
-		exhibitionVenue,
+		exhibitionTitle: exhibitionTitle,
+		exhibitionDates: exhibitionDates,
+		exhibitionDates: exhibitionVenue,
 	} = req.body;
 
 

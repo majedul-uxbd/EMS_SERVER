@@ -9,9 +9,9 @@ const calculateCellHeight = (doc, text, width, padding, options = {}) => {
   const lineHeight = fontSize * 1.2;
 
   if (isHeader) {
-    doc.font("Helvetica-Bold");
+    doc.font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Bold.ttf",))
   } else {
-    doc.font("Helvetica");
+    doc.font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Regular.ttf",))
   }
   doc.fontSize(fontSize);
 
@@ -44,9 +44,9 @@ const drawTableCell = (doc, text, x, y, width, height, options = {}) => {
   const fontSize = 9;
 
   if (isHeader) {
-    doc.font("Helvetica-Bold");
+    doc.font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Bold.ttf",));
   } else {
-    doc.font("Helvetica");
+    doc.font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Regular.ttf",));
   }
   doc.fontSize(fontSize);
 
@@ -96,6 +96,8 @@ const drawTableRow = (doc, rowData, colWidths, colPositions, y, options = {}) =>
 
 // Modified main function to return buffer instead of saving file
 const generateRequestedVisitorPDF = async (data) => {
+  const lgKey = data.lg;
+  let colLabels;
   return new Promise((resolve, reject) => {
     try {
       const doc = new PDFDocument({
@@ -117,16 +119,24 @@ const generateRequestedVisitorPDF = async (data) => {
 
       // Header and Title
       doc.image(
-        path.join(process.cwd(), "/src/common/utilities/images/UXBD_logo.jpg"),
+        path.join(process.cwd(), "/src/common/utilities/images/UXAP_logo.jpg"),
         pageWidth - 105,
         margin - 16,
         { width: 55, align: "right" }
       );
-      doc
-        .fontSize(16)
-        .font("Helvetica-Bold")
-        .fillColor("#030663")
-        .text("Interested Visitor List", margin, margin + 10);
+      if (lgKey === 'ja') {
+        doc
+          .fontSize(16)
+          .font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Bold.ttf",))
+          .fillColor("#030663")
+          .text("興味のある訪問者のリスト", margin, margin + 10);
+      } else {
+        doc
+          .fontSize(16)
+          .font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Bold.ttf",))
+          .fillColor("#030663")
+          .text("List of interested visitors", margin, margin + 10);
+      }
       doc
         .moveTo(margin, margin + 40)
         .lineTo(pageWidth - margin, margin + 40)
@@ -136,16 +146,29 @@ const generateRequestedVisitorPDF = async (data) => {
       // Table configuration
       let currentY = margin + 50;
       const colWidths = [35, 110, 100, 75, 85, 85, 130, 130];
-      const colLabels = [
-        "Serial",
-        "Name",
-        "Email",
-        "Contact No.",
-        "Company",
-        "Position",
-        "Requested Projects",
-        "Request Time",
-      ];
+      if (lgKey === 'ja') {
+        colLabels = [
+          "シリアル",
+          "名前",
+          "メール",
+          "連絡先.",
+          "会社",
+          "位置",
+          "リクエストされたプロジェクト",
+          "リクエスト時間",
+        ]
+      } else {
+        colLabels = [
+          "Serial",
+          "Name",
+          "Email",
+          "Contact No.",
+          "Company",
+          "Position",
+          "Requested Projects",
+          "Request Time",
+        ];
+      }
 
       const colPositions = colWidths.reduce((acc, width) => {
         acc.push((acc[acc.length - 1] || margin) + width);
@@ -155,7 +178,8 @@ const generateRequestedVisitorPDF = async (data) => {
       // Draw initial headers
       currentY += drawTableRow(doc, colLabels, colWidths, colPositions, currentY, {
         isHeader: true,
-        customHeight: 40
+        customHeight: 40,
+        font: path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Bold.ttf",)
       });
 
       // Function to check if a row needs custom height
@@ -164,7 +188,7 @@ const generateRequestedVisitorPDF = async (data) => {
       };
 
       // Draw table rows
-      data.forEach((visitor, index) => {
+      data.data.forEach((visitor, index) => {
         // Check if we need a new page
         if (currentY + 50 > pageHeight - margin) {
           doc.addPage({
@@ -175,7 +199,8 @@ const generateRequestedVisitorPDF = async (data) => {
           currentY = margin;
           currentY += drawTableRow(doc, colLabels, colWidths, colPositions, currentY, {
             isHeader: true,
-            customHeight: 40
+            customHeight: 40,
+            font: path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Regular.ttf",)
           });
         }
 

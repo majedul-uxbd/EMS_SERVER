@@ -74,7 +74,7 @@ const checkIfUserIsEnrolledInAExhibition = async (req, res, next) => {
     if (authData.role === 'organizer') {
         next();
     }
-    else if (authData.role === 'visitor' || authData.role === 'exhibitor') {
+    else if (authData.role === 'visitor' || authData.role === 'exhibitor' || authData.role === 'exhibitor_admin') {
         const isEnrolled = await checkIfUserIsEnrolledInAExhibitionQuery(authData, bodyData);
         if (isEnrolled) {
             next();

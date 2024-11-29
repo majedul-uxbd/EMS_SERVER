@@ -156,7 +156,7 @@ commonRouter.get('/upcoming-exhibitions',
 commonRouter.get(
     '/get-exhibitions',
     authenticateToken,
-    isUserRoleOrganizerOrExhibitorOrVisitor,
+    // isUserRoleOrganizerOrExhibitorOrVisitor,
     async (req, res) => {
         getExhibitionDataForUsers(req.auth)
             .then((data) => {
@@ -227,25 +227,25 @@ commonRouter.post('/generate-id-card',
         switch (user.role) {
             case 'visitor':
                 color = visitorBgColor;
-                userRole = 'VISITOR';
+                userRole = 'ビジター (VISITOR)';
                 position = user.position;
                 companyName = user.company_name;
                 break;
             case 'exhibitor':
                 color = exhibitorBgColor;
-                userRole = 'EXHIBITOR';
+                userRole = '出展者 (EXHIBITOR)';
                 position = user.position;
                 companyName = user.company_name;
                 break;
             case 'exhibitor_admin':
                 color = exhibitorBgColor;
-                userRole = 'EXHIBITOR';
+                userRole = '出展者 (EXHIBITOR)';
                 position = user.position;
                 companyName = user.company_name;
                 break;
             case 'organizer':
                 color = organizerBgColor;
-                userRole = 'ORGANIZER';
+                userRole = '主催者 (ORGANIZER)';
                 position = user.position;
                 companyName = user.company_name;
                 break;
@@ -274,15 +274,15 @@ commonRouter.post('/generate-id-card',
             doc.fill(color);
 
             // 1st image
-            doc.image(path.join(currentPathName, '/src/common/utilities/images/left_side_pic.png'),
+            doc.image(path.join(currentPathName, '/src/common/utilities/images/left_side_pic.jpg'),
                 4, 4, { width: 291, height: 414 });
 
             // 1st logo
-            doc.image(path.join(currentPathName, '/src/common/utilities/images/UXBD_logo.jpg'),
+            doc.image(path.join(currentPathName, '/src/common/utilities/images/UXAP_logo.jpg'),
                 100, 435, { width: 100, height: 100 });
 
             // 2nd logo
-            doc.image(path.join(currentPathName, '/src/common/utilities/images/UXBD_logo.jpg'),
+            doc.image(path.join(currentPathName, '/src/common/utilities/images/UXAP_logo.jpg'),
                 395, 435, { width: 100, height: 100 });
 
             // User Information Body1
@@ -331,7 +331,7 @@ commonRouter.post('/generate-id-card',
 
             // User Role1
             doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Bold.ttf'))
-                .fontSize(20)
+                .fontSize(18)
                 .fillColor('#ffffff')
                 .text(userRole, 0, 538, {
                     width: 300,
@@ -340,7 +340,7 @@ commonRouter.post('/generate-id-card',
 
             // User Role2
             doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Bold.ttf'))
-                .fontSize(20)
+                .fontSize(18)
                 .fillColor('#ffffff')
                 .text(userRole, 295, 538, {
                     width: 300,
@@ -442,47 +442,49 @@ commonRouter.post('/generate-id-card',
             const shapeWidth = 285;
             const spacing = 5;
 
-            // Loop through eventDetails in chunks of 2
-            for (let i = 0; i < eventDetails.length; i += 2) {
-                // Calculate y position for each rectangle
-                const currentY = baseY + Math.floor(i / 2) * (shapeHeight + spacing);
+            if (eventDetails !== null) {
+                // Loop through eventDetails in chunks of 2
+                for (let i = 0; i < eventDetails.length; i += 2) {
+                    // Calculate y position for each rectangle
+                    const currentY = baseY + Math.floor(i / 2) * (shapeHeight + spacing);
 
-                // Draw rectangle for the current group
-                doc.rect(startX, currentY, shapeWidth, shapeHeight)
-                    .fill('#f2f2f2')
-                    .lineWidth(1)
-                    .stroke('black');
+                    // Draw rectangle for the current group
+                    doc.rect(startX, currentY, shapeWidth, shapeHeight)
+                        .fill('#f2f2f2')
+                        .lineWidth(1)
+                        .stroke('black');
 
-                // Display text for up to two events within the same rectangle
-                for (let j = 0; j < 2 && i + j < eventDetails.length; j++) {
-                    const event = eventDetails[i + j];
-                    const dayDate = format(event.exhibition_date, 'yyyy-MM-dd');
-                    const dayInfo = `${event.exhibition_day}: ${dayDate}`;
+                    // Display text for up to two events within the same rectangle
+                    for (let j = 0; j < 2 && i + j < eventDetails.length; j++) {
+                        const event = eventDetails[i + j];
+                        const dayDate = format(event.exhibition_date, 'yyyy-MM-dd');
+                        const dayInfo = `${event.exhibition_day}: ${dayDate}`;
 
-                    // Adjust the horizontal position (startX) for each event in the rectangle
-                    doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Bold.ttf'))
-                        .fontSize(9)
-                        .fillColor('black')
-                        .text(dayInfo, startX + j * 150, currentY + 8, {
-                            width: 140,
-                            align: 'center',
-                        });
+                        // Adjust the horizontal position (startX) for each event in the rectangle
+                        doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Bold.ttf'))
+                            .fontSize(9)
+                            .fillColor('black')
+                            .text(dayInfo, startX + j * 150, currentY + 8, {
+                                width: 140,
+                                align: 'center',
+                            });
 
-                    doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Bold.ttf'))
-                        .fontSize(7)
-                        .fillColor('black')
-                        .text(event.title, startX + j * 150, currentY + 23, {
-                            width: 140,
-                            align: 'center',
-                        });
+                        doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Bold.ttf'))
+                            .fontSize(7)
+                            .fillColor('black')
+                            .text(event.title, startX + j * 150, currentY + 23, {
+                                width: 140,
+                                align: 'center',
+                            });
 
-                    doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Bold.ttf'))
-                        .fontSize(7)
-                        .fillColor('black')
-                        .text(event.descriptions, startX + j * 150, currentY + 40, {
-                            width: 140,
-                            align: 'center',
-                        });
+                        doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Bold.ttf'))
+                            .fontSize(7)
+                            .fillColor('black')
+                            .text(event.descriptions, startX + j * 150, currentY + 40, {
+                                width: 140,
+                                align: 'center',
+                            });
+                    }
                 }
             }
 
@@ -517,21 +519,19 @@ commonRouter.post('/generate-id-card',
             // Save the PDF
             doc.end();
             const fileFullPath = path.join(filePath, `/${fullName}.pdf`);
-            // console.log("🚀 ~ fileFullPath:", fileFullPath)
             setTimeout(() => {
                 res.download(fileFullPath, (downloadErr) => {
                     if (downloadErr) {
-                        console.log('🚀 ~ file: common-route.js:464 ~ res.download ~ downloadErr:', downloadErr);
-                        console.error("Failed to download user ID card");
-                        return res.status(500).send("Error downloading file");
-                    } else {
-                        console.log("ID Card generated and downloaded successfully");
+                        return res.status(400).send({
+                            status: 'failed',
+                            message: 'Failed to download user ID card'
+                        });
                     }
                 });
-            }, 1000); // 2000 ms = 2 seconds
+            }, 1000); // 1000 ms = 1 seconds
         } catch (error) {
-            console.log(error)
-            return res.status(400).send({
+            // console.log(error)
+            return res.status(API_STATUS_CODE.BAD_REQUEST).send({
                 status: "failed",
                 message: "Failed to generate user ID card"
             })

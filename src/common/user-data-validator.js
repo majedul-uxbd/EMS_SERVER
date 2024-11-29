@@ -91,6 +91,8 @@ const isValidEmail = (email) => {
 
 // validate user password
 const isValidPassword = (password) => {
+	const USERNAME_MAX_LENGTH = 50;
+	const USERNAME_MIN_LENGTH = 4;
 	// Regex to enforce the following rules:
 	// - At least one lowercase letter
 	// - At least one uppercase letter
@@ -101,10 +103,13 @@ const isValidPassword = (password) => {
 	// const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,60}$/;
 	if (_.isEmpty(password)) {
 		return false;
-		// } else {
-		// 	if (!passwordRegex.test(password)) {
-		// 		return false;
-		// 	}
+	} else {
+		if (
+			password.length > USERNAME_MAX_LENGTH ||
+			password.length < USERNAME_MIN_LENGTH
+		) {
+			return false;
+		}
 	}
 	return true;
 };

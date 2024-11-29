@@ -18,7 +18,9 @@ const totalVisitorCount = async () => {
     SELECT 
         COUNT(*) AS total_visitors
     FROM 
-        visitors;
+        visitors
+    WHERE
+        is_user_active = ${1};
     `;
     try {
         const [result] = await pool.query(_query);
@@ -35,7 +37,9 @@ const totalExhibitorCount = async () => {
     FROM 
         user
     WHERE
-        role = 'exhibitor';
+        role IN ('exhibitor', 'exhibitor_admin') AND
+        is_user_active = ${1};
+
     `;
     try {
         const [result] = await pool.query(_query);
@@ -52,7 +56,8 @@ const totalOrganizerCount = async () => {
     FROM 
         user
     WHERE
-        role = 'organizer';
+        role = 'organizer' AND
+        is_user_active = ${1};
     `;
     try {
         const [result] = await pool.query(_query);
@@ -112,6 +117,8 @@ const allCountForDashboardTab1 = async () => {
             projectCount
         }
         return Promise.resolve({
+            status: 'success',
+            message: 'Get data successfully',
             totalCount: totalCount
         })
     } catch (error) {

@@ -36,21 +36,17 @@ const getExhibitionsId = async () => {
 const getAttendanceData = async (exhibitionId) => {
     const _query = `
 	SELECT
-        COUNT(
-            DISTINCT a.visitors_id
-        ) AS visitor_count,
-        COUNT(
-            DISTINCT a.exhibitor_id
-        ) AS exhibitor_count,
-         e.exhibitions_title
+        COUNT(DISTINCT a.visitors_id) AS visitor_count,
+        COUNT(DISTINCT a.exhibitor_id) AS exhibitor_count,
+        e.exhibitions_title
     FROM
-        attendances AS a
+        exhibitions AS e
     LEFT JOIN exhibition_days AS ed
     ON
-        a.exhibition_days_id = ed.id
-    LEFT JOIN exhibitions AS e
+        e.id = ed.exhibitions_id
+    LEFT JOIN attendances AS a
     ON
-        ed.exhibitions_id = e.id
+        ed.id = a.exhibition_days_id
     WHERE
         e.id = ?;
 
@@ -60,7 +56,7 @@ const getAttendanceData = async (exhibitionId) => {
         const [result] = await pool.query(_query, exhibitionId);
         return Promise.resolve(result);
     } catch (error) {
-        // console.log("🚀 ~ getAttendenceData ~ error:", error)
+        // console.log('🚀 ~ file: get-graph-1-data.js:59 ~ getAttendanceData ~ error:', error);
         return Promise.reject(error);
     }
 }
@@ -72,8 +68,10 @@ const getCompanyData = async (exhibitionId) => {
         COUNT(ehc.id) AS company_count,
         ex.exhibitions_title
     FROM
+        exhibitions ex
+    LEFT JOIN  
         exhibitions_has_companies AS ehc
-    LEFT JOIN exhibitions ex ON
+    ON
         ehc.exhibition_id = ex.id
     WHERE
         ex.id = ?;
@@ -83,7 +81,7 @@ const getCompanyData = async (exhibitionId) => {
         const [result] = await pool.query(_query, exhibitionId);
         return Promise.resolve(result);
     } catch (error) {
-        // console.log("🚀 ~ getAttendenceData ~ error:", error)
+        // console.log('🚀 ~ file: get-graph-1-data.js:82 ~ getCompanyData ~ error:', error);
         return Promise.reject(error);
     }
 }
@@ -95,14 +93,15 @@ const getProjectData = async (exhibitionId) => {
         COUNT(projects.id) AS project_count,
         ex.exhibitions_title
     FROM
-        projects
-    LEFT JOIN exhibitions_has_companies AS ehc
+        exhibitions AS ex
+    LEFT JOIN 
+        exhibitions_has_companies AS ehc
     ON
-        projects.companies_id = ehc.company_id
-    LEFT JOIN
-        exhibitions as ex
+        ex.id=ehc.exhibition_id  
+    LEFT JOIN 
+        projects 
     ON 
-        ehc.exhibition_id = ex.id
+        projects.companies_id = ehc.company_id
     WHERE
         ex.id = ?;
   `;
@@ -111,7 +110,7 @@ const getProjectData = async (exhibitionId) => {
         const [result] = await pool.query(_query, exhibitionId);
         return Promise.resolve(result);
     } catch (error) {
-        // console.log("🚀 ~ getAttendenceData ~ error:", error)
+        // console.log('🚀 ~ file: get-graph-1-data.js:111 ~ getProjectData ~ error:', error);
         return Promise.reject(error);
     }
 }
@@ -125,6 +124,13 @@ const getGraph1Data = async () => {
     let projectCount = [];
     try {
         const exhibitionId = await getExhibitionsId();
+
+        if (exhibitionId.length <= 0) {
+            return Promise.resolve({
+                status: 'success',
+                message: 'Exhibitions not found'
+            })
+        }
 
         const previousExhibitions = exhibitionId.filter(exhibition => {
             const dates = JSON.parse(exhibition.exhibition_dates);
@@ -163,12 +169,16 @@ const getGraph1Data = async () => {
                 projectCount,
             }
             return Promise.resolve({
+                status: 'success',
+                message: 'Get data successfully',
                 totalCount: totalCount
             })
         } else {
-            return Promise.reject(
-                setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'No upcoming exhibitions')
-            )
+            return Promise.resolve({
+                status: 'success',
+                message: 'No exhibitions found'
+            })
+
         }
     } catch (error) {
         // console.log('🚀 ~ file: get-graph-1-data.js:33 ~ getGraph1Data ~ error:', error);

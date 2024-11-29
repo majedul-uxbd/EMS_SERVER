@@ -64,7 +64,7 @@ const getNumberOfRowsQuery = async (companyId) => {
 }
 
 
-const getRequestedVisitorDataQuery = async (companyId) => {
+const getRequestedVisitorDataQuery = async (companyId, paginationData) => {
     const _query = `
         SELECT
             visitor.f_name,
@@ -87,11 +87,17 @@ const getRequestedVisitorDataQuery = async (companyId) => {
         ON 
             ad.project_id = project.id
         WHERE
-            ad.company_id = ?;
+            ad.company_id = ?
+        LIMIT ? OFFSET ?;
     `;
+    const _values = [
+        companyId,
+        paginationData.itemsPerPage,
+        paginationData.offset
+    ]
 
     try {
-        const [result] = await pool.query(_query, companyId);
+        const [result] = await pool.query(_query, _values);
         if (result.length > 0) {
             return result;
         }
@@ -105,12 +111,12 @@ const getRequestedVisitorDataQuery = async (companyId) => {
 /**
  * @description This function is used to get those visitor data who are requested for project document 
  */
-const getRequestedVisitorData = async (authData) => {
+const getRequestedVisitorData = async (authData, paginationData) => {
     try {
         const companyId = await getCompanyId(authData);
         if (companyId) {
             const totalRows = await getNumberOfRowsQuery(companyId);
-            const visitorData = await getRequestedVisitorDataQuery(companyId);
+            const visitorData = await getRequestedVisitorDataQuery(companyId, paginationData);
             return Promise.resolve({
                 metadata: {
                     totalRows: totalRows,

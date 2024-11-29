@@ -14,7 +14,7 @@ const { setRejectMessage } = require("../../common/set-reject-message");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
 
-const checkIfVisitorAlreadyEnrolled = async (authData) => {
+const checkIfVisitorAlreadyEnrolled = async (authData, bodyData) => {
 
     const _query = `
         SELECT
@@ -22,11 +22,13 @@ const checkIfVisitorAlreadyEnrolled = async (authData) => {
         FROM
             exhibitions_has_visitor
         WHERE
-            visitor_id  = ?;
+            visitor_id  = ? AND
+            exhibition_id = ?;
     `;
 
     const _values = [
-        authData.id
+        authData.id,
+        bodyData.exhibitionId
     ]
 
     try {
@@ -75,7 +77,7 @@ const insertEnrollData = async (authData, bodyData) => {
  */
 const enrollVisitorInExhibition = async (authData, bodyData) => {
     try {
-        const isAlreadyEnrolled = await checkIfVisitorAlreadyEnrolled(authData);
+        const isAlreadyEnrolled = await checkIfVisitorAlreadyEnrolled(authData, bodyData);
         if (isAlreadyEnrolled) {
             return Promise.reject(
                 setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'You have already enrolled')

@@ -36,7 +36,36 @@ const { insertRequestedDocumentData } = require("../../main/exhibitors/insert-re
 const { getRequestedVisitorData } = require("../../main/exhibitors/get-requested-visitor-data");
 const { generateRequestedVisitorPDF } = require("../../main/exhibitors/create_requested_data-pdf");
 const { enrollCompanyInExhibition } = require("../../main/exhibitors/enroll-company-in-exhibitions");
+
+
 exhibitorsRouter.use(authenticateToken);
+
+
+/**
+ * This API will create a new exhibitor
+ */
+exhibitorsRouter.post(
+	'/add',
+	isUserRoleExhibitorAdmin,
+	validateExhibitorsData,
+	async (req, res) => {
+
+		addExhibitor(req.body.exhibitor, req.auth)
+			.then((data) => {
+				return res.status(API_STATUS_CODE.ACCEPTED).send({
+					status: data.status,
+					message: data.message,
+				});
+			})
+			.catch((error) => {
+				const { statusCode, message } = error;
+				return res.status(statusCode).send({
+					status: 'failed',
+					message: message,
+				});
+			});
+	}
+);
 
 
 /**
@@ -120,22 +149,24 @@ exhibitorsRouter.post(
 /**
  * This API will allow Exhibitor Admin to active de-activated exhibitor
  */
-exhibitorsRouter.post("/active", isUserRoleExhibitorAdmin, async (req, res) => {
-	activeExhibitorData(req.auth, req.body)
-		.then((data) => {
-			return res.status(API_STATUS_CODE.OK).send({
-				status: data.status,
-				message: data.message,
+exhibitorsRouter.post("/active",
+	isUserRoleExhibitorAdmin,
+	async (req, res) => {
+		activeExhibitorData(req.auth, req.body)
+			.then((data) => {
+				return res.status(API_STATUS_CODE.OK).send({
+					status: data.status,
+					message: data.message,
+				});
+			})
+			.catch((error) => {
+				const { statusCode, message } = error;
+				return res.status(statusCode).send({
+					status: "failed",
+					message: message,
+				});
 			});
-		})
-		.catch((error) => {
-			const { statusCode, message } = error;
-			return res.status(statusCode).send({
-				status: "failed",
-				message: message,
-			});
-		});
-});
+	});
 
 /**
  * This API will allow Exhibitor Admin to de-active activated exhibitor
@@ -218,8 +249,9 @@ exhibitorsRouter.post(
 	"/get-requested-visitor-data",
 	authenticateToken,
 	isUserRoleExhibitorAdminOrExhibitor,
+	paginationData,
 	async (req, res) => {
-		getRequestedVisitorData(req.auth)
+		getRequestedVisitorData(req.auth, req.body.paginationData)
 			.then((data) => {
 				return res.status(API_STATUS_CODE.OK).send({
 					status: "success",

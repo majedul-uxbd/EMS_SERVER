@@ -13,6 +13,8 @@ const express = require('express');
 const fileUploadRouter = express.Router();
 
 const authenticateToken = require('../../middlewares/jwt');
+const path = require("path");
+
 const { uploadFileValidator } = require('../../common/utilities/file-upload/upload-file-validation');
 const { errorCheck } = require('../../common/utilities/file-upload/check-error');
 const { API_STATUS_CODE } = require('../../consts/error-status');
@@ -21,6 +23,7 @@ const { isUserRoleAdminOrExhibitorAdminOrExhibitor } = require('../../common/uti
 const { uploadImageValidator } = require('../../common/utilities/file-upload/upload-image-validator');
 const { insertImageData } = require('../../main/upload-file/upload-profile-image-info');
 const { checkIfFileSavePathExist } = require('../../common/utilities/file-upload/check-file-path-exist');
+
 
 fileUploadRouter.use(authenticateToken);
 
@@ -59,9 +62,9 @@ fileUploadRouter.post('/upload-image',
     uploadImageValidator.single('upload_image'),
     errorCheck,
     async (req, res) => {
-        const fileName = req.file?.filename;
+        const buffer = req.file?.buffer;
 
-        insertImageData(fileName, req.auth)
+        insertImageData(buffer, req.auth)
             .then(data => {
                 return res.status(API_STATUS_CODE.OK).send({
                     status: data.status,

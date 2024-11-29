@@ -9,12 +9,14 @@
  * 
  */
 
-
+/**
+ * @description This function is used to generate random string
+ */
 const generateRandomString = () => {
     const uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     const lowercase = "abcdefghijklmnopqrstuvwxyz";
     const numbers = "0123456789";
-    const specialChars = "!@#$&()=";
+    const specialChars = "!@#$&";
     const allChars = uppercase + lowercase + numbers + specialChars;
 
     // Ensure at least one of each required character

@@ -27,18 +27,10 @@ const { API_STATUS_CODE } = require("../../consts/error-status");
  */
 const validateExhibitorsData = (req, res, next) => {
     const errors = [];
-    if (!req.body.companyId) {
-        return res.status(API_STATUS_CODE.BAD_REQUEST).send({
-            status: "failed",
-            message: "Company ID is required",
-        });
-    }
     const exhibitor = {
-        companyId: req.body.companyId,
         firstName: req.body.firstName,
         lastName: req.body.lastName,
         email: req.body.email,
-        password: req.body.password,
         contact: req.body.contact,
         position: req.body.position,
         role: req.body.role,
@@ -64,18 +56,10 @@ const validateExhibitorsData = (req, res, next) => {
     if (!isValidUserPosition(exhibitor.position)) {
         errors.push("Invalid user position");
     }
-    if (!_.isNil(exhibitor.role)) {
-        if (!isValidUserRole(exhibitor.role)) {
-            errors.push("Invalid user role");
-        }
-    } else {
-        exhibitor.role = 'exhibitor';
-    }
 
-    if (!isValidPassword(exhibitor.password)) {
-        errors.push("Invalid user password");
+    if (exhibitor.role !== 'exhibitor' && exhibitor.role !== 'exhibitor_admin') {
+        errors.push("Invalid user rolea");
     }
-    // console.log("🚀 ~ validateAddUserData ~ errors:", errors)
 
     if (errors.length > 0) {
         return res.status(API_STATUS_CODE.BAD_REQUEST).send({
@@ -83,8 +67,7 @@ const validateExhibitorsData = (req, res, next) => {
             message: errors,
         });
     }
-    // console.log("🚀 ~ validateExhibitorsData ~ exhibitor:", exhibitor);
-    // return
+
     req.body.exhibitor = exhibitor;
     next();
 };

@@ -7,7 +7,7 @@ const getNumberOfPendingRowsQuery = async () => {
     const _query = `
     SELECT count(*) AS totalRows
     FROM companies
-    WHERE current_status = 0;
+    WHERE current_status = 1;
     `;
 
     try {
@@ -33,7 +33,7 @@ const getPendingCompanyExhibitorDataQuery = async (paginationData) => {
     FROM
         companies
     WHERE
-        current_status = 0
+        current_status = 1
     LIMIT ?
     OFFSET ?;
     `;

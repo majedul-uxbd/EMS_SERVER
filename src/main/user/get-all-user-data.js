@@ -24,15 +24,14 @@ const getNumberOfRowsQuery = async (userData, paginationData) => {
         companies
     ON companies.id = user.companies_id
     WHERE
-        companies.is_active = ${1} AND
-        user.is_user_active = ${1}
-
     `;
 
     if (userData.role === 'exhibitor' || userData.role === 'exhibitor_admin') {
-        _query += ` AND user.role IN (?, 'exhibitor_admin')`;
+        _query += `companies.is_active = ${1}
+         AND user.role IN (?, 'exhibitor_admin')`;
     } else if (userData.role === 'organizer') {
-        _query += ` AND user.role = ?`;
+        _query += `user.is_user_active = ${1}
+         AND user.role = ?`;
     }
 
     const values = [userData.role, paginationData.itemsPerPage, paginationData.offset];
@@ -76,14 +75,14 @@ const getUserDataQuery = async (userData, paginationData) => {
         companies
     ON companies.id = user.companies_id
     WHERE
-        companies.is_active = ${1} AND
-        user.is_user_active = ${1}
     `;
 
     if (userData.role === 'exhibitor' || userData.role === 'exhibitor_admin') {
-        _query += ` AND user.role IN (?, 'exhibitor_admin')`;
+        _query += `companies.is_active = ${1}
+         AND user.role IN (?, 'exhibitor_admin')`;
     } else if (userData.role === 'organizer') {
-        _query += ` AND user.role = ?`;
+        _query += `user.is_user_active = ${1}
+         AND user.role = ?`;
     }
 
     _query += ` LIMIT ? OFFSET ?`;

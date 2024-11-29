@@ -15,7 +15,8 @@ const { fileTypes, uploadFileSize } = require("./upload-file-const-value");
 const { imageStorage } = require("./image-name-modifiers");
 
 const uploadImageValidator = multer({
-    storage: imageStorage,
+    // storage: imageStorage,
+    storage: multer.memoryStorage(),
     fileFilter: (req, file, cb) => {
         if (fileTypes.includes(file.mimetype)) {
             cb(null, true);

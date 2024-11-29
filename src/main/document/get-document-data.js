@@ -44,6 +44,7 @@ const getNumberOfRowsQuery = async (bodyData) => {
 const getDocumentDataQuery = async (bodyData, paginationData) => {
     const _query = `
     SELECT
+        doc.id,
         doc.project_id,
         doc.title,
         doc.file_name,

@@ -10,7 +10,9 @@ const formatDateTime = (isoString) => {
 };
 
 // Modified function to return PDF buffer instead of saving to file
-const generatePDF = (data) => {
+const generatePDF = (data, lg) => {
+	const lgKey = lg;
+	console.log('🚀 ~ file: visitors_document-list.js:15 ~ generatePDF ~ lgKey:', data);
 	return new Promise((resolve, reject) => {
 		try {
 			const doc = new PDFDocument({
@@ -27,7 +29,7 @@ const generatePDF = (data) => {
 
 			// Header section with logo and title
 			doc.image(
-				path.join(process.cwd(), "/src/common/utilities/images/UXBD_logo.jpg"),
+				path.join(process.cwd(), "/src/common/utilities/images/UXAP_logo.jpg"),
 				710,
 				15,
 				{
@@ -36,11 +38,17 @@ const generatePDF = (data) => {
 				}
 			);
 
-			doc
-				.fontSize(19)
-				.font("Helvetica-Bold")
-				.fillColor("#030663")
-				.text("List of Requested Documents", 50, 50);
+			if (lgKey === 'ja') {
+				doc.fontSize(19)
+					.font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Bold.ttf",))
+					.fillColor("#030663")
+					.text("依頼された書類の一覧", 50, 50);
+			} else {
+				doc.fontSize(19)
+					.font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Bold.ttf",))
+					.fillColor("#030663")
+					.text("List of Requested Documents", 50, 50);
+			}
 			doc.moveTo(50, 90).lineTo(780, 90).stroke();
 
 			doc.moveDown(1);
@@ -67,32 +75,60 @@ const generatePDF = (data) => {
 			};
 
 			// Draw table headers with borders
-			doc.fontSize(10).font("Helvetica-Bold");
+			doc.fontSize(10).font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Bold.ttf",));
 
-			doc.text("Serial", colXPositions.serialNo, tableTop, {
-				width: colWidths.serialNo,
-				align: "center",
-			});
-			doc.text("Project Name", colXPositions.projectName, tableTop, {
-				width: colWidths.projectName,
-				align: "center",
-			});
-			doc.text("Platform", colXPositions.platform, tableTop, {
-				width: colWidths.platform,
-				align: "center",
-			});
-			doc.text("Company Name", colXPositions.companyName, tableTop, {
-				width: colWidths.companyName,
-				align: "center",
-			});
-			doc.text("Document Title", colXPositions.title, tableTop, {
-				width: colWidths.title,
-				align: "center",
-			});
-			doc.text("Request Time", colXPositions.createdAt, tableTop, {
-				width: colWidths.createdAt,
-				align: "center",
-			});
+			if (lgKey === 'ja') {
+				doc.text("シリアル", colXPositions.serialNo, tableTop, {
+					width: colWidths.serialNo,
+					align: "center",
+				});
+				doc.text("プロジェクト名", colXPositions.projectName, tableTop, {
+					width: colWidths.projectName,
+					align: "center",
+				});
+				doc.text("プラットフォーム", colXPositions.platform, tableTop, {
+					width: colWidths.platform,
+					align: "center",
+				});
+				doc.text("会社名", colXPositions.companyName, tableTop, {
+					width: colWidths.companyName,
+					align: "center",
+				});
+				doc.text("文書タイトル", colXPositions.title, tableTop, {
+					width: colWidths.title,
+					align: "center",
+				});
+				doc.text("リクエスト時間", colXPositions.createdAt, tableTop, {
+					width: colWidths.createdAt,
+					align: "center",
+				});
+
+			} else {
+				doc.text("Serial", colXPositions.serialNo, tableTop, {
+					width: colWidths.serialNo,
+					align: "center",
+				});
+				doc.text("Project Name", colXPositions.projectName, tableTop, {
+					width: colWidths.projectName,
+					align: "center",
+				});
+				doc.text("Platform", colXPositions.platform, tableTop, {
+					width: colWidths.platform,
+					align: "center",
+				});
+				doc.text("Company Name", colXPositions.companyName, tableTop, {
+					width: colWidths.companyName,
+					align: "center",
+				});
+				doc.text("Document Title", colXPositions.title, tableTop, {
+					width: colWidths.title,
+					align: "center",
+				});
+				doc.text("Request Time", colXPositions.createdAt, tableTop, {
+					width: colWidths.createdAt,
+					align: "center",
+				});
+			}
 
 			// Draw header borders
 			Object.keys(colXPositions).forEach((key) => {
@@ -102,7 +138,7 @@ const generatePDF = (data) => {
 			});
 
 			// Reset font to normal for table data
-			doc.font("Helvetica");
+			doc.font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Regular.ttf",));
 
 			// Draw table rows with serial numbers
 			data.forEach((row, index) => {
@@ -150,7 +186,7 @@ const generatePDF = (data) => {
 };
 
 // Modified function to return PDF buffer
-const generatePDFReport = async (data) => {
+const generatePDFReport = async (data, lg) => {
 	try {
 		if (!Array.isArray(data) || data.length === 0) {
 			throw setRejectMessage(
@@ -159,7 +195,7 @@ const generatePDFReport = async (data) => {
 			);
 		}
 
-		const pdfBuffer = await generatePDF(data);
+		const pdfBuffer = await generatePDF(data, lg);
 		return pdfBuffer;
 	} catch (error) {
 		console.error("Error generating PDF report:", error);

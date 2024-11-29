@@ -143,14 +143,7 @@ const getUserInformationForIdCard = async (req, res, next) => {
                 message: 'Exhibition data is not found'
             })
         }
-        if (eventDetails) {
-            req.body.eventDetails = eventDetails;
-        } else {
-            return res.status(API_STATUS_CODE.BAD_REQUEST).send({
-                status: 'failed',
-                message: 'Event data is not found'
-            })
-        }
+        req.body.eventDetails = eventDetails;
         // console.log({ userInfo, exhibitionData, eventDetails });
         next();
 

@@ -1,4 +1,3 @@
-const bcrypt = require("bcrypt");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 const { pool } = require("../../../database/db");
 const { generateRandomString } = require("../../common/utilities/generate-random-string");
@@ -16,17 +15,15 @@ const addCompanyWithExhibitor = async (companyData, exhibitor) => {
             throw setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Failed to create company');
         }
 
-        // Step 2: Generate Password and Create Exhibitor
+        // Step 2: Generate Password and Create Exhibitor (without hashing)
         const exhibitorPassword = await generateRandomString();
-        exhibitor.password = await bcrypt.hash(exhibitorPassword, 10);
+        exhibitor.password = exhibitorPassword; // Removed password hashing
         exhibitor.companyId = companyResult.companyId;
 
         const exhibitorResult = await addExhibitor(exhibitor, connection);
         if (exhibitorResult.status !== 'success') {
             throw setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Failed to create exhibitor');
         }
-
-        // Step 3: (Removed email sending logic)
 
         await connection.commit();
         return {
@@ -53,7 +50,7 @@ const addCompanyData = async (companyData, connection) => {
             email, 
             created_at,
             is_active
-        ) VALUES (?, ?, ?, ?, ?, 1);
+        ) VALUES (?, ?, ?, ?, ?, 0);
     `;
     const values = [
         companyData.companyName,
@@ -117,7 +114,7 @@ const addExhibitor = async (exhibitor, connection) => {
             exhibitor.firstName,
             exhibitor.lastName,
             exhibitor.email,
-            exhibitor.password,
+            exhibitor.password, // Now using unhashed password
             exhibitor.contact,
             exhibitor.position,
             exhibitor.role,

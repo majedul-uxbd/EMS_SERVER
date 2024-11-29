@@ -137,7 +137,7 @@ visitorsRouter.post(
 	isUserRoleVisitor,
 	paginationData,
 	async (req, res) => {
-		getRequestedDocumentData(req.auth, req.body, req.body.paginationData)
+		getRequestedDocumentData(req.auth, req.body.paginationData)
 			.then((data) => {
 				return res.status(API_STATUS_CODE.OK).send({
 					status: "success",
@@ -162,7 +162,7 @@ visitorsRouter.post(
 	authenticateToken,
 	isUserRoleExhibitorAdminOrExhibitorOrVisitor,
 	async (req, res) => {
-		const { data } = req.body;
+		const { lg, data } = req.body;
 
 		if (!Array.isArray(data)) {
 			return res.status(API_STATUS_CODE.BAD_REQUEST).send({
@@ -172,7 +172,7 @@ visitorsRouter.post(
 		}
 
 		try {
-			const pdfBuffer = await generatePDFReport(data);
+			const pdfBuffer = await generatePDFReport(data, lg);
 
 			// Set response headers for PDF
 			res.setHeader('Content-Type', 'application/pdf');

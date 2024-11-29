@@ -72,32 +72,24 @@ const getNumberOfRowsQuery = async () => {
 const getAttendanceData = async (paginationData) => {
 	const _query = `
 	SELECT
-			attendances.time,
-			attendances.exhibitions_day,
-			taken_by.f_name AS taken_by_f_name,
-			taken_by.l_name AS taken_by_l_name,
+		attendances.time,
+		attendances.exhibitions_day,
+		taken_by.f_name AS taken_by_f_name,
+		taken_by.l_name AS taken_by_l_name,
+		ex.id AS exhibition_id,
+		ex.exhibitions_title AS exhibition_name,
 		CASE WHEN user.id IS NULL THEN visitors.id ELSE user.id
-		END AS id,
-		CASE 
-			WHEN user.id IS NULL THEN visitors.f_name 
-			ELSE user.f_name
-		END AS f_name,
-		CASE 
-			WHEN user.id IS NULL THEN visitors.l_name 
-			ELSE user.l_name
-		END AS l_name,
-		CASE 
-			WHEN user.id IS NULL THEN visitors.company 
-			ELSE user.company
-		END AS company,
-		CASE 
-			WHEN user.id IS NULL THEN visitors.position 
-			ELSE user.position
-		END AS position,
-		CASE 
-			WHEN user.id IS NULL THEN visitors.role 
-			ELSE user.role
-		END AS role
+	END AS id,
+	CASE WHEN user.id IS NULL THEN visitors.f_name ELSE user.f_name
+	END AS f_name,
+	CASE WHEN user.id IS NULL THEN visitors.l_name ELSE user.l_name
+	END AS l_name,
+	CASE WHEN user.id IS NULL THEN visitors.company ELSE user.company
+	END AS company,
+	CASE WHEN user.id IS NULL THEN visitors.position ELSE user.position
+	END AS position,
+	CASE WHEN user.id IS NULL THEN visitors.role ELSE user.role
+	END AS role
 	FROM
 		attendances
 	LEFT JOIN(
@@ -134,6 +126,13 @@ const getAttendanceData = async (paginationData) => {
 	LEFT JOIN user AS taken_by
 	ON
 		attendances.taken_by = taken_by.id
+	LEFT JOIN exhibition_days AS ed
+	ON
+		attendances.exhibition_days_id = ed.id
+	LEFT JOIN
+		exhibitions AS ex
+	ON
+		ed.exhibitions_id = ex.id
 	LIMIT ?
     OFFSET ?;
   `;

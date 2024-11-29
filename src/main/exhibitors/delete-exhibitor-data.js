@@ -15,6 +15,31 @@ const { setRejectMessage } = require("../../common/set-reject-message");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
 
+const checkExhibitorRole = async (exhibitorData) => {
+    const _query = `
+    SELECT
+        role
+    FROM 
+        user
+    WHERE
+        id = ?;
+    `;
+
+    try {
+        const [result] = await pool.query(_query, exhibitorData.id);
+        if (result.length > 0) {
+            return Promise.resolve(result[0].role);
+        }
+    } catch (error) {
+        return Promise.reject(
+            setRejectMessage(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'operation_failed'
+            )
+        );
+    }
+}
+
 const getExhibitorCompanyQuery = async (authData) => {
     const _query = `
     SELECT
@@ -109,12 +134,18 @@ const deleteUserInfoQuery = async (exhibitorData) => {
  */
 const deleteExhibitorData = async (authData, exhibitorData) => {
     try {
+        const checkRole = await checkExhibitorRole(exhibitorData);
+        if (checkRole === 'exhibitor_admin') {
+            return Promise.reject(
+                setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Exhibitor admin can not be de-activated')
+            )
+        }
         const companyId = await getExhibitorCompanyQuery(authData);
         if (!_.isNil(companyId)) {
             const isExhibitorExist = await checkExhibitorAlreadyDeActiveOrNot(companyId, exhibitorData);
             if (isExhibitorExist) {
                 return Promise.reject(
-                    setRejectMessage(API_STATUS_CODE.BAD_REQUEST, "User has already de-active")
+                    setRejectMessage(API_STATUS_CODE.BAD_REQUEST, "User has already de-activated")
                 )
             }
             const isUserDelete = await deleteUserInfoQuery(exhibitorData);

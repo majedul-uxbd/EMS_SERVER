@@ -19,6 +19,7 @@ const { isUserRoleAdmin } = require('../../common/utilities/check-user-role');
 const authenticateToken = require('../../middlewares/jwt');
 const { deleteExhibitionsData } = require('../../main/exhibitions/delete-exhibitions-data');
 const { deleteEventData } = require('../../main/exhibitions/delete-event-data');
+const { updateExhibitionData } = require('../../main/exhibitions/update-exhibition-data');
 
 exhibitionsRouter.use(authenticateToken);
 
@@ -47,30 +48,30 @@ exhibitionsRouter.post('/add',
             });
     });
 
+
 /**
- * TODO: Need to work on this API. This is not running API
- */
-// exhibitionsRouter.post('/update',
-//     isUserRoleAdmin,
-//     validateExhibitionsBodyData,
-//     async (req, res) => {
+* TODO: Need to work on this API. This is not running API
+*/
+exhibitionsRouter.post('/update',
+    isUserRoleAdmin,
+    validateExhibitionsBodyData,
+    async (req, res) => {
 
-//         updateExhibitionData(req.body.bodyData)
-//             .then(data => {
-//                 return res.status(API_STATUS_CODE.CREATED).send({
-//                     status: data.status,
-//                     message: data.message
-//                 })
-//             })
-//             .catch(error => {
-//                 const { statusCode, message } = error;
-//                 return res.status(statusCode).send({
-//                     status: 'failed',
-//                     message: message,
-//                 })
-//             });
-//     });
-
+        updateExhibitionData(req.body.bodyData)
+            .then(data => {
+                return res.status(API_STATUS_CODE.CREATED).send({
+                    status: data.status,
+                    message: data.message
+                })
+            })
+            .catch(error => {
+                const { statusCode, message } = error;
+                return res.status(statusCode).send({
+                    status: 'failed',
+                    message: message,
+                })
+            });
+    });
 
 /**
  * Through this API admin can delete exhibitions data

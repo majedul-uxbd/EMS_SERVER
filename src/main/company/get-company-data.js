@@ -21,9 +21,8 @@ const getNumberOfRowsQuery = async () => {
     FROM
         companies
     WHERE
-        is_active = ${1}
+        current_status IS NULL;
     `;
-
 
     try {
         const [result] = await pool.query(_query);
@@ -58,9 +57,12 @@ const getCompanyDataQuery = async (paginationData) => {
         updated_at
     FROM
         companies
+    WHERE
+        current_status IS NULL
     LIMIT ?
     OFFSET ?;
     `;
+
 
     const values = [paginationData.itemsPerPage, paginationData.offset];
 

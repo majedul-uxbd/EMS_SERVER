@@ -30,7 +30,6 @@ const { activeCompanyInfo } = require('../../main/company/active-company-data');
 const { updateCompanyInfo } = require('../../main/company/update-company-data');
 const { getActiveCompanyData } = require('../../main/company/get-active-company-data');
 const { validateUserData } = require('../../middlewares/user/user-data-validator');
-const { getDocumentData } = require('../../main/document/get-document-data');
 const { addCompanyWithExhibitor } = require('../../main/company/add-company-and-exhibitor');
 const { getPendingCompanyExhibitorData } = require('../../main/company/show_pending _requestOfCompany_ExhibitorCreation');
 const { approvePendingRequest } = require('../../main/company/approve_company_and_exhibitor');
@@ -40,6 +39,8 @@ const { getExhibition } = require('../../main/exhibitions/get-exhibitions');
 const { getExhibitionData } = require('../../main/exhibitions/get-exhibitions-data');
 const { getEventDate } = require('../../main/exhibitions/get-event-date');
 const { addEventDetails } = require('../../main/exhibitions/add-event-details');
+const { getPendingRequestsCount } = require('../../main/company/total-pending-company');
+const { activeUser } = require('../../main/user/active-user');
 systemAdminRouter.use(authenticateToken);
 
 
@@ -175,8 +176,6 @@ systemAdminRouter.post('/update',
 // Route to create company and exhibitor
 systemAdminRouter.post(
     '/add-company-with-exhibitor',
-    checkUserIdValidity,
-    isUserRoleAdmin,
     async (req, res) => {
         try {
             const { companyData, exhibitor } = req.body;
@@ -201,10 +200,12 @@ systemAdminRouter.post(
             });
         } catch (error) {
             const statusCode = error.statusCode || API_STATUS_CODE.INTERNAL_SERVER_ERROR;
+
             return res.status(statusCode).json({
                 status: 'failed',
                 message: error.message || 'Internal Server Error'
             });
+            console.log(error.message);
         }
     }
 );
@@ -537,6 +538,46 @@ systemAdminRouter.post('/add-event-details',
                     message: message,
                 })
             });
+    });
+
+systemAdminRouter.post('/total-pending-requests',
+    isUserRoleAdmin,
+    async (req, res) => {
+        getPendingRequestsCount()
+            .then(data => {
+                return res.status(API_STATUS_CODE.OK).send({
+                    status: 'success',
+                    message: "Total pending requests fetched successfully",
+                    data
+                })
+            })
+            .catch(error => {
+                const { statusCode, message } = error;
+                return res.status(statusCode).send({
+                    status: 'failed',
+                    message: message,
+                })
+            })
+    });
+
+
+systemAdminRouter.post('/active-user',
+    isUserRoleAdmin,
+    async (req, res) => {
+        activeUser(req.body)
+            .then(data => {
+                return res.status(API_STATUS_CODE.OK).send({
+                    status: data.status,
+                    message: data.message
+                })
+            })
+            .catch(error => {
+                const { statusCode, message } = error;
+                return res.status(statusCode).send({
+                    status: 'failed',
+                    message: message,
+                })
+            })
     });
 
 

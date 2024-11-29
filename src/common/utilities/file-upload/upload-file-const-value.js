@@ -18,12 +18,12 @@ const path = require('path');
 const imageDir = path.join(process.cwd(), "/uploads/profile-images");
 
 /**
- * @description Upload image saved file directory
+ * @description Upload document saved file directory
  */
 const documentDir = path.join(process.cwd(), "/uploads/documents");
 
 /**
- * @description Upload image saved file directory
+ * @description Upload ID Card saved file directory
  */
 const idCardDir = path.join(process.cwd(), "/uploads/ID-card");
 

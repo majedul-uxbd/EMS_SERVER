@@ -22,9 +22,9 @@ dashboardRouter.get(
         allCountForDashboardTab1()
             .then((data) => {
                 return res.status(API_STATUS_CODE.OK).send({
-                    status: 'success',
-                    message: 'Get all count successfully',
-                    ...data
+                    status: data.status,
+                    message: data.message,
+                    totalCount: data.totalCount
                 });
             })
             .catch((error) => {
@@ -48,9 +48,9 @@ dashboardRouter.post(
         allCountForDashboardTab2(req.body)
             .then((data) => {
                 return res.status(API_STATUS_CODE.OK).send({
-                    status: 'success',
-                    message: 'Get all count successfully',
-                    ...data
+                    status: data.status,
+                    message: data.message,
+                    totalCount: data.totalCount
                 });
             })
             .catch((error) => {
@@ -74,9 +74,9 @@ dashboardRouter.get(
         getGraph1Data(req.body)
             .then((data) => {
                 return res.status(API_STATUS_CODE.OK).send({
-                    status: 'success',
-                    message: 'Get all count successfully',
-                    ...data
+                    status: data.status,
+                    message: data.message,
+                    totalCount: data.totalCount
                 });
             })
             .catch((error) => {
@@ -92,7 +92,7 @@ dashboardRouter.get(
 
 
 /**
- * This API will return all graph count for the dashboard tab 1 based on exhibition
+ * This API will return all graph count for the dashboard tab 2 based on exhibition
  */
 dashboardRouter.post(
     "/graph-2",
@@ -101,9 +101,9 @@ dashboardRouter.post(
         getGraph2Data(req.body)
             .then((data) => {
                 return res.status(API_STATUS_CODE.OK).send({
-                    status: 'success',
-                    message: 'Get all count successfully',
-                    ...data
+                    status: data.status,
+                    message: data.message,
+                    totalCount: data.totalCount
                 });
             })
             .catch((error) => {

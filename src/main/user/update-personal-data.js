@@ -12,9 +12,6 @@
 const { pool } = require("../../../database/db");
 const { setRejectMessage } = require("../../common/set-reject-message");
 const { API_STATUS_CODE } = require("../../consts/error-status");
-const { format } = require('date-fns');
-
-
 
 const updateUserInfoQuery = (bodyData, authData) => {
     const tableName = [];
@@ -117,7 +114,7 @@ const updatePersonalInfo = async (bodyData, authData) => {
             )
         }
     } catch (error) {
-        console.log("🚀 ~ updateUserInfo ~ error:", error)
+        // console.log("🚀 ~ updateUserInfo ~ error:", error)
         return Promise.reject(
             setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, "Internal Server Error")
         )

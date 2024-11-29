@@ -37,7 +37,7 @@ const { projectRouter } = require("./routes/project/project-route");
 const { attendanceRouter } = require("./routes/attendances/attendance-route");
 const { commonRouter } = require("./routes/common/common-route");
 const { dashboardRouter } = require("./routes/admin-dashboard/dashboard-route");
-
+const { withoutLoginRouter } = require('./routes/withoutLogin/without-Token-route');
 
 // Middleware
 app.use("/users", usersRouter);
@@ -52,6 +52,7 @@ app.use("/project", projectRouter);
 app.use("/attendances", attendanceRouter);
 app.use("/common", commonRouter);
 app.use("/dashboard", dashboardRouter);
+app.use("/withoutLogin", withoutLoginRouter);
 
 // app.get("/status", (req, res) => {
 //   res.json({

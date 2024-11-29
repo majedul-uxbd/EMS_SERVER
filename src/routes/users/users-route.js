@@ -17,11 +17,8 @@ const { userLogin } = require('../../main/user/user-login');
 const { getUserData } = require('../../main/user/get-user-data');
 const { API_STATUS_CODE } = require('../../consts/error-status');
 const authenticateToken = require('../../middlewares/jwt');
-const { validateUserData } = require('../../middlewares/user/user-data-validator');
-const { addUser } = require('../../main/user/add-user');
 const { checkUserIdValidity } = require('../../middlewares/check-user-id-validity');
 const { updateUserDataValidator } = require('../../middlewares/user/update-user-data-validator');
-const { isUserRoleAdminOrExhibitorAdmin } = require('../../common/utilities/check-user-role');
 const { updatePersonalInfo } = require('../../main/user/update-personal-data');
 const { deletePersonalData } = require('../../main/user/delete-personal-data');
 

@@ -9,6 +9,7 @@
  * 
  */
 
+const _ = require('lodash');
 const { pool } = require("../../../database/db");
 const { setRejectMessage } = require("../../common/set-reject-message");
 const { API_STATUS_CODE } = require("../../consts/error-status");
@@ -104,7 +105,10 @@ const totalEnrolledCompanyId = async (bodyData) => {
     `;
     try {
         const [result] = await pool.query(_query, bodyData.exhibitionId);
-        return Promise.resolve(result);
+        if (result.length > 0) {
+            return Promise.resolve(result);
+        }
+        return Promise.resolve(false);
     } catch (error) {
         return Promise.reject(error);
     }
@@ -150,18 +154,36 @@ const checkCompanyHasProjects = async (companyId) => {
  */
 const allCountForDashboardTab2 = async (bodyData) => {
     let attendedCompanyCount = 0;
+    if (_.isNil(bodyData.exhibitionId)) {
+        return Promise.reject(
+            setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Exhibition ID is required')
+        )
+    }
     try {
         const attendedVisitorCount = await attendedVisitorCountQuery(bodyData);
         const enrolledVisitorCount = await enrolledVisitorCountQuery(bodyData);
         const attendedExhibitorCount = await attendedExhibitorCountQuery(bodyData);
         const enrolledCompanyCount = await enrolledCompanyCountQuery(bodyData);
         const enrolledCompanyId = await totalEnrolledCompanyId(bodyData);
-        // const projectCount = await totalProjectCount(bodyData);
 
-        for (const company of enrolledCompanyId) {
-            const hasCompany = await checkCompanyHasProjects(company.company_id);
-            if (hasCompany) {
-                attendedCompanyCount = attendedCompanyCount + 1;
+        if (enrolledCompanyId === false) {
+            const totalCount = {
+                attendedVisitorCount,
+                enrolledVisitorCount,
+                attendedExhibitorCount,
+                enrolledCompanyCount,
+            }
+            return Promise.resolve({
+                status: 'success',
+                message: 'No company enrolled in this exhibition',
+                totalCount: totalCount
+            });
+        } else {
+            for (const company of enrolledCompanyId) {
+                const hasCompany = await checkCompanyHasProjects(company.company_id);
+                if (hasCompany) {
+                    attendedCompanyCount = attendedCompanyCount + 1;
+                }
             }
         }
 
@@ -174,6 +196,8 @@ const allCountForDashboardTab2 = async (bodyData) => {
             attendedCompanyCount,
         }
         return Promise.resolve({
+            status: 'success',
+            message: 'Get data successfully',
             totalCount: totalCount
         })
     } catch (error) {

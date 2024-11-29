@@ -10,23 +10,27 @@
  */
 
 const multer = require("multer");
+const { API_STATUS_CODE } = require("../../../consts/error-status");
 
 const errorCheck = (err, req, res, next) => {
-  if (err) {
-    if (err instanceof multer.MulterError) {
-      return res.status(500).send({
-        err,
-        status: "failed",
-        message: "Failed to upload file",
-      });
-    } else {
-      return res.send(err?.message);
-    }
-  } else {
-    next();
-  }
+	if (err) {
+		if (err instanceof multer.MulterError) {
+			return res.status(API_STATUS_CODE.BAD_REQUEST).send({
+				err,
+				status: "failed",
+				message: "Failed to upload file",
+			});
+		} else {
+			return res.status(API_STATUS_CODE.BAD_REQUEST).send({
+				status: "failed",
+				message: err?.message
+			});
+		}
+	} else {
+		next();
+	}
 };
 
 module.exports = {
-  errorCheck,
+	errorCheck,
 };

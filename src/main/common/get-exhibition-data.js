@@ -51,8 +51,7 @@ const exhibitionDataForExhibitor = async (authData) => {
         ON
             ehc.company_id = u.companies_id
         WHERE
-            u.id = ? AND 
-            u.role = ?;
+            u.id = ?;
     `;
     const _values = [
         authData.id,
@@ -118,7 +117,12 @@ const getExhibitionDataForUsers = async (authData) => {
                 // Check if any date matches today or if the first date is in the future
                 const hasMatchingOrUpcomingDate = dates.some(date => {
                     const exhibitionDate = new Date(date);
-                    return exhibitionDate >= today;
+                    const normalizedToday = new Date(
+                        today.getFullYear(),
+                        today.getMonth(),
+                        today.getDate()
+                    );
+                    return exhibitionDate >= normalizedToday;
                 });
                 return hasMatchingOrUpcomingDate;
             });
