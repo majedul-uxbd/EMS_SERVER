@@ -3,12 +3,77 @@ const { pool } = require("../../../database/db");
 const { generateRandomString } = require("../../common/utilities/generate-random-string");
 const setRejectMessage = (statusCode, message) => ({ statusCode, message });
 
+const checkDuplicateName = async () => {
+    const _query = `
+    SELECT 
+        name
+    FROM
+        companies;
+`;
+
+    try {
+        const [result] = await pool.query(_query);
+        if (result.length > 0) {
+            return result;
+        }
+        return false;
+    } catch (error) {
+        // console.log("🚀 ~ userLoginQuery ~ error:", error)
+        return Promise.reject(
+            setRejectMessage(error)
+        )
+    }
+};
+
+
+/**
+ * @param {string} str1 
+ * @param {string} str2 
+ * @param {boolean} caseInsensitive 
+ * @description This function will check if the str1 and str2 are the same string or not.
+ */
+const compareStrings = (str1, str2, caseInsensitive = true) => {
+    const splitStr1 = str1.trim().split(/\s+/);
+    const splitStr2 = str2.trim().split(/\s+/);
+
+    if (splitStr1.length === splitStr2.length) {
+        for (let i = 0; i < splitStr1.length; i++) {
+            if (caseInsensitive) {
+                if (splitStr1[i].toLowerCase() !== splitStr2[i].toLowerCase()) {
+                    return false;
+                }
+            } else {
+                if (splitStr1[i] !== splitStr2[i]) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
 const addCompanyWithExhibitor = async (companyData, exhibitor) => {
+    let isMatched = false;
+
     const connection = await pool.getConnection();
 
     try {
         await connection.beginTransaction();
-
+        const companyName = await checkDuplicateName();
+        for (const company of companyName) {
+            const result = compareStrings(companyData.companyName, company.name);
+            if (result) {
+                // console.log(`Match found: ${companyData.companyName} matches with ${company.name}`);
+                isMatched = true;
+                break;
+            }
+        }
+        if (isMatched === true) {
+            return Promise.reject(
+                setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Company name has already exists')
+            );
+        }
         // Step 1: Create Company
         const companyResult = await addCompanyData(companyData, connection);
         if (companyResult.status !== 'success') {
@@ -104,9 +169,10 @@ const addExhibitor = async (exhibitor, connection) => {
                 contact_no, 
                 position, 
                 role, 
-                is_user_active, 
+                is_user_active,
+                current_status, 
                 created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?);
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 1, ?);
         `;
 
         const values = [

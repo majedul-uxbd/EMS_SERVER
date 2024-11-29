@@ -3,7 +3,7 @@ const withoutLoginRouter = express.Router();
 
 const { addCompanyWithExhibitor } = require('../../main/company/add-company-and-exhibitor');
 const { API_STATUS_CODE } = require("../../consts/error-status");
-const { paginationData } = require("../../middlewares/common/pagination-data");
+
 
 withoutLoginRouter.post(
     '/add-company-with-exhibitor',
@@ -36,7 +36,6 @@ withoutLoginRouter.post(
                 status: 'failed',
                 message: error.message || 'Internal Server Error'
             });
-            console.log(error.message);
         }
     }
 );

@@ -32,14 +32,18 @@ const totalVisitorCount = async () => {
 
 const totalExhibitorCount = async () => {
     const _query = `
-    SELECT 
+    SELECT
         COUNT(*) AS total_exhibitors
-    FROM 
+    FROM
         user
+    LEFT JOIN
+        companies AS company
+    ON
+        user.companies_id = company.id
     WHERE
-        role IN ('exhibitor', 'exhibitor_admin') AND
-        is_user_active = ${1};
-
+        company.is_active = ${1} AND
+        user.role IN('exhibitor', 'exhibitor_admin') AND 
+        user.current_status IS NULL;
     `;
     try {
         const [result] = await pool.query(_query);
@@ -72,7 +76,9 @@ const totalCompanyCount = async () => {
     SELECT 
         COUNT(*) AS total_companies
     FROM 
-        companies;
+        companies
+    WHERE
+        current_status IS NULL;
     `;
     try {
         const [result] = await pool.query(_query);

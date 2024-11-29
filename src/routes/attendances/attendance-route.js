@@ -65,7 +65,6 @@ attendanceRouter.post(
 attendanceRouter.post(
 	"/generate_attendance_pdf",
 	authenticateToken,
-
 	async (req, res) => {
 		const { id, lg } = req.body;
 

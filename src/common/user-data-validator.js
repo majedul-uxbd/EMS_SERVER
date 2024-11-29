@@ -20,7 +20,7 @@ const VALID_USER_ROLE_TYPE = Object.freeze({
 // validate user first name
 const isValidUserFirstName = (fName) => {
 	const USERNAME_MAX_LENGTH = 60;
-	const USERNAME_MIN_LENGTH = 3;
+	const USERNAME_MIN_LENGTH = 2;
 	if (_.isEmpty(fName)) {
 		return false;
 	} else {
@@ -42,7 +42,7 @@ const isValidUserFirstName = (fName) => {
 // validate user last name
 const isValidUserLastName = (lName) => {
 	const USERNAME_MAX_LENGTH = 60;
-	const USERNAME_MIN_LENGTH = 3;
+	const USERNAME_MIN_LENGTH = 2;
 	if (_.isEmpty(lName)) {
 		return false;
 	} else {

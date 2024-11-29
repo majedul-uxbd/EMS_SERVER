@@ -148,56 +148,55 @@ const generateAttendancePDF = (data, lg) => {
 
             // Add exhibition details
             if (lg === 'ja') {
-                // Header with exhibition details
                 doc.fontSize(18).font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Bold.ttf"))
                     .text("出席レポート", { align: "center" });
                 doc.moveDown();
+                doc.fontSize(12).font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Regular.ttf"))
+                    .text("すべての時間は日本標準時で表示されます。", { align: "center" });
+                doc.moveDown();
 
-                // Add exhibition details with indent
-                const labelX = 50;  // Align with the table's left column
-                const valueX = 120; // Position slightly to the right of labels for values
+                const labelX = 50;
+                const valueX = 120;
+                let currentUpY = doc.y;
 
-                // Save current y position
-                let currentupY = doc.y;
                 doc.fontSize(12).font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Bold.ttf"))
-                    .text("展示:", labelX, currentupY);
+                    .text("展示:", labelX, currentUpY);
                 doc.fontSize(11).font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Regular.ttf"))
-                    .text(exhibitions_title, valueX, currentupY);
+                    .text(exhibitions_title, valueX, currentUpY);
 
-                // Update y position for the next row
-                currentupY += doc.currentLineHeight();
+                currentUpY += doc.currentLineHeight();
 
-                // Add venue details
                 doc.fontSize(12).font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Bold.ttf"))
-                    .text("会場:", labelX, currentupY);
+                    .text("会場:", labelX, currentUpY);
                 doc.fontSize(11).font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Regular.ttf"))
-                    .text(exhibition_venue, valueX, currentupY);
+                    .text(exhibition_venue, valueX, currentUpY);
                 doc.moveDown(1).moveTo(50, doc.y).lineTo(550, doc.y).stroke();
             } else {
-                // Header with exhibition details
                 doc.fontSize(18).font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Bold.ttf"))
                     .text("Attendance Report", { align: "center" });
                 doc.moveDown();
+                doc.fontSize(12).font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Regular.ttf"))
+                    .text("All times are shown here in Japanese Standard Time.", { align: "center" });
+                doc.moveDown();
 
-                // Add exhibition details with indent
-                const labelX = 50;  // Align with the table's left column
-                const valueX = 120; // Position slightly to the right of labels for values
+                const labelX = 50;
+                const valueX = 120;
 
                 // Save current y position
-                let currentupY = doc.y;
+                let currentUpY = doc.y;
                 doc.fontSize(12).font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Bold.ttf"))
-                    .text("Exhibition:", labelX, currentupY);
+                    .text("Exhibition:", labelX, currentUpY);
                 doc.fontSize(11).font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Regular.ttf"))
-                    .text(exhibitions_title, valueX, currentupY);
+                    .text(exhibitions_title, valueX, currentUpY);
 
                 // Update y position for the next row
-                currentupY += doc.currentLineHeight();
+                currentUpY += doc.currentLineHeight();
 
                 // Add venue details
                 doc.fontSize(12).font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Bold.ttf"))
-                    .text("Venue:", labelX, currentupY);
+                    .text("Venue:", labelX, currentUpY);
                 doc.fontSize(11).font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Regular.ttf"))
-                    .text(exhibition_venue, valueX, currentupY);
+                    .text(exhibition_venue, valueX, currentUpY);
                 doc.moveDown(1).moveTo(50, doc.y).lineTo(550, doc.y).stroke();
             }
 

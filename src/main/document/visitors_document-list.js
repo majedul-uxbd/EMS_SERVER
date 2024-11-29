@@ -12,7 +12,6 @@ const formatDateTime = (isoString) => {
 // Modified function to return PDF buffer instead of saving to file
 const generatePDF = (data, lg) => {
 	const lgKey = lg;
-	console.log('🚀 ~ file: visitors_document-list.js:15 ~ generatePDF ~ lgKey:', data);
 	return new Promise((resolve, reject) => {
 		try {
 			const doc = new PDFDocument({
@@ -40,19 +39,32 @@ const generatePDF = (data, lg) => {
 
 			if (lgKey === 'ja') {
 				doc.fontSize(19)
-					.font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Bold.ttf",))
+					.font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Bold.ttf"))
 					.fillColor("#030663")
 					.text("依頼された書類の一覧", 50, 50);
+
+				doc.fontSize(12) // Smaller font for subtitle
+					.font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Regular.ttf"))
+					.fillColor("#000000")
+					.text("すべての時間は日本標準時で表示されています", 50, 75);
+
+				// doc.moveDown(0.5); // Add space below the subtitle
 			} else {
 				doc.fontSize(19)
-					.font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Bold.ttf",))
+					.font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Bold.ttf"))
 					.fillColor("#030663")
 					.text("List of Requested Documents", 50, 50);
-			}
-			doc.moveTo(50, 90).lineTo(780, 90).stroke();
 
-			doc.moveDown(1);
-			doc.fillColor("#000000");
+				doc.fontSize(12) // Smaller font for subtitle
+					.font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Regular.ttf"))
+					.fillColor("#000000")
+					.text("All times are shown here in Japanese Standard Time", 50, 75);
+
+				// doc.moveDown(0.5); // Add space below the subtitle
+			}
+
+			// Draw a horizontal line for section separation
+			doc.moveTo(50, 100).lineTo(780, 100).stroke();
 
 			// Define table layout for landscape orientation
 			const tableTop = 130;
@@ -75,7 +87,7 @@ const generatePDF = (data, lg) => {
 			};
 
 			// Draw table headers with borders
-			doc.fontSize(10).font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Bold.ttf",));
+			doc.fontSize(10).font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Bold.ttf"));
 
 			if (lgKey === 'ja') {
 				doc.text("シリアル", colXPositions.serialNo, tableTop, {
@@ -138,7 +150,7 @@ const generatePDF = (data, lg) => {
 			});
 
 			// Reset font to normal for table data
-			doc.font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Regular.ttf",));
+			doc.font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Regular.ttf"));
 
 			// Draw table rows with serial numbers
 			data.forEach((row, index) => {
@@ -179,6 +191,7 @@ const generatePDF = (data, lg) => {
 			});
 
 			doc.end();
+
 		} catch (error) {
 			reject(error);
 		}

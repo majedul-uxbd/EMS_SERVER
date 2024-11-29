@@ -204,7 +204,7 @@ const approvePendingRequest = async (companyId) => {
 
             // Hash the password for the user after the emails are sent
             const hashedPassword = await bcrypt.hash(user.password, 10);
-            const updatePasswordQuery = `UPDATE user SET password = ? WHERE id = ?;`;
+            const updatePasswordQuery = `UPDATE user SET password = ?, is_user_active = 1, current_status = NULL WHERE id = ?;`;
             await pool.query(updatePasswordQuery, [hashedPassword, user.id]);
 
             return {

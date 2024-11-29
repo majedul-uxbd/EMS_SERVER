@@ -124,28 +124,44 @@ const generateRequestedVisitorPDF = async (data) => {
         margin - 16,
         { width: 55, align: "right" }
       );
+
       if (lgKey === 'ja') {
         doc
           .fontSize(16)
-          .font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Bold.ttf",))
+          .font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Bold.ttf"))
           .fillColor("#030663")
           .text("興味のある訪問者のリスト", margin, margin + 10);
+
+        doc.fontSize(12) // Add subtitle
+          .font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Regular.ttf"))
+          .fillColor("#000000")
+          .text("すべての時間は日本標準時で表示されています", margin, margin + 35);
+
       } else {
         doc
           .fontSize(16)
-          .font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Bold.ttf",))
+          .font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Bold.ttf"))
           .fillColor("#030663")
           .text("List of interested visitors", margin, margin + 10);
+
+        doc.fontSize(12) // Add subtitle
+          .font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Regular.ttf"))
+          .fillColor("#000000")
+          .text("All times are shown here in Japanese Standard Time", margin, margin + 35);
       }
+
+      // Add horizontal line for separation
       doc
-        .moveTo(margin, margin + 40)
-        .lineTo(pageWidth - margin, margin + 40)
+        .moveTo(margin, margin + 55)
+        .lineTo(pageWidth - margin, margin + 55)
         .stroke();
+
       doc.fillColor("#000000");
 
       // Table configuration
-      let currentY = margin + 50;
+      let currentY = margin + 65; // Adjust currentY to accommodate additional spacing for subtitle and line
       const colWidths = [35, 110, 100, 75, 85, 85, 130, 130];
+
       if (lgKey === 'ja') {
         colLabels = [
           "シリアル",
@@ -156,7 +172,7 @@ const generateRequestedVisitorPDF = async (data) => {
           "位置",
           "リクエストされたプロジェクト",
           "リクエスト時間",
-        ]
+        ];
       } else {
         colLabels = [
           "Serial",
@@ -179,7 +195,7 @@ const generateRequestedVisitorPDF = async (data) => {
       currentY += drawTableRow(doc, colLabels, colWidths, colPositions, currentY, {
         isHeader: true,
         customHeight: 40,
-        font: path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Bold.ttf",)
+        font: path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Bold.ttf"),
       });
 
       // Function to check if a row needs custom height
@@ -200,7 +216,7 @@ const generateRequestedVisitorPDF = async (data) => {
           currentY += drawTableRow(doc, colLabels, colWidths, colPositions, currentY, {
             isHeader: true,
             customHeight: 40,
-            font: path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Regular.ttf",)
+            font: path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Regular.ttf"),
           });
         }
 
@@ -219,7 +235,7 @@ const generateRequestedVisitorPDF = async (data) => {
         const customHeight = needsCustomHeight(rowData) ? 80 : undefined;
 
         const rowHeight = drawTableRow(doc, rowData, colWidths, colPositions, currentY, {
-          customHeight: customHeight
+          customHeight: customHeight,
         });
 
         currentY += rowHeight;
@@ -227,6 +243,7 @@ const generateRequestedVisitorPDF = async (data) => {
 
       // End the document
       doc.end();
+
     } catch (error) {
       reject(error);
     }
