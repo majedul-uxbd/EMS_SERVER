@@ -18,34 +18,62 @@ const { isUserRoleAdmin } = require('../../common/utilities/check-user-role');
 const { validateOrganizerData } = require('../../middlewares/organizer/validate-organizer-data');
 const { addOrganizerData } = require('../../main/organizer/add-organizer-data');
 const { API_STATUS_CODE } = require('../../consts/error-status');
+const { enrollOrganizer } = require('../../main/organizer/enroll-organizer');
 
 
 organizerRouter.use(authenticateToken);
 
 
+// organizerRouter.post(
+//     '/add',
+//     authenticateToken,
+//     isUserRoleAdmin,
+//     validateOrganizerData,
+//     async (req, res) => {
+//         addOrganizerData(req.body.organizerData)
+//             .then((data) => {
+//                 const { statusCode, status, message } = data;
+//                 return res.status(statusCode).send({
+//                     status: status,
+//                     message: message
+//                 });
+//             })
+//             .catch((error) => {
+//                 const { statusCode, status, message } = error;
+//                 return res.status(statusCode).send({
+//                     status: status,
+//                     message: message,
+//                 });
+//             });
+//     }
+// );
+
+
+/**
+ * This API is used to enroll a organizer in a exhibition
+ */
 organizerRouter.post(
-    '/add',
+    '/enroll',
     authenticateToken,
     isUserRoleAdmin,
-    validateOrganizerData,
     async (req, res) => {
-        addOrganizerData(req.body.organizerData)
+        enrollOrganizer(req.body)
             .then((data) => {
-                return res.status(API_STATUS_CODE.ACCEPTED).send({
-                    status: data.status,
-                    message: data.message,
+                const { statusCode, status, message } = data;
+                return res.status(statusCode).send({
+                    status: status,
+                    message: message
                 });
             })
             .catch((error) => {
-                const { statusCode, message } = error;
+                const { statusCode, status, message } = error;
                 return res.status(statusCode).send({
-                    status: 'failed',
+                    status: status,
                     message: message,
                 });
             });
     }
 );
-
 
 module.exports = {
     organizerRouter

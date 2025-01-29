@@ -13,7 +13,7 @@ const fs = require("fs").promises;
 const _ = require("lodash");
 const { pool } = require("../../../database/db");
 
-const { setRejectMessage } = require("../../common/set-reject-message");
+const { setServerResponse } = require("../../common/set-server-response");
 const { isValidDocumentTitle } = require("../../common/user-data-validator");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
@@ -37,9 +37,7 @@ const checkIfProjectExist = async (projectId) => {
         return false;
     } catch (error) {
         // console.log("🚀 ~ getCompanyId ~ error:", error);
-        return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Operation failed')
-        );
+        return Promise.reject(error);
 
     }
 }
@@ -84,9 +82,7 @@ const insertDocumentDataQuery = async (documentData, authData) => {
         return false;
     } catch (error) {
         // console.log("🚀 ~ getCompanyId ~ error:", error);
-        return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Operation failed')
-        );
+        return Promise.reject(error);
 
     }
 }
@@ -94,13 +90,15 @@ const insertDocumentDataQuery = async (documentData, authData) => {
 /**
  * @description This function is used to upload file data into the database. 
  */
-const uploadFileInfo = async (fileInfo, fileData, authData) => {
+const uploadFileInfo = async (fileInfo, bodyData, authData) => {
+    // console.log(fileInfo, bodyData, authData);
+    const lgKey = bodyData.lg;
 
     const createdAt = new Date();
 
     const documentData = {
-        projectId: fileData.projectId,
-        title: fileData.title,
+        projectId: bodyData.projectId,
+        title: bodyData.title,
         fileName: fileInfo.filename,
         filePath: fileInfo.path,
         createdAt: createdAt
@@ -108,19 +106,31 @@ const uploadFileInfo = async (fileInfo, fileData, authData) => {
     if (!isValidDocumentTitle(documentData.title)) {
         await deleteUploadedFile(fileInfo.path);
         return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Document title is not valid')
+            setServerResponse(
+                API_STATUS_CODE.BAD_REQUEST,
+                'document_title_is_not_valid',
+                lgKey,
+            )
         );
     }
     if (_.isEmpty(documentData.filePath)) {
         await deleteUploadedFile(fileInfo.path);
         return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Failed to upload file')
+            setServerResponse(
+                API_STATUS_CODE.BAD_REQUEST,
+                'failed_to_upload_file',
+                lgKey,
+            )
         );
     }
     if (_.isNil(documentData.projectId)) {
         await deleteUploadedFile(fileInfo.path);
         return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Project id is required')
+            setServerResponse(
+                API_STATUS_CODE.BAD_REQUEST,
+                'project_id_is_required',
+                lgKey,
+            )
         );
     }
     try {
@@ -128,27 +138,42 @@ const uploadFileInfo = async (fileInfo, fileData, authData) => {
         if (isIdValid) {
             const isInsertData = await insertDocumentDataQuery(documentData, authData);
             if (isInsertData) {
-                return Promise.resolve({
-                    status: 'success',
-                    message: 'File uploaded successfully'
-                })
+                return Promise.resolve(
+                    setServerResponse(
+                        API_STATUS_CODE.OK,
+                        'file_uploaded_successfully',
+                        lgKey,
+                    )
+                )
             } else {
                 await deleteUploadedFile(fileInfo.path);
                 return Promise.reject(
-                    setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Failed to upload file')
+                    setServerResponse(
+                        API_STATUS_CODE.BAD_REQUEST,
+                        'failed_to_upload_file',
+                        lgKey,
+                    )
                 )
             }
         } else {
             await deleteUploadedFile(fileInfo.path);
             return Promise.reject(
-                setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Project is not found')
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'project_is_not_found',
+                    lgKey,
+                )
             )
         }
     } catch (error) {
         // console.log("🚀 ~ uploadFileInfo ~ error:", error)
         await deleteUploadedFile(fileInfo.path);
         return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Failed to upload file')
+            setServerResponse(
+                API_STATUS_CODE.BAD_REQUEST,
+                'failed_to_upload_file',
+                lgKey,
+            )
         )
     }
 }

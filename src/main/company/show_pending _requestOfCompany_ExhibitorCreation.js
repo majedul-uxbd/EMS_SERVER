@@ -1,6 +1,6 @@
 const _ = require("lodash");
 const { pool } = require("../../../database/db");
-const { setRejectMessage } = require("../../common/set-reject-message");
+const { setServerResponse } = require("../../common/set-server-response");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
 const getNumberOfPendingRowsQuery = async () => {
@@ -12,17 +12,9 @@ const getNumberOfPendingRowsQuery = async () => {
 
     try {
         const [result] = await pool.query(_query);
-        if (result.length > 0) {
-            return Promise.resolve(result[0]);
-        } else {
-            return Promise.reject(
-                setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'No pending companies found')
-            );
-        }
+        return Promise.resolve(result[0]);
     } catch (error) {
-        return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, 'operation_failed')
-        );
+        return Promise.reject(error);
     }
 };
 
@@ -44,29 +36,41 @@ const getPendingCompanyExhibitorDataQuery = async (paginationData) => {
         const [result] = await pool.query(_query, values);
         return Promise.resolve(result);
     } catch (error) {
-        return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, 'operation_failed')
-        );
+        return Promise.reject(error);
     }
 };
 
 /**
  * @description This function retrieves data for all pending company exhibitor creations.
  */
-const getPendingCompanyExhibitorData = async (paginationData) => {
+const getPendingCompanyExhibitorData = async (bodyData, paginationData) => {
+    const lgKey = bodyData.lg;
+
     try {
         const totalRows = await getNumberOfPendingRowsQuery();
-        const result = await getPendingCompanyExhibitorDataQuery(paginationData);
+        const companyData = await getPendingCompanyExhibitorDataQuery(paginationData);
 
-        return Promise.resolve({
+        const result = {
             metadata: {
                 totalRows: totalRows,
             },
-            data: result
-        });
+            data: companyData
+        }
+        return Promise.resolve(
+            setServerResponse(
+                API_STATUS_CODE.OK,
+                'get_data_successfully',
+                lgKey,
+                result
+            )
+        );
     } catch (error) {
         return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, 'Internal server error')
+            setServerResponse(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'Internal_server_error',
+                lgKey
+            )
         );
     }
 };

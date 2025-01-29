@@ -11,10 +11,10 @@
 
 const _ = require('lodash')
 const jwt = require('jsonwebtoken');
-const { setRejectMessage } = require('../../common/set-reject-message');
 const { API_STATUS_CODE } = require('../../consts/error-status');
 const bcrypt = require("bcrypt");
 const { pool } = require('../../../database/db');
+const { setServerResponse } = require('../../common/set-server-response');
 
 
 const updateUserPassword = async (bodyData) => {
@@ -54,12 +54,7 @@ const updateUserPassword = async (bodyData) => {
         }
         return false;
     } catch (error) {
-        return Promise.reject(
-            setRejectMessage(
-                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-                'Operation failed'
-            )
-        );
+        return Promise.reject(error);
     }
 }
 
@@ -68,6 +63,7 @@ const updateUserPassword = async (bodyData) => {
  * @description This function is used to reset user password
  */
 const resetUserPassword = async (bodyData) => {
+    const lgKey = bodyData.lg;
     let email;
     let password;
     try {
@@ -75,7 +71,11 @@ const resetUserPassword = async (bodyData) => {
             jwt.verify(bodyData.token, process.env.SECRET_KEY, (err, user) => {
                 if (err) {
                     return Promise.reject(
-                        setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Invalid token')
+                        setServerResponse(
+                            API_STATUS_CODE.UNAUTHORIZED,
+                            'invalid_token',
+                            lgKey
+                        )
                     );
                 }
                 email = user.email;
@@ -84,7 +84,11 @@ const resetUserPassword = async (bodyData) => {
             email = bodyData.email;
         } else {
             return Promise.reject(
-                setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Failed to update password')
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'failed_to_update_password',
+                    lgKey
+                )
             )
         }
         password = await bcrypt.hash(bodyData.password, 10);
@@ -92,19 +96,29 @@ const resetUserPassword = async (bodyData) => {
 
         const isUpdated = await updateUserPassword(bodyData);
         if (isUpdated) {
-            return Promise.resolve({
-                status: 'success',
-                message: 'Password reset successfully'
-            })
+            return Promise.resolve(
+                setServerResponse(
+                    API_STATUS_CODE.OK,
+                    'password_reset_successfully',
+                    lgKey
+                )
+            )
         } else {
             return Promise.reject(
-                setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Failed to update password')
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'failed_to_update_password',
+                    lgKey
+                )
             )
         }
     } catch (error) {
         return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, 'Internal Server Error')
-        )
+            setServerResponse(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'internal_server_error',
+                lgKey,
+            ))
     }
 }
 

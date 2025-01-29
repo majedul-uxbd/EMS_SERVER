@@ -13,9 +13,7 @@ const jwt = require('jsonwebtoken');
 const _ = require('lodash');
 const { pool } = require('../../../database/db');
 const { API_STATUS_CODE } = require('../../consts/error-status');
-const {
-    setRejectMessage,
-} = require('../../common/set-reject-message');
+const { setServerResponse } = require('../../common/set-server-response');
 
 const userLoginQuery = async (email) => {
     const query = `
@@ -28,11 +26,12 @@ const userLoginQuery = async (email) => {
         contact_no,
         position,
         role,
+        is_user_active,
         profile_img
 	FROM
 		user
 	WHERE
-		email = ? AND is_user_active = ${1};
+		email = ?;
 	`;
     const values = [email];
 
@@ -40,16 +39,15 @@ const userLoginQuery = async (email) => {
         const [result] = await pool.query(query, values);
         // console.log("🚀 ~ userLoginQuery ~ result:", result)
         if (result.length > 0) {
-            return Promise.resolve(result[0]);
+            if (result[0].is_user_active === 1) {
+                return Promise.resolve(result[0]);
+            } else {
+                return 0;
+            }
         } return false;
     } catch (error) {
         // console.log("🚀 ~ userLoginQuery ~ error111:", error)
-        return Promise.reject(
-            setRejectMessage(
-                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-                'Operation failed'
-            )
-        );
+        return Promise.reject(error);
     }
 };
 
@@ -80,12 +78,7 @@ const visitorsLoginQuery = async (email) => {
         } return false;
     } catch (error) {
         // console.log("🚀 ~ userLoginQuery ~ error:", error)
-        return Promise.reject(
-            setRejectMessage(
-                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-                'Operation failed'
-            )
-        );
+        return Promise.reject(error);
     }
 };
 
@@ -113,35 +106,51 @@ const generateToken = (userInfo) => {
  * @description This function is used to login the user
  */
 const userLogin = async (user) => {
+    const lgKey = user.lg;
     let userInfo;
 
     if (!user.email || !user.password) {
         Promise.reject(
-            setRejectMessage(
-                API_STATUS_CODE.FORBIDDEN,
-                'Invalid email or password'
+            setServerResponse(
+                API_STATUS_CODE.BAD_REQUEST,
+                'invalid_email_or_password',
+                lgKey,
             )
         );
     }
 
     try {
         userInfo = await userLoginQuery(user.email);
-        // console.log("🚀 ~ userLogin ~ userInfo:", userInfo)
         if (userInfo === false) {
             userInfo = await visitorsLoginQuery(user.email);
         }
     } catch (error) {
         // console.log("🚀 ~ userLogin ~ error:", error)
         return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.BAD_REQUEST, "Invalid email or password")
+            setServerResponse(
+                API_STATUS_CODE.BAD_REQUEST,
+                'invalid_email_or_password',
+                lgKey,
+            )
         );
     }
     // console.log("🚀 ~ userLogin ~ userInfo:", userInfo)
+    if (userInfo === 0) {
+        return Promise.reject(
+            setServerResponse(
+                API_STATUS_CODE.BAD_REQUEST,
+                'no_user_found_or_user_is_not_active',
+                lgKey,
+                userInfo
+            )
+        );
+    }
     if (!userInfo) {
         return Promise.reject(
-            setRejectMessage(
+            setServerResponse(
                 API_STATUS_CODE.BAD_REQUEST,
-                'Invalid email or password'
+                'invalid_email_or_password',
+                lgKey,
             )
         );
     }
@@ -155,37 +164,45 @@ const userLogin = async (user) => {
     } catch (error) {
         // console.log("🚀 ~ userLogin ~ error:", error)
         return Promise.reject(
-            setRejectMessage(
-                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-                'Operation failed'
+            setServerResponse(
+                API_STATUS_CODE.BAD_REQUEST,
+                'operation_failed',
+                lgKey,
             )
         );
     }
 
     if (!isPasswordCorrect) {
         return Promise.reject(
-            setRejectMessage(
+            setServerResponse(
                 API_STATUS_CODE.BAD_REQUEST,
-                'Invalid email or password'
+                'invalid_email_or_password',
+                lgKey,
             )
         );
     }
 
     const token = generateToken(userInfo);
-    return Promise.resolve({
-        message: 'User successfully login',
+    user = {
         token: token,
-        user: {
-            id: userInfo.id,
-            firstName: userInfo.f_name,
-            lastName: userInfo.l_name,
-            email: userInfo.email,
-            contact: userInfo.contact_no,
-            position: userInfo.position,
-            role: userInfo.role,
-            profile_img: userInfo.profile_img,
-        },
-    });
+        id: userInfo.id,
+        firstName: userInfo.f_name,
+        lastName: userInfo.l_name,
+        email: userInfo.email,
+        contact: userInfo.contact_no,
+        position: userInfo.position,
+        role: userInfo.role,
+        profile_img: userInfo.profile_img,
+    }
+
+    return Promise.resolve(
+        setServerResponse(
+            API_STATUS_CODE.OK,
+            'user_logged_in_successfully',
+            lgKey,
+            user
+        )
+    );
 };
 module.exports = {
     userLogin,

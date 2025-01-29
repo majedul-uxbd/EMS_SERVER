@@ -10,7 +10,7 @@
  */
 
 const { pool } = require("../../../database/db");
-const { setRejectMessage } = require("../../common/set-reject-message");
+const { setServerResponse } = require("../../common/set-server-response");
 const {
 	isValidProjectName,
 	isValidProjectPlatform,
@@ -35,12 +35,31 @@ const getCompanyId = async (authData) => {
 		}
 	} catch (error) {
 		// console.log("🚀 ~ getCompanyId ~ error:", error);
-		return Promise.reject(
-			setRejectMessage(API_STATUS_CODE.BAD_REQUEST, "Operation failed")
-		);
+		return Promise.reject(error);
 	}
 };
 
+
+const checkDuplicateProjectName = async (companyId) => {
+	const _query = `
+    SELECT
+        project_name
+    FROM
+        projects
+	WHERE
+		companies_id = ?;
+    `;
+
+	try {
+		const [result] = await pool.query(_query, companyId);
+		if (result.length > 0) {
+			return result
+		} return 0;
+	} catch (error) {
+		// console.log("🚀 ~ getCompanyId ~ error:", error);
+		return Promise.reject(error);
+	}
+};
 
 const insertProjectDataQuery = async (authData, projectData) => {
 	const _query = `
@@ -71,47 +90,104 @@ const insertProjectDataQuery = async (authData, projectData) => {
 		return false;
 	} catch (error) {
 		// console.log("🚀 ~ getCompanyId ~ error:", error);
-		return Promise.reject(
-			setRejectMessage(API_STATUS_CODE.BAD_REQUEST, "Operation failed")
-		);
+		return Promise.reject(error);
 	}
 };
 
+/**
+ * @param {string} str1 
+ * @param {string} str2 
+ * @param {boolean} caseInsensitive 
+ * @description This function will check if the str1 and str2 are the same string or not.
+ */
+const compareStrings = (str1, str2, caseInsensitive = true) => {
+	const splitStr1 = str1.trim().split(/\s+/);
+	const splitStr2 = str2.trim().split(/\s+/);
+
+	if (splitStr1.length === splitStr2.length) {
+		for (let i = 0; i < splitStr1.length; i++) {
+			if (caseInsensitive) {
+				if (splitStr1[i].toLowerCase() !== splitStr2[i].toLowerCase()) {
+					return false;
+				}
+			} else {
+				if (splitStr1[i] !== splitStr2[i]) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+	return false;
+}
 
 /**
  * @description This function is used to create new project
  */
 const createProjectData = async (authData, projectData) => {
+	const lgKey = projectData.lg;
+
 	if (!isValidProjectName(projectData.projectName)) {
 		return Promise.reject(
-			setRejectMessage(API_STATUS_CODE.BAD_REQUEST, "Project Name is not valid")
+			setServerResponse(
+				API_STATUS_CODE.BAD_REQUEST,
+				'project_name_is_not_valid',
+				lgKey,
+			)
 		);
 	}
 	if (!isValidProjectPlatform(projectData.platform)) {
 		return Promise.reject(
-			setRejectMessage(
+			setServerResponse(
 				API_STATUS_CODE.BAD_REQUEST,
-				"Project platform is not valid"
+				'project_platform_is_not_valid',
+				lgKey,
 			)
 		);
 	}
 	const createdAt = new Date();
+	let isMatched = false;
+
 	try {
 		const companyId = await getCompanyId(authData);
+		const projectName = await checkDuplicateProjectName(companyId);
+		if (projectName !== 0) {
+			for (const project of projectName) {
+				const result = compareStrings(projectData.projectName, project.project_name);
+				if (result) {
+					// console.log(`Match found: ${projectData.projectName} matches with ${project.project_name}`);
+					isMatched = true;
+					break;
+				}
+			}
+			if (isMatched === true) {
+				return Promise.reject(
+					setServerResponse(
+						API_STATUS_CODE.BAD_REQUEST,
+						'project_name_has_already_exists',
+						lgKey,
+					)
+				);
+			}
+		}
 		projectData = { ...projectData, companyId, createdAt: createdAt };
 		const isInsertData = await insertProjectDataQuery(authData, projectData);
 		if (isInsertData) {
-			return Promise.resolve({
-				status: "success",
-				message: "Project data successfully inserted",
-			});
+			return Promise.resolve(
+				setServerResponse(
+					API_STATUS_CODE.OK,
+					'project_data_successfully_inserted',
+					lgKey,
+				)
+			);
 		}
 	} catch (error) {
 		// console.log("🚀 ~ createProjectData ~ error:", error)
 		return Promise.reject(
-			setRejectMessage(
+			setServerResponse(
 				API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-				"Internal Server Error"
+				'internal_server_error',
+				lgKey,
 			)
 		);
 	}

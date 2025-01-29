@@ -28,6 +28,7 @@ const { API_STATUS_CODE } = require("../../consts/error-status");
 const validateExhibitorsData = (req, res, next) => {
     const errors = [];
     const exhibitor = {
+        lg: req.body.lg,
         firstName: req.body.firstName,
         lastName: req.body.lastName,
         email: req.body.email,
@@ -62,10 +63,13 @@ const validateExhibitorsData = (req, res, next) => {
     }
 
     if (errors.length > 0) {
-        return res.status(API_STATUS_CODE.BAD_REQUEST).send({
-            status: "failed",
-            message: errors,
-        });
+        return res.status(API_STATUS_CODE.BAD_REQUEST).send(
+            setServerResponse(
+                API_STATUS_CODE.BAD_REQUEST,
+                'invalid_data',
+                exhibitor.lg,
+            )
+        );
     }
 
     req.body.exhibitor = exhibitor;

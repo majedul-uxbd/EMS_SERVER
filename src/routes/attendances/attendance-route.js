@@ -7,7 +7,8 @@ const { createAttendanceData } = require("../../main/attendance/create-attendanc
 const { getAllAttendanceData } = require("../../main/attendance/get-all-attendance");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 const { paginationData } = require("../../middlewares/common/pagination-data");
-const { fetchAttendanceData, generateAttendancePDF } = require("../../main/attendance/pdf-attendance")
+const { fetchAttendanceData, generateAttendancePDF } = require("../../main/attendance/pdf-attendance");
+const { setServerResponse } = require("../../common/set-server-response");
 attendanceRouter.use(authenticateToken);
 
 
@@ -20,15 +21,16 @@ attendanceRouter.post(
 	async (req, res) => {
 		createAttendanceData(req.auth, req.body)
 			.then((data) => {
-				return res.status(API_STATUS_CODE.OK).send({
-					status: data.status,
-					message: data.message,
+				const { statusCode, status, message } = data;
+				return res.status(statusCode).send({
+					status: status,
+					message: message,
 				});
 			})
 			.catch((error) => {
-				const { statusCode, message } = error;
+				const { statusCode, status, message } = error;
 				return res.status(statusCode).send({
-					status: "failed",
+					status: status,
 					message: message,
 				});
 			});
@@ -44,18 +46,19 @@ attendanceRouter.post(
 	isUserRoleAdminOrOrganizer,
 	paginationData,
 	async (req, res) => {
-		getAllAttendanceData(req.body.paginationData)
+		getAllAttendanceData(req.auth, req.body, req.body.paginationData)
 			.then((data) => {
-				return res.status(API_STATUS_CODE.OK).send({
-					status: "success",
-					message: data.message,
-					...data,
+				const { statusCode, status, message, result } = data;
+				return res.status(statusCode).send({
+					status: status,
+					message: message,
+					...result
 				});
 			})
 			.catch((error) => {
-				const { statusCode, message } = error;
+				const { statusCode, status, message } = error;
 				return res.status(statusCode).send({
-					status: "failed",
+					status: status,
 					message: message,
 				});
 			});
@@ -65,15 +68,17 @@ attendanceRouter.post(
 attendanceRouter.post(
 	"/generate_attendance_pdf",
 	authenticateToken,
-
 	async (req, res) => {
 		const { id, lg } = req.body;
 
 		if (!id) {
-			return res.status(API_STATUS_CODE.BAD_REQUEST).send({
-				status: "failed",
-				message: "Exhibition ID is required in the request body.",
-			});
+			return res.status(API_STATUS_CODE.BAD_REQUEST).send(
+				setServerResponse(
+					API_STATUS_CODE.BAD_REQUEST,
+					'exhibition_id_is_required',
+					lg
+				)
+			);
 		}
 
 		try {
@@ -81,10 +86,13 @@ attendanceRouter.post(
 			const attendanceData = await fetchAttendanceData(id);
 
 			if (attendanceData.length === 0) {
-				return res.status(API_STATUS_CODE.NOT_FOUND).send({
-					status: "failed",
-					message: "No attendance data found for the given exhibition ID.",
-				});
+				return res.status(API_STATUS_CODE.BAD_REQUEST).send(
+					setServerResponse(
+						API_STATUS_CODE.BAD_REQUEST,
+						'attendance_data_is_not_found_for_the_exhibition',
+						lg
+					)
+				);
 			}
 
 			// Generate the PDF from the fetched data
@@ -97,13 +105,14 @@ attendanceRouter.post(
 			// Send the PDF buffer as the response
 			return res.status(API_STATUS_CODE.OK).send(pdfBuffer);
 		} catch (error) {
-			console.error("Error generating attendance PDF:", error);
-			const { statusCode = API_STATUS_CODE.INTERNAL_SERVER_ERROR, message = "Internal server error" } = error;
-
-			return res.status(statusCode).send({
-				status: "failed",
-				message,
-			});
+			// console.log('🚀 ~ file: attendance-route.js:109 ~ error:', error);
+			return res.status(API_STATUS_CODE.INTERNAL_SERVER_ERROR).send(
+				setServerResponse(
+					API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+					'internal_server_error',
+					lg,
+				)
+			);
 		}
 	}
 );

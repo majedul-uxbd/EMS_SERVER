@@ -11,7 +11,7 @@
 
 const _ = require('lodash');
 const { pool } = require("../../../database/db");
-const { setRejectMessage } = require("../../common/set-reject-message");
+const { setServerResponse } = require("../../common/set-server-response");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
 
@@ -32,9 +32,7 @@ const getCompanyId = async (authData) => {
         }
     } catch (error) {
         // console.log("🚀 ~ getCompanyId ~ error:", error)
-        return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Operation failed')
-        );
+        return Promise.reject(error);
     }
 }
 
@@ -59,29 +57,44 @@ const getProjectDataQuery = async (companyId) => {
         return Promise.resolve(result)
     } catch (error) {
         // console.log("🚀 ~ getCompanyId ~ error:", error)
-        return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Operation failed')
-        );
+        return Promise.reject(error);
     }
 };
 
 /**
  * @description This function is used to get project data based on user company ID for Dropdown
  */
-const getProjectData = async (authData) => {
+const getProjectData = async (authData, bodyData) => {
+    const lgKey = bodyData.lg;
+
     try {
         const companyId = await getCompanyId(authData);
         if (!_.isNil(companyId)) {
             const projectData = await getProjectDataQuery(companyId)
-            return Promise.resolve(projectData);
+            return Promise.resolve(
+                setServerResponse(
+                    API_STATUS_CODE.OK,
+                    'get_data_successfully',
+                    lgKey,
+                    projectData
+                )
+            );
         } else {
             return Promise.reject(
-                setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'No')
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'company_not_found',
+                    lgKey,
+                )
             );
         }
     } catch (error) {
         return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, 'Internal Server Error')
+            setServerResponse(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'internal_server_error',
+                lgKey,
+            )
         );
     }
 }

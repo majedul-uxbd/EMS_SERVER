@@ -1,236 +1,213 @@
-const PDFDocument = require("pdfkit");
+const fs = require("fs");
 const path = require("path");
-const { format } = require("date-fns");
+const _ = require("lodash");
+const { jsPDF } = require("jspdf");
+const { API_STATUS_CODE } = require("../../consts/error-status");
+require('jspdf-autotable');
 
-// Keeping the helper functions unchanged
-const calculateCellHeight = (doc, text, width, padding, options = {}) => {
-  const isHeader = options.isHeader || false;
-  const fontSize = 9;
-  const lineHeight = fontSize * 1.2;
-
-  if (isHeader) {
-    doc.font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Bold.ttf",))
-  } else {
-    doc.font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Regular.ttf",))
-  }
-  doc.fontSize(fontSize);
-
-  const textString = text || "";
-  const textWidth = width - (padding * 2);
-  const words = textString.toString().split(' ');
-  let lines = [];
-  let currentLine = '';
-
-  words.forEach(word => {
-    const testLine = currentLine ? `${currentLine} ${word}` : word;
-    if (doc.widthOfString(testLine) <= textWidth) {
-      currentLine = testLine;
-    } else {
-      lines.push(currentLine);
-      currentLine = word;
-    }
-  });
-  if (currentLine) {
-    lines.push(currentLine);
-  }
-
-  const contentHeight = lines.length * lineHeight;
-  return Math.max(contentHeight + (padding * 2), 30);
+// Constants
+const FONT_PATHS = {
+	bold: path.join(process.cwd(), "src/common/utilities/font/NotoSansJP-Bold.ttf"),
+	regular: path.join(process.cwd(), "src/common/utilities/font/NotoSansJP-Regular.ttf")
 };
 
-const drawTableCell = (doc, text, x, y, width, height, options = {}) => {
-  const isHeader = options.isHeader || false;
-  const padding = 5;
-  const fontSize = 9;
+const LOGO_PATH = path.join(process.cwd(), "src/common/utilities/images/UXAP_logo.jpg");
 
-  if (isHeader) {
-    doc.font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Bold.ttf",));
-  } else {
-    doc.font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Regular.ttf",));
-  }
-  doc.fontSize(fontSize);
-
-  doc.lineWidth(0.5)
-    .rect(x, y, width, height)
-    .stroke();
-
-  const textHeight = doc.heightOfString(text || "", { width: width - (padding * 2) });
-  const verticalPadding = (height - textHeight) / 2;
-
-  doc.text(text || "", x + padding, y + verticalPadding, {
-    width: width - (padding * 2),
-    align: "left",
-    lineGap: 2
-  });
+const TABLE_HEADERS = {
+	ja: [
+		"シリアル",
+		"名前",
+		"メール",
+		"連絡先",
+		"会社",
+		"位置",
+		"リクエストされたプロジェクト"
+	],
+	en: [
+		"Serial",
+		"Name",
+		"Email",
+		"Contact No.",
+		"Company",
+		"Position",
+		"Requested Projects"
+	]
 };
 
-const drawTableRow = (doc, rowData, colWidths, colPositions, y, options = {}) => {
-  const padding = 5;
-  let rowHeight;
+// Helper Functions
+const generateBodyData = (lgKey, bodyData) => {
+	const tableHeader = TABLE_HEADERS[lgKey] || TABLE_HEADERS.en;
 
-  if (options.customHeight) {
-    rowHeight = options.customHeight;
-  } else {
-    let maxHeight = 0;
-    rowData.forEach((text, i) => {
-      const cellHeight = calculateCellHeight(doc, text, colWidths[i], padding, options);
-      maxHeight = Math.max(maxHeight, cellHeight);
-    });
-    rowHeight = maxHeight;
-  }
+	const tableRows = bodyData.map((record, index) => {
+		const fullName = `${record.f_name || ""} ${record.l_name || ""}`.trim();
+		return [
+			(index + 1).toString(),
+			fullName,
+			record.email || "",
+			record.contact_no || "",
+			record.company_name || "",
+			record.position || "",
+			record.project_names || ""
+		];
+	});
 
-  rowData.forEach((text, i) => {
-    drawTableCell(
-      doc,
-      text,
-      colPositions[i] - colWidths[i],
-      y,
-      colWidths[i],
-      rowHeight,
-      options
-    );
-  });
-
-  return rowHeight;
+	return { tableHeader, tableRows };
 };
 
-// Modified main function to return buffer instead of saving file
+const loadFonts = async () => {
+	try {
+		// Verify fonts exist
+		await Promise.all([
+			fs.promises.access(FONT_PATHS.bold),
+			fs.promises.access(FONT_PATHS.regular)
+		]);
+
+		// Read font files and convert to base64
+		const [boldFont, regularFont] = await Promise.all([
+			fs.promises.readFile(FONT_PATHS.bold, { encoding: 'base64' }),
+			fs.promises.readFile(FONT_PATHS.regular, { encoding: 'base64' })
+		]);
+
+		return { boldFont, regularFont };
+	} catch (error) {
+		throw new Error("Required fonts not found: " + error.message);
+	}
+};
+
+const setupDocument = async (doc, lgKey) => {
+	const leftMargin = 30;
+
+	try {
+		// Load and convert logo to base64
+		const logoBase64 = await fs.promises.readFile(LOGO_PATH, { encoding: 'base64' });
+
+		// Add header content based on language
+		if (lgKey === 'ja') {
+			doc.setFont("NotoSansJP", "bold")
+				.setFontSize(25)
+				.text("興味のある訪問者のリスト", leftMargin, 65)
+				.addImage(`data:image/jpeg;base64,${logoBase64}`, 'JPEG', 565, 30, 47, 48)
+				.setLineWidth(1)
+				.line(leftMargin, 80, 608, 80);
+		} else {
+			doc.setFont("NotoSansJP", "bold")
+				.setFontSize(25)
+				.text("List of Interested Visitors", leftMargin, 65)
+				.addImage(`data:image/jpeg;base64,${logoBase64}`, 'JPEG', 565, 30, 47, 48)
+				.setLineWidth(1)
+				.line(leftMargin, 80, 608, 80);
+		}
+	} catch (error) {
+		console.error('Error loading logo:', error);
+		// Continue without logo if there's an error
+		if (lgKey === 'ja') {
+			doc.setFont("NotoSansJP", "bold")
+				.setFontSize(25)
+				.text("興味のある訪問者のリスト", leftMargin, 65)
+				.setLineWidth(1)
+				.line(leftMargin, 80, 608, 80);
+		} else {
+			doc.setFont("NotoSansJP", "bold")
+				.setFontSize(25)
+				.text("List of Interested Visitors", leftMargin, 65)
+				.setLineWidth(1)
+				.line(leftMargin, 80, 608, 80);
+		}
+	}
+};
+
+// Main Function
 const generateRequestedVisitorPDF = async (data) => {
-  const lgKey = data.lg;
-  let colLabels;
-  return new Promise((resolve, reject) => {
-    try {
-      const doc = new PDFDocument({
-        size: "A4",
-        layout: "landscape",
-        margins: { top: 30, bottom: 30, left: 30, right: 30 },
-      });
+	if (!data?.data || !Array.isArray(data.data) || data.data.length === 0) {
+		return Promise.resolve(
+			setServerResponse(
+				API_STATUS_CODE.BAD_REQUEST,
+				'valid_visitor_data_array_is_required',
+				lgKey
+			)
+		)
+	}
 
-      // Collect chunks in memory instead of writing to file
-      const chunks = [];
-      doc.on('data', chunk => chunks.push(chunk));
-      doc.on('end', () => resolve(Buffer.concat(chunks)));
-      doc.on('error', reject);
+	const lgKey = data.lg || 'en';
+	const fileSavePath = path.join(process.cwd(), "uploads", "reports");
 
-      // Page dimensions and margin
-      const pageWidth = 842;
-      const pageHeight = 595;
-      const margin = 30;
+	// Ensure directory exists
+	await fs.promises.mkdir(fileSavePath, { recursive: true });
 
-      // Header and Title
-      doc.image(
-        path.join(process.cwd(), "/src/common/utilities/images/UXAP_logo.jpg"),
-        pageWidth - 105,
-        margin - 16,
-        { width: 55, align: "right" }
-      );
-      if (lgKey === 'ja') {
-        doc
-          .fontSize(16)
-          .font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Bold.ttf",))
-          .fillColor("#030663")
-          .text("興味のある訪問者のリスト", margin, margin + 10);
-      } else {
-        doc
-          .fontSize(16)
-          .font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Bold.ttf",))
-          .fillColor("#030663")
-          .text("List of interested visitors", margin, margin + 10);
-      }
-      doc
-        .moveTo(margin, margin + 40)
-        .lineTo(pageWidth - margin, margin + 40)
-        .stroke();
-      doc.fillColor("#000000");
+	try {
+		// Load fonts
+		const fonts = await loadFonts();
 
-      // Table configuration
-      let currentY = margin + 50;
-      const colWidths = [35, 110, 100, 75, 85, 85, 130, 130];
-      if (lgKey === 'ja') {
-        colLabels = [
-          "シリアル",
-          "名前",
-          "メール",
-          "連絡先.",
-          "会社",
-          "位置",
-          "リクエストされたプロジェクト",
-          "リクエスト時間",
-        ]
-      } else {
-        colLabels = [
-          "Serial",
-          "Name",
-          "Email",
-          "Contact No.",
-          "Company",
-          "Position",
-          "Requested Projects",
-          "Request Time",
-        ];
-      }
+		// Initialize PDF document
+		const doc = new jsPDF({
+			orientation: "landscape",
+			unit: "px",
+			format: 'a4',
+			compress: true,
+			putOnlyUsedFonts: true
+		});
 
-      const colPositions = colWidths.reduce((acc, width) => {
-        acc.push((acc[acc.length - 1] || margin) + width);
-        return acc;
-      }, []);
+		// Setup fonts
+		doc.addFileToVFS("NotoSansJP-Bold.ttf", fonts.boldFont);
+		doc.addFont("NotoSansJP-Bold.ttf", "NotoSansJP", "bold");
+		doc.addFileToVFS("NotoSansJP-Regular.ttf", fonts.regularFont);
+		doc.addFont("NotoSansJP-Regular.ttf", "NotoSansJP", "regular");
 
-      // Draw initial headers
-      currentY += drawTableRow(doc, colLabels, colWidths, colPositions, currentY, {
-        isHeader: true,
-        customHeight: 40,
-        font: path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Bold.ttf",)
-      });
+		// Setup document layout
+		await setupDocument(doc, lgKey);
 
-      // Function to check if a row needs custom height
-      const needsCustomHeight = (rowData) => {
-        return rowData[6] && rowData[6].length > 40;
-      };
+		// Generate table data
+		const tableData = generateBodyData(lgKey, data.data);
 
-      // Draw table rows
-      data.data.forEach((visitor, index) => {
-        // Check if we need a new page
-        if (currentY + 50 > pageHeight - margin) {
-          doc.addPage({
-            size: "A4",
-            layout: "landscape",
-            margins: { top: 30, bottom: 30, left: 30, right: 30 },
-          });
-          currentY = margin;
-          currentY += drawTableRow(doc, colLabels, colWidths, colPositions, currentY, {
-            isHeader: true,
-            customHeight: 40,
-            font: path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Regular.ttf",)
-          });
-        }
+		// Generate table
+		doc.autoTable({
+			startY: 120,
+			margin: { top: 100, left: 30, right: 30 },
+			theme: 'striped',
+			styles: {
+				font: "NotoSansJP",
+				cellPadding: 3,
+				fontSize: 10
+			},
+			headStyles: {
+				fillColor: '#030663',
+				halign: 'center',
+				valign: 'middle',
+				fontStyle: "bold",
+			},
+			bodyStyles: {
+				halign: 'center',
+				valign: 'middle',
+				fontStyle: "regular",
+			},
+			columnStyles: {
+				0: { cellWidth: 'auto' },
+				1: { cellWidth: 'auto' },
+				2: { cellWidth: 'auto' },
+				3: { cellWidth: 'auto' },
+				4: { cellWidth: 'auto' },
+				5: { cellWidth: 'auto' },
+				6: { cellWidth: 'auto' },
+			},
+			head: [tableData.tableHeader],
+			body: tableData.tableRows,
+		});
 
-        const fullName = `${visitor.f_name || ""} ${visitor.l_name || ""}`.trim();
-        const rowData = [
-          (index + 1).toString(),
-          fullName,
-          visitor.email || "",
-          visitor.contact_no || "",
-          visitor.company_name || "",
-          visitor.position || "",
-          visitor.project_names,
-          format(new Date(visitor.created_at), "MMM dd, yyyy hh:mm:ss a"),
-        ];
+		// Save PDF
+		const filePath = path.join(fileSavePath, "requested-visitors-report.pdf");
+		await fs.promises.writeFile(filePath, Buffer.from(doc.output("arraybuffer")));
 
-        const customHeight = needsCustomHeight(rowData) ? 80 : undefined;
-
-        const rowHeight = drawTableRow(doc, rowData, colWidths, colPositions, currentY, {
-          customHeight: customHeight
-        });
-
-        currentY += rowHeight;
-      });
-
-      // End the document
-      doc.end();
-    } catch (error) {
-      reject(error);
-    }
-  });
+		return filePath;
+	} catch (error) {
+		// console.error("PDF Generation Error:", error);
+		return Promise.resolve(
+			setServerResponse(
+				API_STATUS_CODE.BAD_REQUEST,
+				'failed_to_generate_report',
+				lgKey
+			)
+		)
+	}
 };
 
 module.exports = { generateRequestedVisitorPDF };

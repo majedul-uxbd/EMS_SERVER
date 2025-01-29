@@ -15,8 +15,8 @@
 const OTP_EXPIRED_PERIOD_IN_MINS = 15;
 
 const emailAccount = Object.freeze({
-    email: 'majedulledp3@gmail.com',
-    pass: 'jibagtvhydllkziu'
+    email: 'bdtest@uxd.co.jp',
+    pass: 'tttTtttwlao23'
 })
 
 const FRONTEND_URL = 'https://bdtmp.ultra-x.jp/ems/en';

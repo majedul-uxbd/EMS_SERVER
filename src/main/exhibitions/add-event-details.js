@@ -10,9 +10,30 @@
  */
 
 const { pool } = require("../../../database/db");
-const { setRejectMessage } = require("../../common/set-reject-message");
+const { setServerResponse } = require("../../common/set-server-response");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
+
+const checkIsExhibitionExists = async (bodyData) => {
+    const _query = `
+        SELECT
+            id
+        FROM
+            exhibitions
+        WHERE
+            id = ?;
+    `;
+
+    try {
+        const [result] = await pool.query(_query, bodyData.exhibitionId);
+        if (result.length > 0) {
+            return true;
+        }
+        return false;
+    } catch (error) {
+        return Promise.reject(error);
+    }
+}
 
 const checkEventAlreadyExists = async (bodyData) => {
     const _query = `
@@ -69,7 +90,7 @@ const insertEventDetailsData = async (bodyData) => {
         }
         return false;
     } catch (error) {
-        console.log('🚀 ~ file: add-event-details.js:72 ~ insertEventDetailsData ~ error:', error);
+        // console.log('🚀 ~ file: add-event-details.js:72 ~ insertEventDetailsData ~ error:', error);
         return Promise.reject(error);
     }
 }
@@ -78,25 +99,48 @@ const insertEventDetailsData = async (bodyData) => {
  * This function is used to insert event details into the database
  */
 const addEventDetails = async (bodyData) => {
+    const lgKey = bodyData.lg;
+
     const date = new Date();
     bodyData = { ...bodyData, createsAt: date }
     try {
+        const isExhibitionExist = await checkIsExhibitionExists(bodyData);
+        if (!isExhibitionExist) {
+            return Promise.reject(
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'exhibition_is_not_found',
+                    lgKey,
+                )
+            );
+        }
         const isAlreadyExist = await checkEventAlreadyExists(bodyData);
         if (isAlreadyExist) {
             return Promise.reject(
-                setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Event details already exists')
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'event_details_already_exists',
+                    lgKey,
+                )
             );
         }
         const insertData = await insertEventDetailsData(bodyData);
         if (insertData) {
-            return Promise.resolve({
-                status: 'success',
-                message: 'Event details added successfully'
-            });
+            return Promise.resolve(
+                setServerResponse(
+                    API_STATUS_CODE.OK,
+                    'event_details_added_successfully',
+                    lgKey,
+                ));
         }
     } catch (error) {
+        // console.log('🚀 ~ file: add-event-details.js:106 ~ addEventDetails ~ error:', error);
         return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, 'Internal Server Error')
+            setServerResponse(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'internal_server_error',
+                lgKey,
+            )
         );
     }
 }

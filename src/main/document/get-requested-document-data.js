@@ -10,7 +10,7 @@
  */
 
 const { pool } = require("../../../database/db");
-const { setRejectMessage } = require("../../common/set-reject-message");
+const { setServerResponse } = require("../../common/set-server-response");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
 
@@ -41,12 +41,7 @@ const getNumberOfRowsQuery = async (authData) => {
         return Promise.resolve(result[0]);
     } catch (error) {
         // console.log('🚀 ~ userLoginQuery ~ error:', error);
-        return Promise.reject(
-            setRejectMessage(
-                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-                'operation_failed'
-            )
-        );
+        return Promise.reject(error);
     }
 }
 
@@ -98,28 +93,36 @@ const getNumberOfRowsQuery = async (authData) => {
 const getApprovedProjectDataQuery = async (authData, paginationData) => {
     const _query = `
     SELECT
+        company.id AS company_id,
         company.name AS company_name,
         company.website_link,
         company.address,
         company.email,
+        project.id AS project_id,
         project.project_name,
         project.project_platform,
+        document.id AS document_id,
         document.title,
         document.file_name,
         document.file_path,
+        ex.id AS exhibition_id,
+        ex.exhibitions_title,
         a_document.is_approved,
         a_document.created_at
     FROM
         approved_document AS a_document
-    LEFT JOIN companies AS company
+    LEFT JOIN exhibitions AS ex
     ON
-        a_document.company_id = company.id
+        ex.id = a_document.exhibition_id
     LEFT JOIN projects AS project
     ON
         a_document.project_id = project.id
     LEFT JOIN documents AS document
     ON
-        document.project_id = project.id
+        project.id = document.project_id
+    LEFT JOIN companies AS company
+    ON
+        project.companies_id = company.id
     WHERE
         a_document.visitor_id = ?
     LIMIT ?
@@ -137,28 +140,26 @@ const getApprovedProjectDataQuery = async (authData, paginationData) => {
         return Promise.resolve(result);
 
     } catch (error) {
-        setRejectMessage(
-            API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-            'operation_failed'
-        )
+        return Promise.reject(error);
     }
 }
 
 /**
  * @description This function is used to see the visitors of their approved, rejected and pending requests
  */
-const getRequestedDocumentData = async (authData, paginationData) => {
+const getRequestedDocumentData = async (authData, bodyData, paginationData) => {
+    const lgKey = bodyData.lg;
     try {
         const totalRows = await getNumberOfRowsQuery(authData);
 
         // if (bodyData.status === '1') {
         const getData = await getApprovedProjectDataQuery(authData, paginationData);
-        return Promise.resolve({
+        const result = {
             metadata: {
                 totalRows: totalRows,
             },
             data: getData
-        });
+        };
         // } else {
         //     const getData = await getDisApprovedProjectDataQuery(authData, bodyData, paginationData);
         //     return Promise.resolve({
@@ -168,11 +169,22 @@ const getRequestedDocumentData = async (authData, paginationData) => {
         //         data: getData
         //     });
         // }
-
+        return Promise.resolve(
+            setServerResponse(
+                API_STATUS_CODE.OK,
+                'get_data_successfully',
+                lgKey,
+                result
+            )
+        );
     } catch (error) {
-        console.log("🚀 ~ getRequestedDocumentData ~ error:", error)
+        // console.log("🚀 ~ getRequestedDocumentData ~ error:", error)
         return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, 'Internal Server Error')
+            setServerResponse(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'internal_server_error',
+                lgKey,
+            )
         );
     }
 }

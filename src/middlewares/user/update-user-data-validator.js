@@ -9,10 +9,10 @@
  * 
  */
 
+const { setServerResponse } = require("../../common/set-server-response");
 const {
     isValidUserFirstName,
     isValidUserLastName,
-    isValidEmail,
     isValidUserContact,
     isValidUserPosition,
     isValidUserRole,
@@ -26,10 +26,11 @@ const _ = require('lodash');
  */
 const updateUserDataValidator = (req, res, next) => {
     const authData = req.auth;
+    const lgKey = req.body.lg;
     // const userData = req.body.userData;
-    const errors = [];
 
     const user = {
+        lg: req.body.lg,
         id: req.body.id,
         firstName: req.body.firstName,
         lastName: req.body.lastName,
@@ -43,7 +44,13 @@ const updateUserDataValidator = (req, res, next) => {
 
     if (req.originalUrl === '/system-admin/update') {
         if (_.isNil(user.id) || !_.isNumber(user.id)) {
-            errors.push("Invalid user ID ");
+            return res.status(API_STATUS_CODE.BAD_REQUEST).send(
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'user_id_is_required',
+                    lgKey,
+                )
+            );
         }
     } else {
         delete user.id;
@@ -51,32 +58,50 @@ const updateUserDataValidator = (req, res, next) => {
 
     if (!_.isNil(user.firstName)) {
         if (!isValidUserFirstName(user.firstName)) {
-            errors.push("Invalid user first name");
+            return res.status(API_STATUS_CODE.BAD_REQUEST).send(
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'invalid_user_first_name',
+                    lgKey
+                )
+            );
         }
     }
 
     if (!_.isNil(user.lastName)) {
         if (!isValidUserLastName(user.lastName)) {
-            errors.push("Invalid user last name");
+            return res.status(API_STATUS_CODE.BAD_REQUEST).send(
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'invalid_user_last_name',
+                    lgKey
+                )
+            );
         }
     }
-
-    // if (!_.isNil(user.email)) {
-    //     if (!isValidEmail(user.email)) {
-    //         errors.push("Invalid user email address");
-    //     }
-    // }
 
     if (!_.isNil(user.contact)) {
         if (!isValidUserContact(user.contact)) {
-            errors.push("Invalid user contact number");
+            return res.status(API_STATUS_CODE.BAD_REQUEST).send(
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'invalid_user_contact_number',
+                    lgKey
+                )
+            );
         }
     }
 
-    if (user.role === 'visitor') {
+    if (authData.role === 'visitor') {
         if (!_.isNil(user.company)) {
             if (!isValidUserCompany(user.company)) {
-                errors.push("Invalid company name");
+                return res.status(API_STATUS_CODE.BAD_REQUEST).send(
+                    setServerResponse(
+                        API_STATUS_CODE.BAD_REQUEST,
+                        'invalid_company_name',
+                        lgKey
+                    )
+                );
             }
         }
     } else {
@@ -85,27 +110,31 @@ const updateUserDataValidator = (req, res, next) => {
 
     if (!_.isNil(user.position)) {
         if (!isValidUserPosition(user.position)) {
-            errors.push("Invalid user position");
+            return res.status(API_STATUS_CODE.BAD_REQUEST).send(
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'invalid_user_position',
+                    lgKey
+                )
+            );
         }
     }
     if (authData.role === 'system_admin') {
         if (!_.isNil(user.role)) {
             if (!isValidUserRole(user.role)) {
-                errors.push("Invalid user role");
+                return res.status(API_STATUS_CODE.BAD_REQUEST).send(
+                    setServerResponse(
+                        API_STATUS_CODE.BAD_REQUEST,
+                        'invalid_user_role',
+                        lgKey
+                    )
+                );
             }
         }
     } else {
         delete user.role
     }
 
-
-    if (errors.length > 0) {
-        return res.status(API_STATUS_CODE.BAD_REQUEST).send({
-            status: "failed",
-            message: errors,
-        });
-    }
-    // console.log("🚀 ~ validateAddUserData ~ user:", user)
     // return
     req.body.user = user;
     next();

@@ -13,11 +13,9 @@ const express = require('express');
 const projectRouter = express.Router();
 
 const authenticateToken = require('../../middlewares/jwt');
-const { isUserRoleAdminOrExhibitorAdminOrExhibitor } = require('../../common/utilities/check-user-role');
+const { isUserRoleAdminOrExhibitorAdminOrExhibitor, isUserRoleAdmin } = require('../../common/utilities/check-user-role');
 const { createProjectData } = require('../../main/project/create-project');
-const { API_STATUS_CODE } = require('../../consts/error-status');
 const { updateProjectData } = require('../../main/project/update-project-data');
-const { checkUserIdValidity } = require('../../middlewares/check-user-id-validity');
 const { deleteProjectData } = require('../../main/project/delete-project data');
 const { getAllProjectData } = require('../../main/project/get-all-project-data');
 const { getProjectData } = require('../../main/project/get-project-data');
@@ -25,6 +23,7 @@ const { paginationData } = require('../../middlewares/common/pagination-data');
 const { getDocumentData } = require('../../main/document/get-document-data');
 const { getCompanyProjectData } = require('../../main/project/get-company-project-data');
 const { deleteDocumentData } = require('../../main/document/delete-document-data');
+const { getProjectDocumentData } = require('../../main/document/get-project-document-data');
 
 projectRouter.use(authenticateToken);
 
@@ -37,19 +36,20 @@ projectRouter.post('/add',
     async (req, res) => {
 
         createProjectData(req.auth, req.body)
-            .then(data => {
-                return res.status(API_STATUS_CODE.OK).send({
-                    status: data.status,
-                    message: data.message
-                })
-            })
-            .catch(error => {
-                const { statusCode, message } = error;
+            .then((data) => {
+                const { statusCode, status, message } = data;
                 return res.status(statusCode).send({
-                    status: 'failed',
-                    message: message,
-                })
+                    status: status,
+                    message: message
+                });
             })
+            .catch((error) => {
+                const { statusCode, status, message } = error;
+                return res.status(statusCode).send({
+                    status: status,
+                    message: message,
+                });
+            });
     });
 
 
@@ -58,22 +58,22 @@ projectRouter.post('/add',
  */
 projectRouter.post('/update',
     isUserRoleAdminOrExhibitorAdminOrExhibitor,
-    checkUserIdValidity,
     async (req, res) => {
         updateProjectData(req.auth, req.body)
-            .then(data => {
-                return res.status(API_STATUS_CODE.OK).send({
-                    status: data.status,
-                    message: data.message
-                })
-            })
-            .catch(error => {
-                const { statusCode, message } = error;
+            .then((data) => {
+                const { statusCode, status, message } = data;
                 return res.status(statusCode).send({
-                    status: 'failed',
-                    message: message,
-                })
+                    status: status,
+                    message: message
+                });
             })
+            .catch((error) => {
+                const { statusCode, status, message } = error;
+                return res.status(statusCode).send({
+                    status: status,
+                    message: message,
+                });
+            });
     });
 
 /**
@@ -81,22 +81,22 @@ projectRouter.post('/update',
  */
 projectRouter.post('/delete',
     isUserRoleAdminOrExhibitorAdminOrExhibitor,
-    checkUserIdValidity,
     async (req, res) => {
         deleteProjectData(req.body)
-            .then(data => {
-                return res.status(API_STATUS_CODE.OK).send({
-                    status: data.status,
-                    message: data.message
-                })
-            })
-            .catch(error => {
-                const { statusCode, message } = error;
+            .then((data) => {
+                const { statusCode, status, message } = data;
                 return res.status(statusCode).send({
-                    status: 'failed',
-                    message: message,
-                })
+                    status: status,
+                    message: message
+                });
             })
+            .catch((error) => {
+                const { statusCode, status, message } = error;
+                return res.status(statusCode).send({
+                    status: status,
+                    message: message,
+                });
+            });
     });
 
 /**
@@ -104,24 +104,24 @@ projectRouter.post('/delete',
  */
 projectRouter.post('/get-all-project',
     isUserRoleAdminOrExhibitorAdminOrExhibitor,
-    checkUserIdValidity,
     paginationData,
     async (req, res) => {
-        getAllProjectData(req.body.paginationData)
-            .then(data => {
-                return res.status(API_STATUS_CODE.OK).send({
-                    status: 'success',
-                    message: 'Get all projects data successfully',
-                    ...data
-                })
-            })
-            .catch(error => {
-                const { statusCode, message } = error;
+        getAllProjectData(req.body, req.body.paginationData)
+            .then((data) => {
+                const { statusCode, status, message, result } = data;
                 return res.status(statusCode).send({
-                    status: 'failed',
+                    status: status,
                     message: message,
-                })
+                    ...result
+                });
             })
+            .catch((error) => {
+                const { statusCode, status, message } = error;
+                return res.status(statusCode).send({
+                    status: status,
+                    message: message,
+                });
+            });
     });
 
 
@@ -130,48 +130,49 @@ projectRouter.post('/get-all-project',
  */
 projectRouter.post('/get-project',
     isUserRoleAdminOrExhibitorAdminOrExhibitor,
-    checkUserIdValidity,
     async (req, res) => {
-        getProjectData(req.auth)
-            .then(data => {
-                return res.status(API_STATUS_CODE.OK).send({
-                    status: 'success',
-                    message: 'Get projects data successfully',
-                    data
-                })
-            })
-            .catch(error => {
-                const { statusCode, message } = error;
+        getProjectData(req.auth, req.body)
+            .then((data) => {
+                const { statusCode, status, message, result } = data;
                 return res.status(statusCode).send({
-                    status: 'failed',
+                    status: status,
                     message: message,
-                })
+                    projectData: result
+                });
             })
+            .catch((error) => {
+                const { statusCode, status, message } = error;
+                return res.status(statusCode).send({
+                    status: status,
+                    message: message,
+                });
+            });
     });
 
 
 /**
- * Get project data based on company id
- */
+* Get project data based on company id
+*/
 projectRouter.post('/get-company-project',
     isUserRoleAdminOrExhibitorAdminOrExhibitor,
     paginationData,
     async (req, res) => {
-        getCompanyProjectData(req.auth, req.body.paginationData)
-            .then(data => {
-                return res.status(API_STATUS_CODE.OK).send({
-                    status: 'success',
-                    message: 'Get projects data successfully',
-                    data
-                })
-            })
-            .catch(error => {
-                const { statusCode, message } = error;
+        getCompanyProjectData(req.auth, req.body, req.body.paginationData)
+            .then((data) => {
+                const { statusCode, status, message, result } = data;
                 return res.status(statusCode).send({
-                    status: 'failed',
+                    status: status,
                     message: message,
-                })
+                    ...result
+                });
             })
+            .catch((error) => {
+                const { statusCode, status, message } = error;
+                return res.status(statusCode).send({
+                    status: status,
+                    message: message,
+                });
+            });
     });
 
 /**
@@ -182,20 +183,21 @@ projectRouter.post('/get-document',
     paginationData,
     async (req, res) => {
         getDocumentData(req.body, req.body.paginationData)
-            .then(data => {
-                return res.status(API_STATUS_CODE.OK).send({
-                    status: 'success',
-                    message: 'Get document data successfully',
-                    ...data
-                })
-            })
-            .catch(error => {
-                const { statusCode, message } = error;
+            .then((data) => {
+                const { statusCode, status, message, result } = data;
                 return res.status(statusCode).send({
-                    status: 'failed',
+                    status: status,
                     message: message,
-                })
+                    ...result
+                });
             })
+            .catch((error) => {
+                const { statusCode, status, message } = error;
+                return res.status(statusCode).send({
+                    status: status,
+                    message: message,
+                });
+            });
     });
 
 /**
@@ -205,19 +207,47 @@ projectRouter.post('/delete-document',
     isUserRoleAdminOrExhibitorAdminOrExhibitor,
     async (req, res) => {
         deleteDocumentData(req.body)
-            .then(data => {
-                return res.status(API_STATUS_CODE.OK).send({
-                    status: data.status,
-                    message: data.message
-                })
-            })
-            .catch(error => {
-                const { statusCode, message } = error;
+            .then((data) => {
+                const { statusCode, status, message } = data;
                 return res.status(statusCode).send({
-                    status: 'failed',
-                    message: message,
-                })
+                    status: status,
+                    message: message
+                });
             })
+            .catch((error) => {
+                const { statusCode, status, message } = error;
+                return res.status(statusCode).send({
+                    status: status,
+                    message: message,
+                });
+            });
+    })
+
+
+/**
+ * This API is used to get Project Document based on project ID
+ */
+projectRouter.post('/get-project-document',
+    isUserRoleAdmin,
+    paginationData,
+    async (req, res) => {
+
+        getProjectDocumentData(req.body, req.body.paginationData)
+            .then((data) => {
+                const { statusCode, status, message, result } = data;
+                return res.status(statusCode).send({
+                    status: status,
+                    message: message,
+                    ...result
+                });
+            })
+            .catch((error) => {
+                const { statusCode, status, message } = error;
+                return res.status(statusCode).send({
+                    status: status,
+                    message: message,
+                });
+            });
     })
 
 

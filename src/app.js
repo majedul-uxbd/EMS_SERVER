@@ -38,6 +38,8 @@ const { attendanceRouter } = require("./routes/attendances/attendance-route");
 const { commonRouter } = require("./routes/common/common-route");
 const { dashboardRouter } = require("./routes/admin-dashboard/dashboard-route");
 const { withoutLoginRouter } = require('./routes/withoutLogin/without-Token-route');
+const { testRouter } = require("./routes/test-route");
+const { reportGenerateRouter } = require("./routes/report-generate/report-generate-route");
 
 // Middleware
 app.use("/users", usersRouter);
@@ -53,6 +55,8 @@ app.use("/attendances", attendanceRouter);
 app.use("/common", commonRouter);
 app.use("/dashboard", dashboardRouter);
 app.use("/withoutLogin", withoutLoginRouter);
+app.use("/test", testRouter);
+app.use("/report-generate", reportGenerateRouter);
 
 // app.get("/status", (req, res) => {
 //   res.json({

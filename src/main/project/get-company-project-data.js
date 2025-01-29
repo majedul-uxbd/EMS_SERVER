@@ -11,7 +11,7 @@
 
 const _ = require('lodash');
 const { pool } = require("../../../database/db");
-const { setRejectMessage } = require("../../common/set-reject-message");
+const { setServerResponse } = require("../../common/set-server-response");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
 
@@ -31,12 +31,7 @@ const getProjectCompanyId = async (authData) => {
         }
     } catch (error) {
         // console.log('🚀 ~ userLoginQuery ~ error:', error);
-        return Promise.reject(
-            setRejectMessage(
-                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-                'operation_failed'
-            )
-        );
+        return Promise.reject(error);
     }
 }
 
@@ -65,12 +60,7 @@ const getNumberOfRowsQuery = async (companyId) => {
         return Promise.resolve(result[0]);
     } catch (error) {
         // console.log('🚀 ~ userLoginQuery ~ error:', error);
-        return Promise.reject(
-            setRejectMessage(
-                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-                'operation_failed'
-            )
-        );
+        return Promise.reject(error);
     }
 }
 
@@ -123,33 +113,44 @@ const getProjectDataQuery = async (companyId, paginationData) => {
 
     } catch (error) {
         // console.log("🚀 ~ getProjectDataQuery ~ error:", error)
-        setRejectMessage(
-            API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-            'operation_failed'
-        )
+        return Promise.reject(error);
     }
 }
 
 /**
  * @description This function is used to get project data based on company ID
  */
-const getCompanyProjectData = async (authData, paginationData) => {
+const getCompanyProjectData = async (authData, bodyData, paginationData) => {
+    const lgKey = bodyData.lg;
+
     try {
         const companyId = await getProjectCompanyId(authData)
 
         const totalRows = await getNumberOfRowsQuery(companyId);
-        const documentData = await getProjectDataQuery(companyId, paginationData);
+        const projectData = await getProjectDataQuery(companyId, paginationData);
 
-        return Promise.resolve({
+        const result = {
             metadata: {
                 totalRows: totalRows,
             },
-            data: documentData
-        });
+            data: projectData
+        };
+        return Promise.resolve(
+            setServerResponse(
+                API_STATUS_CODE.OK,
+                'get_data_successfully',
+                lgKey,
+                result
+            )
+        )
     } catch (error) {
         // console.log("🚀 ~ getDocumentData ~ error:", error)
         return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, 'Internal Server Error')
+            setServerResponse(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'internal_server_error',
+                lgKey,
+            )
         );
     }
 }

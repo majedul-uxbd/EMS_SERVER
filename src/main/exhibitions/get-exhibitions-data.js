@@ -11,7 +11,7 @@
 
 const { pool } = require("../../../database/db");
 
-const { setRejectMessage } = require("../../common/set-reject-message");
+const { setServerResponse } = require("../../common/set-server-response");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
 
@@ -42,12 +42,7 @@ const getAttendedUserDataQuery = async (bodyData) => {
         return Promise.resolve(result[0]);
     } catch (error) {
         // console.log('🚀 ~ userLoginQuery ~ error:', error);
-        return Promise.reject(
-            setRejectMessage(
-                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-                'operation_failed'
-            )
-        );
+        return Promise.reject(error);
     }
 }
 
@@ -76,12 +71,7 @@ const getEventDetailsQuery = async (bodyData) => {
         return Promise.resolve(result);
     } catch (error) {
         // console.log('🚀 ~ userLoginQuery ~ error:', error);
-        return Promise.reject(
-            setRejectMessage(
-                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-                'operation_failed'
-            )
-        );
+        return Promise.reject(error);
     }
 }
 
@@ -117,12 +107,7 @@ const getExhibitionDataQuery = async (bodyData) => {
         return Promise.resolve(result[0]);
     } catch (error) {
         // console.log('🚀 ~ userLoginQuery ~ error:', error);
-        return Promise.reject(
-            setRejectMessage(
-                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-                'operation_failed'
-            )
-        );
+        return Promise.reject(error);
     }
 }
 
@@ -131,21 +116,29 @@ const getExhibitionDataQuery = async (bodyData) => {
  * @description This function is used to get all exhibitions data 
  */
 const getExhibitionData = async (bodyData) => {
-
+    const lgKey = bodyData.lg;
     try {
         let exhibitionInfo = await getExhibitionDataQuery(bodyData);
         let eventDetails = await getEventDetailsQuery(bodyData);
         const attendedUserInfo = await getAttendedUserDataQuery(bodyData);
         exhibitionInfo = { ...exhibitionInfo, ...attendedUserInfo, eventDetails }
-        return Promise.resolve({
-            // data: { exhibitionInfo, attendedUserInfo }
-            data: exhibitionInfo
-        });
+        return Promise.resolve(
+            setServerResponse(
+                API_STATUS_CODE.OK,
+                'get_data_successfully',
+                lgKey,
+                exhibitionInfo
+            )
+        );
     } catch (error) {
         // console.log("🚀 ~ userLogin ~ error:", error)
         return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, 'Internal Server Error')
-        );
+            setServerResponse(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'internal_server_error',
+                lgKey,
+            ),
+        )
     }
 };
 

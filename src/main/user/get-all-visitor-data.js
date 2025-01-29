@@ -1,22 +1,21 @@
 /**
- * @author Md. Majedul Islam <https://github.com/majedul-uxbd> 
+ * @author Md. Majedul Islam <https://github.com/majedul-uxbd>
  * Software Engineer,
  * Ultra-X BD Ltd.
  *
  * @copyright All right reserved Ultra-X Asia Pacific
- * 
- * @description 
- * 
+ *
+ * @description
+ *
  */
 
-const _ = require("lodash");
-const { pool } = require("../../../database/db");
-const { setRejectMessage } = require("../../common/set-reject-message");
-const { API_STATUS_CODE } = require("../../consts/error-status");
-
+const _ = require('lodash');
+const { pool } = require('../../../database/db');
+const { setServerResponse } = require('../../common/set-server-response');
+const { API_STATUS_CODE } = require('../../consts/error-status');
 
 const getNumberOfRowsQuery = async () => {
-    const _query = `
+	const _query = `
     SELECT count(*) AS totalRows
     FROM
         visitors
@@ -24,29 +23,17 @@ const getNumberOfRowsQuery = async () => {
         is_user_active = ${1}
     `;
 
-
-    try {
-        const [result] = await pool.query(_query);
-        if (result.length > 0) {
-            return Promise.resolve(result[0]);
-        } else {
-            return Promise.reject(
-                setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'User not found')
-            )
-        }
-    } catch (error) {
-        // console.log('🚀 ~ userLoginQuery ~ error:', error);
-        return Promise.reject(
-            setRejectMessage(
-                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-                'operation_failed'
-            )
-        );
-    }
-}
+	try {
+		const [result] = await pool.query(_query);
+		return Promise.resolve(result[0]);
+	} catch (error) {
+		// console.log('🚀 ~ userLoginQuery ~ error:', error);
+		return Promise.reject(error);
+	}
+};
 
 const getVisitorDataQuery = async (paginationData) => {
-    const _query = `
+	const _query = `
     SELECT
         id,
         f_name,
@@ -67,47 +54,51 @@ const getVisitorDataQuery = async (paginationData) => {
     OFFSET ?;
     `;
 
-    const values = [paginationData.itemsPerPage, paginationData.offset];
+	const values = [paginationData.itemsPerPage, paginationData.offset];
 
-
-    try {
-        const [result] = await pool.query(_query, values);
-        return Promise.resolve(result);
-
-    } catch (error) {
-        // console.log('🚀 ~ userLoginQuery ~ error:', error);
-        return Promise.reject(
-            setRejectMessage(
-                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-                'operation_failed'
-            )
-        );
-    }
-}
+	try {
+		const [result] = await pool.query(_query, values);
+		return Promise.resolve(result);
+	} catch (error) {
+		// console.log('🚀 ~ userLoginQuery ~ error:', error);
+		return Promise.reject(error);
+	}
+};
 
 /**
  * @description This function will return all visitor data
  */
-const getAllVisitorTableData = async (paginationData) => {
-    try {
-        const totalRows = await getNumberOfRowsQuery();
-        const result = await getVisitorDataQuery(paginationData);
-
-        return Promise.resolve({
-            metadata: {
-                totalRows: totalRows,
-            },
-            data: result
-        });
-    } catch (error) {
-        // console.log("🚀 ~ getAllUserTableData ~ error:", error)
-        return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, 'Internal server error')
-        );
-
-    }
-}
+const getAllVisitorTableData = async (userData, paginationData) => {
+	const lgKey = userData.lg;
+	try {
+		const totalRows = await getNumberOfRowsQuery();
+		const getUserData = await getVisitorDataQuery(paginationData);
+		const result = {
+			metadata: {
+				totalRows: totalRows,
+			},
+			data: getUserData,
+		};
+		return Promise.resolve(
+			setServerResponse(
+				API_STATUS_CODE.OK,
+				'get_data_successfully',
+				lgKey,
+				result
+			)
+		);
+	} catch (error) {
+		// console.log("🚀 ~ getAllUserTableData ~ error:", error)
+		return Promise.reject(
+			setServerResponse(
+				API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+				'internal_server_error',
+				lgKey
+			)
+		);
+	}
+};
 
 module.exports = {
-    getAllVisitorTableData
-}
+	getAllVisitorTableData,
+};

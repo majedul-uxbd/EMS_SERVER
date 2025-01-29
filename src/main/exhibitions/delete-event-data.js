@@ -10,7 +10,7 @@
  */
 
 const { pool } = require("../../../database/db");
-const { setRejectMessage } = require("../../common/set-reject-message");
+const { setServerResponse } = require("../../common/set-server-response");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
 
@@ -38,22 +38,34 @@ const deleteEventDataQuery = async (bodyData) => {
  * This function is used to delete event details data
  */
 const deleteEventData = async (bodyData) => {
+    const lgKey = bodyData.lg;
+
     try {
         const isDeleteData = await deleteEventDataQuery(bodyData);
         if (isDeleteData) {
-            return Promise.resolve({
-                status: 'success',
-                message: 'Event details deleted successfully'
-            })
+            return Promise.resolve(
+                setServerResponse(
+                    API_STATUS_CODE.OK,
+                    'event_details_deleted_successfully',
+                    lgKey,
+                )
+            )
         } else {
             return Promise.reject(
-                setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Event is not found')
-            )
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'event_is_not_found',
+                    lgKey,
+                ))
         }
     } catch (error) {
-        console.log('🚀 ~ file: delete-event-data.js:54 ~ deleteEventData ~ error:', error);
+        // console.log('🚀 ~ file: delete-event-data.js:54 ~ deleteEventData ~ error:', error);
         return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, 'Internal server error')
+            setServerResponse(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'internal_server_error',
+                lgKey,
+            )
         );
     }
 };

@@ -30,40 +30,51 @@ const { emailAccount } = require('../config');
  * 
  * @type {Object}
  */
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    secure: true,
-    host: 'smtp.gmail.com',
-    port: 465,
-    auth: {
-        user: emailAccount.email,
-        pass: emailAccount.pass
+const transporter = nodemailer.createTransport(
+    {
+        "host": "49.212.235.234",
+        "port": 587,
+        "secure": false,
+        "auth": {
+            "user": emailAccount.email,
+            "pass": emailAccount.pass
+        },
+        "tls": {
+            "rejectUnauthorized": false
+        }
     }
-})
+)
+
+
 
 /**
- * Sends an email using a configured transporter.
+ * Sends an email using the configured transporter.
  * 
- * This function uses the configured `transporter` object to send an email. 
+ * This function uses the provided `transporter` object to send an email. 
  * It accepts the following parameters:
+ * - `from`: The sender's email address.
  * - `to`: The recipient's email address.
  * - `sub`: The subject line of the email.
  * - `msg`: The HTML content of the email body.
  * 
- * The function calls the `sendMail` method of the `transporter` object, 
- * which sends the email with the provided recipient address, subject, and message.
- *
+ * The function calls the `sendMail` method of the `transporter` object to send the email with the provided 
+ * sender, recipient, subject, and HTML content in the body.
+ * 
+ * @param {string} from - The email address of the sender.
  * @param {string} to - The email address of the recipient.
  * @param {string} sub - The subject line of the email.
- * @param {string} msg - The HTML content of the email.
+ * @param {string} msg - The HTML content of the email body.
  */
-const sendMail = (to, sub, msg) => {
-    transporter.sendMail({
+const sendMail = async (from, to, sub, msg) => {
+    await transporter.sendMail({
+        from: from,
         to: to,
         subject: sub,
-        html: msg
+        html: msg,
+        // attachments: [], // Add attachments if necessary
     })
 }
+
 
 module.exports = {
     sendMail

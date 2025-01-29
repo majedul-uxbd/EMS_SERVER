@@ -14,12 +14,15 @@ const exhibitionsRouter = express.Router();
 
 const { addExhibitionsInfo } = require('../../main/exhibitions/add-exhibitions-info');
 const { validateExhibitionsBodyData } = require('../../middlewares/exhibitions/validate-exhibitions-body-data');
-const { API_STATUS_CODE } = require('../../consts/error-status');
 const { isUserRoleAdmin } = require('../../common/utilities/check-user-role');
 const authenticateToken = require('../../middlewares/jwt');
 const { deleteExhibitionsData } = require('../../main/exhibitions/delete-exhibitions-data');
 const { deleteEventData } = require('../../main/exhibitions/delete-event-data');
 const { updateExhibitionData } = require('../../main/exhibitions/update-exhibition-data');
+const { getExhibitionDaysData } = require('../../main/exhibitions/get-exhibition-days-data');
+const { getExhibitionDayWiseAttendanceData } = require('../../main/exhibitions/get-exhibition-days-wise-attendance');
+const { paginationData } = require('../../middlewares/common/pagination-data');
+const { updateEventDetails } = require('../../main/exhibitions/update-event-details');
 
 exhibitionsRouter.use(authenticateToken);
 
@@ -33,24 +36,25 @@ exhibitionsRouter.post('/add',
     async (req, res) => {
 
         addExhibitionsInfo(req.body.bodyData)
-            .then(data => {
-                return res.status(API_STATUS_CODE.OK).send({
-                    status: data.status,
-                    message: data.message
-                })
-            })
-            .catch(error => {
-                const { statusCode, message } = error;
+            .then((data) => {
+                const { statusCode, status, message } = data;
                 return res.status(statusCode).send({
-                    status: 'failed',
+                    status: status,
+                    message: message
+                });
+            })
+            .catch((error) => {
+                const { statusCode, status, message } = error;
+                return res.status(statusCode).send({
+                    status: status,
                     message: message,
-                })
+                });
             });
     });
 
 
 /**
-* TODO: Need to work on this API. This is not running API
+* THrough this API admin can update exhibitions data
 */
 exhibitionsRouter.post('/update',
     isUserRoleAdmin,
@@ -58,18 +62,19 @@ exhibitionsRouter.post('/update',
     async (req, res) => {
 
         updateExhibitionData(req.body.bodyData)
-            .then(data => {
-                return res.status(API_STATUS_CODE.CREATED).send({
-                    status: data.status,
-                    message: data.message
-                })
-            })
-            .catch(error => {
-                const { statusCode, message } = error;
+            .then((data) => {
+                const { statusCode, status, message } = data;
                 return res.status(statusCode).send({
-                    status: 'failed',
+                    status: status,
+                    message: message
+                });
+            })
+            .catch((error) => {
+                const { statusCode, status, message } = error;
+                return res.status(statusCode).send({
+                    status: status,
                     message: message,
-                })
+                });
             });
     });
 
@@ -81,18 +86,19 @@ exhibitionsRouter.post('/delete',
     async (req, res) => {
 
         deleteExhibitionsData(req.body)
-            .then(data => {
-                return res.status(API_STATUS_CODE.CREATED).send({
-                    status: data.status,
-                    message: data.message
-                })
-            })
-            .catch(error => {
-                const { statusCode, message } = error;
+            .then((data) => {
+                const { statusCode, status, message } = data;
                 return res.status(statusCode).send({
-                    status: 'failed',
+                    status: status,
+                    message: message
+                });
+            })
+            .catch((error) => {
+                const { statusCode, status, message } = error;
+                return res.status(statusCode).send({
+                    status: status,
                     message: message,
-                })
+                });
             });
     });
 
@@ -105,20 +111,101 @@ exhibitionsRouter.post('/delete-event',
     async (req, res) => {
 
         deleteEventData(req.body)
-            .then(data => {
-                return res.status(API_STATUS_CODE.CREATED).send({
-                    status: data.status,
-                    message: data.message
-                })
-            })
-            .catch(error => {
-                const { statusCode, message } = error;
+            .then((data) => {
+                const { statusCode, status, message } = data;
                 return res.status(statusCode).send({
-                    status: 'failed',
+                    status: status,
+                    message: message
+                });
+            })
+            .catch((error) => {
+                const { statusCode, status, message } = error;
+                return res.status(statusCode).send({
+                    status: status,
                     message: message,
-                })
+                });
             });
     });
+
+
+/**
+* Through this API admin can see event days information based on exhibition ID
+*/
+exhibitionsRouter.post('/get-exhibition-days',
+    isUserRoleAdmin,
+    async (req, res) => {
+
+        getExhibitionDaysData(req.body)
+            .then((data) => {
+                const { statusCode, status, message, result } = data;
+                return res.status(statusCode).send({
+                    status: status,
+                    message: message,
+                    eventDates: result
+                });
+            })
+            .catch((error) => {
+                const { statusCode, status, message } = error;
+                return res.status(statusCode).send({
+                    status: status,
+                    message: message,
+                });
+            });
+    });
+
+
+/**
+* Through this API admin can see event days information based on exhibition ID
+*/
+exhibitionsRouter.post('/exhibition-days-wise-attendance',
+    isUserRoleAdmin,
+    paginationData,
+    async (req, res) => {
+        getExhibitionDayWiseAttendanceData(req.body, req.body.paginationData)
+            .then((data) => {
+                const { statusCode, status, message, result } = data;
+                return res.status(statusCode).send({
+                    status: status,
+                    message: message,
+                    ...result
+                });
+            })
+            .catch((error) => {
+                const { statusCode, status, message } = error;
+                return res.status(statusCode).send({
+                    status: status,
+                    message: message,
+                });
+            });
+    });
+
+
+/**
+* Through this API admin can add event details
+*/
+exhibitionsRouter.post('/update-event-details',
+    isUserRoleAdmin,
+    async (req, res) => {
+
+        updateEventDetails(req.body)
+            .then((data) => {
+                const { statusCode, status, message, result } = data;
+                return res.status(statusCode).send({
+                    status: status,
+                    message: message,
+                    ...result
+                });
+            })
+            .catch((error) => {
+                const { statusCode, status, message } = error;
+                return res.status(statusCode).send({
+                    status: status,
+                    message: message,
+                });
+            });
+    });
+
+
 
 
 module.exports = {

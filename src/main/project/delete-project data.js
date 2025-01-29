@@ -10,7 +10,7 @@
  */
 
 const { pool } = require("../../../database/db");
-const { setRejectMessage } = require("../../common/set-reject-message");
+const { setServerResponse } = require("../../common/set-server-response");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
 
@@ -32,9 +32,7 @@ const checkProjectIdValidity = async (projectId) => {
         return false;
     } catch (error) {
         // console.log("🚀 ~ checkProjectIdValidity ~ error:", error)
-        return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Operation failed')
-        );
+        return Promise.reject(error);
 
     }
 }
@@ -56,9 +54,7 @@ const deleteProjectDataQuery = async (projectId) => {
         return false;
     } catch (error) {
         // console.log("🚀 ~ checkProjectIdValidity ~ error:", error)
-        return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Operation failed')
-        );
+        return Promise.reject(error);
 
     }
 }
@@ -67,23 +63,47 @@ const deleteProjectDataQuery = async (projectId) => {
  * @description This function is used to delete project data
  */
 const deleteProjectData = async (projectData) => {
+    const lgKey = projectData.lg;
+
     try {
         const isValidProjectId = await checkProjectIdValidity(projectData.id);
-        if (isValidProjectId) {
-            const isDeleteProject = await deleteProjectDataQuery(projectData.id);
-            if (isDeleteProject) {
-                return Promise.resolve({
-                    status: 'success',
-                    message: 'Project data deleted successfully'
-                })
-            } else {
-                return Promise.reject(
-                    setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Failed to delete project data')
-                );
-            }
+        if (!isValidProjectId) {
+            return Promise.reject(
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'project_is_not_found',
+                    lgKey,
+                )
+            )
         }
-    } catch (error) {
+        const isDeleteProject = await deleteProjectDataQuery(projectData.id);
+        if (isDeleteProject) {
+            return Promise.resolve(
+                setServerResponse(
+                    API_STATUS_CODE.OK,
+                    'project_data_deleted_successfully',
+                    lgKey,
+                )
+            )
+        } else {
+            return Promise.reject(
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'failed_to_delete_project_data',
+                    lgKey,
+                )
+            );
+        }
 
+    } catch (error) {
+        // console.log('🚀 ~ file: delete-project data.js:101 ~ deleteProjectData ~ error:', error);
+        return Promise.reject(
+            setServerResponse(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'internal_server_error',
+                lgKey,
+            )
+        );
     }
 
 }

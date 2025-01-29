@@ -11,7 +11,7 @@
 
 const _ = require('lodash');
 const { pool } = require("../../../database/db");
-const { setRejectMessage } = require("../../common/set-reject-message");
+const { setServerResponse } = require("../../common/set-server-response");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
 const enrolledVisitorCountQuery = async (bodyData) => {
@@ -153,10 +153,16 @@ const checkCompanyHasProjects = async (companyId) => {
  * @description This function is used to retrieve count of all users 
  */
 const allCountForDashboardTab2 = async (bodyData) => {
+    const lgKey = bodyData.lg;
+
     let attendedCompanyCount = 0;
     if (_.isNil(bodyData.exhibitionId)) {
         return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Exhibition ID is required')
+            setServerResponse(
+                API_STATUS_CODE.BAD_REQUEST,
+                'exhibition_id_is_required',
+                lgKey
+            )
         )
     }
     try {
@@ -173,11 +179,13 @@ const allCountForDashboardTab2 = async (bodyData) => {
                 attendedExhibitorCount,
                 enrolledCompanyCount,
             }
-            return Promise.resolve({
-                status: 'success',
-                message: 'No company enrolled in this exhibition',
-                totalCount: totalCount
-            });
+            return Promise.resolve(
+                setServerResponse(
+                    API_STATUS_CODE.OK,
+                    'no_company_enrolled_in_this_exhibition',
+                    lgKey,
+                    totalCount
+                ));
         } else {
             for (const company of enrolledCompanyId) {
                 const hasCompany = await checkCompanyHasProjects(company.company_id);
@@ -195,14 +203,21 @@ const allCountForDashboardTab2 = async (bodyData) => {
             enrolledCompanyCount,
             attendedCompanyCount,
         }
-        return Promise.resolve({
-            status: 'success',
-            message: 'Get data successfully',
-            totalCount: totalCount
-        })
+        return Promise.resolve(
+            setServerResponse(
+                API_STATUS_CODE.OK,
+                'get_data_successfully',
+                lgKey,
+                totalCount
+            )
+        )
     } catch (error) {
         return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, 'Internal Server Error')
+            setServerResponse(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'internal_server_error',
+                lgKey,
+            )
         )
     }
 }

@@ -11,7 +11,7 @@
 
 const { pool } = require("../../../database/db");
 const { API_STATUS_CODE } = require("../../consts/error-status");
-const { setRejectMessage } = require("../../common/set-reject-message");
+const { setServerResponse } = require("../../common/set-server-response");
 
 // Query to get all attendance data
 const getVisitorOwnData = async (authData) => {
@@ -34,39 +34,35 @@ const getVisitorOwnData = async (authData) => {
 
 	try {
 		const [result] = await pool.query(_query, authData.id);
-		if (result.length > 0) {
-			return Promise.resolve(result);
-		} else {
-			return Promise.reject(
-				setRejectMessage(API_STATUS_CODE.NOT_FOUND, "No data found")
-			);
-		}
+		return Promise.resolve(result);
 	} catch (error) {
-		return Promise.reject(
-			setRejectMessage(
-				API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-				"Operation failed"
-			)
-		);
+		return Promise.reject(error);
 	}
 };
 
 /**
  * @description This function is used to get visitor own information
  */
-const getVisitorData = async (authData) => {
+const getVisitorData = async (authData, bodyData) => {
+	const lgKey = bodyData.lg;
+
 	try {
-		const attendanceData = await getVisitorOwnData(authData);
-		return Promise.resolve({
-			message: "Attendance data fetched successfully",
-			data: attendanceData,
-		});
+		const visitorData = await getVisitorOwnData(authData);
+		return Promise.resolve(
+			setServerResponse(
+				API_STATUS_CODE.OK,
+				'get_data_successfully',
+				lgKey,
+				visitorData
+			)
+		);
 	} catch (error) {
 		// console.error("🚀 ~ getAllAttendanceData ~ error:", error);
 		return Promise.reject(
-			setRejectMessage(
+			setServerResponse(
 				API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-				"Internal Server Error"
+				'internal_server_error',
+				lgKey,
 			)
 		);
 	}

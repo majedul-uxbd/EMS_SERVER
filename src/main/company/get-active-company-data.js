@@ -11,7 +11,7 @@
 
 const _ = require("lodash");
 const { pool } = require("../../../database/db");
-const { setRejectMessage } = require("../../common/set-reject-message");
+const { setServerResponse } = require("../../common/set-server-response");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
 
@@ -32,38 +32,39 @@ const getCompanyDataQuery = async () => {
         is_active = ${1}
     `;
 
-
-
     try {
         const [result] = await pool.query(_query);
         return Promise.resolve(result);
     } catch (error) {
         // console.log('🚀 ~ userLoginQuery ~ error:', error);
-        return Promise.reject(
-            setRejectMessage(
-                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-                'operation_failed'
-            )
-        );
+        return Promise.reject(error);
     }
 }
 
 /**
  * @description This function will return active company account information
  */
-const getActiveCompanyData = async () => {
+const getActiveCompanyData = async (bodyData) => {
+    const lgKey = bodyData.lg;
     try {
         const result = await getCompanyDataQuery();
 
-        return Promise.resolve({
-            status: 'success',
-            message: 'Get company data successfully',
-            data: result
-        });
+        return Promise.resolve(
+            setServerResponse(
+                API_STATUS_CODE.OK,
+                'get_data_successfully',
+                lgKey,
+                result
+            )
+        );
     } catch (error) {
         // console.log("🚀 ~ getAllUserTableData ~ error:", error)
         return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, 'Internal server error')
+            setServerResponse(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'internal_server_error',
+                lgKey
+            )
         );
 
     }

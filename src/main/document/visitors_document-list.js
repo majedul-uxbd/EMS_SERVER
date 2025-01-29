@@ -1,7 +1,7 @@
 const PDFDocument = require("pdfkit");
 const path = require("path");
 const { format } = require("date-fns");
-const { setRejectMessage } = require("../../common/set-reject-message");
+const { setRejectMessage, setServerResponse } = require("../../common/set-server-response");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
 // Function to format datetime using date-fns
@@ -9,10 +9,14 @@ const formatDateTime = (isoString) => {
 	return format(new Date(isoString), "MMM dd, yyyy, hh:mm:ss a");
 };
 
+// Utility function to replace null, undefined, or empty values with "N/A"
+const getValidValue = (value) => {
+	return value == null || value === "" ? "N/A" : value;
+};
+
 // Modified function to return PDF buffer instead of saving to file
 const generatePDF = (data, lg) => {
 	const lgKey = lg;
-	console.log('🚀 ~ file: visitors_document-list.js:15 ~ generatePDF ~ lgKey:', data);
 	return new Promise((resolve, reject) => {
 		try {
 			const doc = new PDFDocument({
@@ -40,19 +44,28 @@ const generatePDF = (data, lg) => {
 
 			if (lgKey === 'ja') {
 				doc.fontSize(19)
-					.font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Bold.ttf",))
+					.font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Bold.ttf"))
 					.fillColor("#030663")
 					.text("依頼された書類の一覧", 50, 50);
+
+				doc.fontSize(12)
+					.font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Regular.ttf"))
+					.fillColor("#000000")
+					.text("すべての時間は日本標準時で表示されています", 50, 75);
 			} else {
 				doc.fontSize(19)
-					.font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Bold.ttf",))
+					.font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Bold.ttf"))
 					.fillColor("#030663")
 					.text("List of Requested Documents", 50, 50);
-			}
-			doc.moveTo(50, 90).lineTo(780, 90).stroke();
 
-			doc.moveDown(1);
-			doc.fillColor("#000000");
+				doc.fontSize(12)
+					.font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Regular.ttf"))
+					.fillColor("#000000")
+					.text("All times are shown here in Japanese Standard Time", 50, 75);
+			}
+
+			// Draw a horizontal line for section separation
+			doc.moveTo(50, 100).lineTo(780, 100).stroke();
 
 			// Define table layout for landscape orientation
 			const tableTop = 130;
@@ -75,7 +88,7 @@ const generatePDF = (data, lg) => {
 			};
 
 			// Draw table headers with borders
-			doc.fontSize(10).font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Bold.ttf",));
+			doc.fontSize(10).font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Bold.ttf"));
 
 			if (lgKey === 'ja') {
 				doc.text("シリアル", colXPositions.serialNo, tableTop, {
@@ -138,30 +151,30 @@ const generatePDF = (data, lg) => {
 			});
 
 			// Reset font to normal for table data
-			doc.font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Regular.ttf",));
+			doc.font(path.join(process.cwd(), "/src/common/utilities/font/NotoSansJP-Regular.ttf"));
 
 			// Draw table rows with serial numbers
 			data.forEach((row, index) => {
 				const yPosition = tableTop + (index + 1) * rowHeight;
-				const formattedDateTime = formatDateTime(row.created_at);
+				const formattedDateTime = row.created_at ? formatDateTime(row.created_at) : "N/A";
 
 				doc.fontSize(8).text(index + 1, colXPositions.serialNo, yPosition, {
 					width: colWidths.serialNo,
 					align: "center",
 				});
-				doc.text(row.project_name, colXPositions.projectName, yPosition, {
+				doc.text(getValidValue(row.project_name), colXPositions.projectName, yPosition, {
 					width: colWidths.projectName,
 					align: "center",
 				});
-				doc.text(row.project_platform, colXPositions.platform, yPosition, {
+				doc.text(getValidValue(row.project_platform), colXPositions.platform, yPosition, {
 					width: colWidths.platform,
 					align: "center",
 				});
-				doc.text(row.company_name, colXPositions.companyName, yPosition, {
+				doc.text(getValidValue(row.company_name), colXPositions.companyName, yPosition, {
 					width: colWidths.companyName,
 					align: "center",
 				});
-				doc.text(row.title, colXPositions.title, yPosition, {
+				doc.text(getValidValue(row.title), colXPositions.title, yPosition, {
 					width: colWidths.title,
 					align: "center",
 				});
@@ -179,6 +192,7 @@ const generatePDF = (data, lg) => {
 			});
 
 			doc.end();
+
 		} catch (error) {
 			reject(error);
 		}
@@ -188,10 +202,13 @@ const generatePDF = (data, lg) => {
 // Modified function to return PDF buffer
 const generatePDFReport = async (data, lg) => {
 	try {
-		if (!Array.isArray(data) || data.length === 0) {
-			throw setRejectMessage(
-				API_STATUS_CODE.BAD_REQUEST,
-				"Data is required and must be a non-empty array"
+		if (data.length === 0) {
+			return Promise.reject(
+				setServerResponse(
+					API_STATUS_CODE.BAD_REQUEST,
+					'data_is_required_and_must_be_a_non_empty_array',
+					lg
+				)
 			);
 		}
 
@@ -200,9 +217,10 @@ const generatePDFReport = async (data, lg) => {
 	} catch (error) {
 		console.error("Error generating PDF report:", error);
 		return Promise.reject(
-			setRejectMessage(
-				API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-				"Failed to generate report"
+			setServerResponse(
+				API_STATUS_CODE.BAD_REQUEST,
+				'failed_to_generate_report',
+				lg
 			)
 		);
 	}

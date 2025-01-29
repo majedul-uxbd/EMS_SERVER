@@ -10,7 +10,7 @@
  */
 
 const { pool } = require("../../../database/db");
-const { setRejectMessage } = require("../../common/set-reject-message");
+const { setRejectMessage, setServerResponse } = require("../../common/set-server-response");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
 
@@ -30,16 +30,12 @@ const getExhibitionQuery = async () => {
         return Promise.resolve(result);
     } catch (error) {
         // console.log('🚀 ~ userLoginQuery ~ error:', error);
-        return Promise.reject(
-            setRejectMessage(
-                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-                'operation_failed'
-            )
-        );
+        return Promise.reject(error);
     }
 }
 
-const getUpcomingExhibitions = async () => {
+const getUpcomingExhibitions = async (bodyData) => {
+    const lgKey = bodyData.lg;
     const today = new Date();
     try {
         const exhibitionInfo = await getExhibitionQuery();
@@ -47,25 +43,41 @@ const getUpcomingExhibitions = async () => {
         const upcomingExhibitions = exhibitionInfo.filter(exhibition => {
             const dates = JSON.parse(exhibition.exhibition_dates);
             // Check if 1st date is after today
-            const hasUpcomingDate = new Date(dates[0]) > today;
+            const normalizedToday = new Date(
+                today.getFullYear(),
+                today.getMonth(),
+                today.getDate()
+            );
+            const hasUpcomingDate = new Date(dates[0]) > normalizedToday;
 
             return hasUpcomingDate;
         });
 
         if (upcomingExhibitions.length > 0) {
-            return Promise.resolve({
-                data: upcomingExhibitions
-            })
+            return Promise.resolve(
+                setServerResponse(
+                    API_STATUS_CODE.OK,
+                    'get_upcoming_exhibitions_successfully',
+                    lgKey,
+                    upcomingExhibitions
+                ))
         } else {
             return Promise.reject(
-                setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'No upcoming exhibitions')
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'no_upcoming_exhibitions',
+                    lgKey,
+                )
             )
         }
-
     } catch (error) {
-        // console.log('🚀 ~ file: get-upcoming-exhibitions.js:68 ~ getUpcomingExhibitions ~ error:', error);
+        // console.log('🚀 ~ file: get-upcoming-exhibitions.js:80 ~ getUpcomingExhibitions ~ error:', error);
         return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, 'Internal Server Error')
+            setServerResponse(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'internal_server_error',
+                lgKey,
+            )
         )
 
     }

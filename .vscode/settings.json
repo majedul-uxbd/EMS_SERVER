@@ -1,0 +1,35 @@
+{
+    "workbench.colorCustomizations": {
+        "activityBar.activeBackground": "#5ea351",
+        "activityBar.background": "#5ea351",
+        "activityBar.foreground": "#15202b",
+        "activityBar.inactiveForeground": "#15202b99",
+        "activityBarBadge.background": "#d4d8ea",
+        "activityBarBadge.foreground": "#15202b",
+        "commandCenter.border": "#e7e7e799",
+        "sash.hoverBorder": "#5ea351",
+        "statusBar.background": "#4a8140",
+        "statusBar.foreground": "#e7e7e7",
+        "statusBarItem.hoverBackground": "#5ea351",
+        "statusBarItem.remoteBackground": "#4a8140",
+        "statusBarItem.remoteForeground": "#e7e7e7",
+        "titleBar.activeBackground": "#4a8140",
+        "titleBar.activeForeground": "#e7e7e7",
+        "titleBar.inactiveBackground": "#4a814099",
+        "titleBar.inactiveForeground": "#e7e7e799"
+    },
+    "peacock.color": "#4a8140",
+    "cSpell.words": [
+        "autotable",
+        "jspdf",
+        "Noto",
+        "UXAP",
+        "EMS_SERVER"
+    ],
+   "[javascript]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+    },
+    "prettier.tabWidth": 4,
+    "prettier.singleQuote": true,
+    "prettier.singleAttributePerLine": true,
+}
