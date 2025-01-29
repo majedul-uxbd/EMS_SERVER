@@ -1,7 +1,7 @@
 const PDFDocument = require("pdfkit");
 const { format } = require("date-fns");
 const { pool } = require("../../../database/db");
-const { setRejectMessage } = require("../../common/set-reject-message");
+const { setRejectMessage } = require("../../common/set-server-response");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 const path = require("path");
 

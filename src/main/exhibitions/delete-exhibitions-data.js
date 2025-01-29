@@ -10,7 +10,7 @@
  */
 
 const { pool } = require("../../../database/db");
-const { setRejectMessage } = require("../../common/set-reject-message");
+const { setServerResponse } = require("../../common/set-server-response");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
 
@@ -34,9 +34,7 @@ const checkIfExhibitionsExist = async (id) => {
         } return false;
     } catch (error) {
         // console.log("🚀 ~ deleteExhibitionsDataQuery ~ error:", error)
-        return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Operation failed')
-        )
+        return Promise.reject(error)
     }
 }
 
@@ -56,9 +54,7 @@ const deleteExhibitionsDataQuery = async (id) => {
         } return false;
     } catch (error) {
         // console.log("🚀 ~ deleteExhibitionsDataQuery ~ error:", error)
-        return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Operation failed')
-        )
+        return Promise.reject(error)
     }
 }
 
@@ -66,25 +62,37 @@ const deleteExhibitionsDataQuery = async (id) => {
  * This function is used to delete exhibitions data from the database 
  */
 const deleteExhibitionsData = async (bodyData) => {
+    const lgKey = bodyData.lg;
+
     try {
         const isDataExist = await checkIfExhibitionsExist(bodyData.id);
         if (isDataExist) {
             const isDeleteData = await deleteExhibitionsDataQuery(bodyData.id);
             if (isDeleteData) {
-                return Promise.resolve({
-                    status: 'success',
-                    message: 'Exhibitions deleted successfully'
-                })
+                return Promise.resolve(
+                    setServerResponse(
+                        API_STATUS_CODE.OK,
+                        'exhibitions_deleted_successfully',
+                        lgKey,
+                    )
+                )
             }
         } else {
             return Promise.reject(
-                setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Exhibitions data is not found')
-            )
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'exhibition_is_not_found',
+                    lgKey,
+                ))
         }
     } catch (error) {
         // console.log("🚀 ~ deleteExhibitionsData ~ error:", error)
         return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, 'Internal Server Error')
+            setServerResponse(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'internal_server_error',
+                lgKey,
+            )
         );
     }
 }

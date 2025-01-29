@@ -202,7 +202,7 @@ const isValidCompanyAddress = (address) => {
 
 // validate project name
 const isValidProjectName = (projectName) => {
-	const USERNAME_MAX_LENGTH = 100;
+	const USERNAME_MAX_LENGTH = 15;
 	const USERNAME_MIN_LENGTH = 3;
 	if (_.isEmpty(projectName)) {
 		return false;
@@ -214,6 +214,52 @@ const isValidProjectName = (projectName) => {
 			if (
 				projectName.length > USERNAME_MAX_LENGTH ||
 				projectName.length < USERNAME_MIN_LENGTH
+			) {
+				return false;
+			}
+		}
+	}
+	return true;
+};
+
+
+// validate Event Title
+const isValidEventTitle = (eventTitle) => {
+	const USERNAME_MAX_LENGTH = 50;
+	const USERNAME_MIN_LENGTH = 4;
+	if (_.isEmpty(eventTitle)) {
+		return false;
+	} else {
+		if (!_.isString(eventTitle)) {
+			return false;
+		} else {
+			// check length
+			if (
+				eventTitle.length > USERNAME_MAX_LENGTH ||
+				eventTitle.length < USERNAME_MIN_LENGTH
+			) {
+				return false;
+			}
+		}
+	}
+	return true;
+};
+
+
+// validate Event Title
+const isValidEventDescription = (description) => {
+	const USERNAME_MAX_LENGTH = 120;
+	const USERNAME_MIN_LENGTH = 4;
+	if (_.isEmpty(description)) {
+		return false;
+	} else {
+		if (!_.isString(description)) {
+			return false;
+		} else {
+			// check length
+			if (
+				description.length > USERNAME_MAX_LENGTH ||
+				description.length < USERNAME_MIN_LENGTH
 			) {
 				return false;
 			}
@@ -260,5 +306,7 @@ module.exports = {
 	isValidCompanyAddress,
 	isValidProjectName,
 	isValidProjectPlatform,
-	isValidDocumentTitle
+	isValidDocumentTitle,
+	isValidEventTitle,
+	isValidEventDescription
 };

@@ -11,9 +11,7 @@
 const _ = require('lodash');
 const { pool } = require('../../../database/db');
 const { API_STATUS_CODE } = require('../../consts/error-status');
-const {
-	setRejectMessage,
-} = require('../../common/set-reject-message');
+const { setServerResponse } = require('../../common/set-server-response');
 
 const getUserDataQuery = async (id) => {
 	const query = `
@@ -41,17 +39,10 @@ const getUserDataQuery = async (id) => {
 
 	try {
 		const [result] = await pool.query(query, values);
-		if (result.length > 0) {
-			return Promise.resolve(result[0]);
-		}
+		return Promise.resolve(result[0]);
 	} catch (error) {
 		// console.log('🚀 ~ userLoginQuery ~ error:', error);
-		return Promise.reject(
-			setRejectMessage(
-				API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-				'operation_failed'
-			)
-		);
+		return Promise.reject(error);
 	}
 };
 
@@ -75,24 +66,19 @@ const getVisitorDataQuery = async (id) => {
 
 	try {
 		const [result] = await pool.query(query, values);
-		if (result.length > 0) {
-			return Promise.resolve(result[0]);
-		}
+		return Promise.resolve(result[0]);
 	} catch (error) {
 		// console.log('🚀 ~ userLoginQuery ~ error:', error);
-		return Promise.reject(
-			setRejectMessage(
-				API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-				'operation_failed'
-			)
-		);
+		return Promise.reject(error);
 	}
 };
 
 /**
  * This function is used to  get visitor and user information
  */
-const getUserData = async (user) => {
+const getUserData = async (user, bodyData) => {
+	const lgKey = bodyData.lg;
+
 	let userInfo;
 
 	try {
@@ -108,14 +94,23 @@ const getUserData = async (user) => {
 	}
 	if (!userInfo) {
 		return Promise.reject(
-			setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'data-not-found')
+			setServerResponse(
+				API_STATUS_CODE.BAD_REQUEST,
+				'user_not_found',
+				lgKey
+			)
+
 		);
 	}
 
-	return Promise.resolve({
-		message: 'user-data-fetched',
-		user: userInfo
-	});
+	return Promise.resolve(
+		setServerResponse(
+			API_STATUS_CODE.OK,
+			'get_data_successfully',
+			lgKey,
+			userInfo
+		)
+	);
 };
 module.exports = {
 	getUserData,

@@ -10,7 +10,7 @@
  */
 
 const { pool } = require("../../../database/db");
-const { setRejectMessage } = require("../../common/set-reject-message");
+const { setServerResponse } = require("../../common/set-server-response");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
 const totalVisitorCount = async () => {
@@ -41,7 +41,6 @@ const totalExhibitorCount = async () => {
     ON
         user.companies_id = company.id
     WHERE
-        company.is_active = ${1} AND
         user.role IN('exhibitor', 'exhibitor_admin') AND 
         user.current_status IS NULL;
     `;
@@ -60,8 +59,7 @@ const totalOrganizerCount = async () => {
     FROM 
         user
     WHERE
-        role = 'organizer' AND
-        is_user_active = ${1};
+        role = 'organizer';
     `;
     try {
         const [result] = await pool.query(_query);
@@ -107,7 +105,8 @@ const totalProjectCount = async () => {
 /**
  * @description This function is used to retrieve count of all users 
  */
-const allCountForDashboardTab1 = async () => {
+const allCountForDashboardTab1 = async (bodyData) => {
+    const lgKey = bodyData.lg;
     try {
         const visitorCount = await totalVisitorCount();
         const exhibitorCount = await totalExhibitorCount();
@@ -122,15 +121,22 @@ const allCountForDashboardTab1 = async () => {
             companyCount,
             projectCount
         }
-        return Promise.resolve({
-            status: 'success',
-            message: 'Get data successfully',
-            totalCount: totalCount
-        })
+        return Promise.resolve(
+            setServerResponse(
+                API_STATUS_CODE.OK,
+                'get_data_successfully',
+                lgKey,
+                totalCount
+            )
+        )
     } catch (error) {
         // console.log('🚀 ~ file: all-count-for-dashboard-tab-1.js:118 ~ allCountForDashboardTab1 ~ error:', error);
         return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, 'Internal Server Error')
+            setServerResponse(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'internal_server_error',
+                lgKey,
+            )
         )
     }
 }

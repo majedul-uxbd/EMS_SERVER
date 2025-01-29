@@ -10,7 +10,7 @@
  */
 
 const { pool } = require("../../../database/db");
-const { setRejectMessage } = require("../../common/set-reject-message");
+const { setServerResponse } = require("../../common/set-server-response");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
 
@@ -32,12 +32,7 @@ const getNumberOfRowsQuery = async (bodyData) => {
         return Promise.resolve(result[0]);
     } catch (error) {
         // console.log('🚀 ~ userLoginQuery ~ error:', error);
-        return Promise.reject(
-            setRejectMessage(
-                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-                'operation_failed'
-            )
-        );
+        return Promise.reject(error);
     }
 }
 
@@ -77,10 +72,7 @@ const getDocumentDataQuery = async (bodyData, paginationData) => {
 
     } catch (error) {
         // console.log("🚀 ~ getDocumentDataQuery ~ error:", error)
-        setRejectMessage(
-            API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-            'operation_failed'
-        )
+        return Promise.reject(error);
     }
 }
 
@@ -88,19 +80,33 @@ const getDocumentDataQuery = async (bodyData, paginationData) => {
  * @description This function is used to get document data based on project ID 
  */
 const getDocumentData = async (bodyData, paginationData) => {
+    const lgKey = bodyData.lg;
+
     try {
         const totalRows = await getNumberOfRowsQuery(bodyData);
         const documentData = await getDocumentDataQuery(bodyData, paginationData);
-        return Promise.resolve({
+        const result = {
             metadata: {
                 totalRows: totalRows,
             },
             data: documentData
-        });
+        };
+        return Promise.resolve(
+            setServerResponse(
+                API_STATUS_CODE.OK,
+                'get_data_successfully',
+                lgKey,
+                result
+            )
+        )
     } catch (error) {
         // console.log("🚀 ~ getDocumentData ~ error:", error)
         return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, 'Internal Server Error')
+            setServerResponse(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'internal_server_error',
+                lgKey,
+            )
         );
     }
 }

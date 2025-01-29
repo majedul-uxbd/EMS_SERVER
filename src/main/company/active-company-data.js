@@ -10,7 +10,7 @@
  */
 
 const { pool } = require("../../../database/db");
-const { setRejectMessage } = require("../../common/set-reject-message");
+const { setServerResponse } = require("../../common/set-server-response");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
 const checkCompanyIdValidityQuery = async (companyData) => {
@@ -32,10 +32,7 @@ const checkCompanyIdValidityQuery = async (companyData) => {
         return false;
     } catch (error) {
         // console.log("🚀 ~ getUserData ~ error:", error)
-        return res.status(API_STATUS_CODE.BAD_REQUEST).send({
-            status: "failed",
-            message: "Operation failed",
-        });
+        return Promise.reject(error);
     }
 }
 
@@ -59,10 +56,7 @@ const activeCompanyInfoQuery = async (companyData) => {
         return false;
     } catch (error) {
         // console.log("🚀 ~ getUserData ~ error:", error)
-        return res.status(API_STATUS_CODE.BAD_REQUEST).send({
-            status: "failed",
-            message: "Operation failed",
-        });
+        return Promise.reject(error);
     }
 }
 
@@ -90,10 +84,7 @@ const enableUserOfTheCompany = async (companyData) => {
         return false;
     } catch (error) {
         // console.log("🚀 ~ getUserData ~ error:", error)
-        return res.status(API_STATUS_CODE.BAD_REQUEST).send({
-            status: "failed",
-            message: "Operation failed",
-        });
+        return Promise.reject(error);
     }
 }
 
@@ -101,31 +92,50 @@ const enableUserOfTheCompany = async (companyData) => {
  * @description This function will active company account
  */
 const activeCompanyInfo = async (companyData) => {
+    const lgKey = companyData.lg;
     try {
         const isCompanyAvailable = await checkCompanyIdValidityQuery(companyData);
         if (isCompanyAvailable) {
             const isCompanyActive = await activeCompanyInfoQuery(companyData);
             if (isCompanyActive) {
                 const isUserActivated = await enableUserOfTheCompany(companyData);
-                return Promise.resolve({
-                    status: "success",
-                    message: "Company activated successfully",
-                    active_user: " Exhibitor admin is now active"
-                });
+                const result = {
+                    active_user: isUserActivated
+                }
+                return Promise.resolve(
+                    setServerResponse(
+                        API_STATUS_CODE.OK,
+                        'company_activated_successfully',
+                        lgKey,
+                        result
+                    )
+                );
             } else {
                 return Promise.reject(
-                    setRejectMessage(API_STATUS_CODE.BAD_REQUEST, "Company has already active")
+                    setServerResponse(
+                        API_STATUS_CODE.BAD_REQUEST,
+                        'company_has_already_active',
+                        lgKey
+                    )
                 )
             }
         }
         else {
             return Promise.reject(
-                setRejectMessage(API_STATUS_CODE.BAD_REQUEST, "Company has already active")
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'company_has_already_active',
+                    lgKey
+                )
             )
         }
     } catch (error) {
         return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, "Internal Server Error")
+            setServerResponse(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'internal_server_error',
+                lgKey
+            )
         );
     }
 }

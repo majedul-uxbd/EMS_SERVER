@@ -10,11 +10,8 @@
  */
 
 const { pool } = require("../../../database/db");
-const { setRejectMessage } = require("../../common/set-reject-message");
+const { setServerResponse } = require("../../common/set-server-response");
 const { API_STATUS_CODE } = require("../../consts/error-status");
-const { format } = require('date-fns');
-
-
 
 const checkUserIdValidityQuery = async (bodyData) => {
     const tableName = [];
@@ -42,10 +39,7 @@ const checkUserIdValidityQuery = async (bodyData) => {
         return false;
     } catch (error) {
         // console.log("🚀 ~ getUserData ~ error:", error)
-        return res.status(API_STATUS_CODE.BAD_REQUEST).send({
-            status: "failed",
-            message: "Operation failed",
-        });
+        return Promise.reject(error);
     }
 }
 
@@ -71,12 +65,7 @@ const checkDuplicateExhibitorAdmin = async (bodyData) => {
         return false;
     } catch (error) {
         // console.log("🚀 ~ userLoginQuery ~ error:", error)
-        return Promise.reject(
-            setRejectMessage(
-                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-                'operation_failed'
-            )
-        );
+        return Promise.reject(error);
     }
 };
 
@@ -158,16 +147,23 @@ const updateUserInfoQuery = (bodyData, authData) => {
     return [_query, _values];
 };
 
+/**
+ * @description This function is used to update user information by System Admin 
+ */
 const updateUserInfo = async (bodyData, authData) => {
+    const lgKey = bodyData.lg;
     const updatedAt = new Date();
-
     bodyData = { ...bodyData, updated_at: updatedAt }
     try {
         if (bodyData.role === 'exhibitor_admin') {
             const isDuplicateExhibitorAdmin = await checkDuplicateExhibitorAdmin(bodyData);
             if (isDuplicateExhibitorAdmin) {
                 return Promise.reject(
-                    setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Exhibitor Admin role has already exist')
+                    setServerResponse(
+                        API_STATUS_CODE.BAD_REQUEST,
+                        'exhibitor_Admin_role_has_already_exist',
+                        lgKey
+                    )
                 );
             }
         }
@@ -176,21 +172,39 @@ const updateUserInfo = async (bodyData, authData) => {
             const [_query, values] = await updateUserInfoQuery(bodyData, authData);
             const [isUpdateUser] = await pool.query(_query, values);
             if (isUpdateUser.affectedRows > 0) {
-                return Promise.resolve();
+                return Promise.resolve(
+                    setServerResponse(
+                        API_STATUS_CODE.OK,
+                        'user_updated_successfully',
+                        lgKey
+                    )
+                );
             } else {
                 return Promise.reject(
-                    setRejectMessage(API_STATUS_CODE.BAD_REQUEST, "Failed to update user information")
+                    setServerResponse(
+                        API_STATUS_CODE.BAD_REQUEST,
+                        'failed_to_update_user_information',
+                        lgKey
+                    )
                 )
             }
         } else {
             return Promise.reject(
-                setRejectMessage(API_STATUS_CODE.BAD_REQUEST, "Can't update inactive user information")
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'cannot_update_inactive_user_information',
+                    lgKey
+                )
             )
         }
     } catch (error) {
         // console.log("🚀 ~ updateUserInfo ~ error:", error)
         return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, "Internal Server Error")
+            setServerResponse(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'internal_server_error',
+                lgKey
+            )
         )
     }
 };

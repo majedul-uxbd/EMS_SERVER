@@ -13,11 +13,9 @@ const express = require('express');
 const fileUploadRouter = express.Router();
 
 const authenticateToken = require('../../middlewares/jwt');
-const path = require("path");
 
 const { uploadFileValidator } = require('../../common/utilities/file-upload/upload-file-validation');
 const { errorCheck } = require('../../common/utilities/file-upload/check-error');
-const { API_STATUS_CODE } = require('../../consts/error-status');
 const { uploadFileInfo } = require('../../main/upload-file/upload-file-info');
 const { isUserRoleAdminOrExhibitorAdminOrExhibitor } = require('../../common/utilities/check-user-role');
 const { uploadImageValidator } = require('../../common/utilities/file-upload/upload-image-validator');
@@ -39,19 +37,20 @@ fileUploadRouter.post('/file-upload',
         const fileInfo = req.file;
 
         uploadFileInfo(fileInfo, req.body, req.auth)
-            .then(data => {
-                return res.status(API_STATUS_CODE.OK).send({
-                    status: data.status,
-                    message: data.message
-                })
-            })
-            .catch(error => {
-                const { statusCode, message } = error;
+            .then((data) => {
+                const { statusCode, status, message } = data;
                 return res.status(statusCode).send({
-                    status: 'failed',
-                    message: message,
-                })
+                    status: status,
+                    message: message
+                });
             })
+            .catch((error) => {
+                const { statusCode, status, message } = error;
+                return res.status(statusCode).send({
+                    status: status,
+                    message: message,
+                });
+            });
 
     }
 )
@@ -64,20 +63,22 @@ fileUploadRouter.post('/upload-image',
     async (req, res) => {
         const buffer = req.file?.buffer;
 
-        insertImageData(buffer, req.auth)
-            .then(data => {
-                return res.status(API_STATUS_CODE.OK).send({
-                    status: data.status,
-                    message: data.message
-                })
-            })
-            .catch(error => {
-                const { statusCode, message } = error;
+        insertImageData(buffer, req.auth, req.body)
+            .then((data) => {
+                const { statusCode, status, message, result } = data;
                 return res.status(statusCode).send({
-                    status: 'failed',
+                    status: status,
                     message: message,
-                })
+                    filePath: result
+                });
             })
+            .catch((error) => {
+                const { statusCode, status, message } = error;
+                return res.status(statusCode).send({
+                    status: status,
+                    message: message,
+                });
+            });
     })
 
 module.exports = {

@@ -15,12 +15,11 @@ const usersRouter = express.Router();
 const { loginUserValidation } = require('../../middlewares/user/login-data-validator');
 const { userLogin } = require('../../main/user/user-login');
 const { getUserData } = require('../../main/user/get-user-data');
-const { API_STATUS_CODE } = require('../../consts/error-status');
 const authenticateToken = require('../../middlewares/jwt');
-const { checkUserIdValidity } = require('../../middlewares/check-user-id-validity');
 const { updateUserDataValidator } = require('../../middlewares/user/update-user-data-validator');
 const { updatePersonalInfo } = require('../../main/user/update-personal-data');
-const { deletePersonalData } = require('../../main/user/delete-personal-data');
+const { isUserRoleAdmin } = require('../../common/utilities/check-user-role');
+const { deleteVisitorData } = require('../../main/user/delete-visitor-data');
 
 
 /**
@@ -32,16 +31,19 @@ usersRouter.post(
 	async (req, res) => {
 		userLogin(req.body.user)
 			.then((data) => {
-				return res.status(API_STATUS_CODE.OK).send({
-					status: 'success',
-					message: 'user-logged in-successfully',
-					...data,
+				const { statusCode, status, message, result } = data;
+				return res.status(statusCode).send({
+					status: status,
+					message: message,
+					token: result.token,
+					user: result
+
 				});
 			})
 			.catch((error) => {
-				const { statusCode, message } = error;
+				const { statusCode, status, message } = error;
 				return res.status(statusCode).send({
-					status: 'failed',
+					status: status,
 					message: message,
 				});
 			});
@@ -78,22 +80,23 @@ usersRouter.post(
 /**
  * This API will get user and visitor own data
  */
-usersRouter.get(
+usersRouter.post(
 	'/get-my-user-data',
 	authenticateToken,
 	async (req, res) => {
-		getUserData(req.auth)
+		getUserData(req.auth, req.body)
 			.then((data) => {
-				return res.status(API_STATUS_CODE.OK).send({
-					status: 'success',
-					message: 'user-data-fetched-successfully',
-					...data,
+				const { statusCode, status, message, result } = data;
+				return res.status(statusCode).send({
+					status: status,
+					message: message,
+					user: result
 				});
 			})
 			.catch((error) => {
-				const { statusCode, message } = error;
+				const { statusCode, status, message } = error;
 				return res.status(statusCode).send({
-					status: 'failed',
+					status: status,
 					message: message,
 				});
 			});
@@ -105,45 +108,47 @@ usersRouter.get(
  */
 usersRouter.post('/update',
 	authenticateToken,
-	checkUserIdValidity,
 	updateUserDataValidator,
 	async (req, res) => {
 		updatePersonalInfo(req.body.user, req.auth)
-			.then(data => {
-				return res.status(API_STATUS_CODE.OK).send({
-					status: data.status,
-					message: data.message
-				})
-			})
-			.catch(error => {
-				const { statusCode, message } = error;
+			.then((data) => {
+				const { statusCode, status, message, result } = data;
 				return res.status(statusCode).send({
-					status: 'failed',
+					status: status,
 					message: message,
-				})
+					data: result
+				});
 			})
+			.catch((error) => {
+				const { statusCode, status, message } = error;
+				return res.status(statusCode).send({
+					status: status,
+					message: message,
+				});
+			});
 	}
 );
 
 
 usersRouter.post('/delete',
 	authenticateToken,
-	checkUserIdValidity,
+	isUserRoleAdmin,
 	async (req, res) => {
-		deletePersonalData(req.auth)
-			.then(data => {
-				return res.status(API_STATUS_CODE.CREATED).send({
-					status: 'success',
-					message: "User deleted successfully"
-				})
-			})
-			.catch(error => {
-				const { statusCode, message } = error;
+		deleteVisitorData(req.body)
+			.then((data) => {
+				const { statusCode, status, message } = data;
 				return res.status(statusCode).send({
-					status: 'failed',
-					message: message,
-				})
+					status: status,
+					message: message
+				});
 			})
+			.catch((error) => {
+				const { statusCode, status, message } = error;
+				return res.status(statusCode).send({
+					status: status,
+					message: message,
+				});
+			});
 	});
 
 module.exports = {

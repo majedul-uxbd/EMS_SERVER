@@ -10,7 +10,7 @@
  */
 
 const { pool } = require("../../../database/db");
-const { setRejectMessage } = require("../../common/set-reject-message");
+const { setServerResponse } = require("../../common/set-server-response");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
 
@@ -76,25 +76,37 @@ const insertEnrollData = async (authData, bodyData) => {
  * @description This function is used to insert visitor enroll data into the database
  */
 const enrollVisitorInExhibition = async (authData, bodyData) => {
+    const lgKey = bodyData.lg;
     try {
         const isAlreadyEnrolled = await checkIfVisitorAlreadyEnrolled(authData, bodyData);
         if (isAlreadyEnrolled) {
             return Promise.reject(
-                setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'You have already enrolled')
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'you_have_already_enrolled',
+                    lgKey
+                )
             );
         }
         const insertData = await insertEnrollData(authData, bodyData);
         if (insertData) {
-            return Promise.resolve({
-                status: 'success',
-                message: 'You are enrolled successfully'
-            });
+            return Promise.resolve(
+                setServerResponse(
+                    API_STATUS_CODE.OK,
+                    'you_are_enrolled_successfully',
+                    lgKey
+                )
+            );
         }
 
     } catch (error) {
-        console.log('🚀 ~ file: enroll-company-in-exhibitions.js:127 ~ error:', error);
+        // console.log('🚀 ~ file: enroll-company-in-exhibitions.js:127 ~ error:', error);
         return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, 'Internal server error')
+            setServerResponse(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'internal_server_error',
+                lgKey
+            )
         );
     }
 }

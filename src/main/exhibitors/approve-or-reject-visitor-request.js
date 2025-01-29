@@ -10,7 +10,7 @@
  */
 
 const { pool } = require("../../../database/db");
-const { setRejectMessage } = require("../../common/set-reject-message");
+const { setServerResponse } = require("../../common/set-server-response");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
 
@@ -37,7 +37,7 @@ const approveOrRejectRequestQuery = async (authData, bodyData) => {
                 bodyData.projectId
             ];
             const [result] = await pool.query(_query, _values);
-            return 'Approved';
+            return 'approved';
         }
         else {
             const _values = [
@@ -47,7 +47,7 @@ const approveOrRejectRequestQuery = async (authData, bodyData) => {
                 bodyData.projectId
             ];
             const [result] = await pool.query(_query, _values);
-            return 'Rejected';
+            return 'rejected';
         }
     } catch (error) {
         return Promise.reject(error);
@@ -58,15 +58,24 @@ const approveOrRejectRequestQuery = async (authData, bodyData) => {
  * @description This function is used to approve or reject visitor request
  */
 const approveOrRejectRequest = async (authData, bodyData) => {
+    const lgKey = bodyData.lg;
+
     try {
         const isApproved = await approveOrRejectRequestQuery(authData, bodyData);
-        return Promise.resolve({
-            status: 'success',
-            message: isApproved
-        })
+        return Promise.resolve(
+            setServerResponse(
+                API_STATUS_CODE.OK,
+                `${isApproved}`,
+                lgKey,
+            )
+        )
     } catch (error) {
         return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, 'Internal Server Error')
+            setServerResponse(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'internal_server_error',
+                lgKey,
+            )
         );
     }
 }

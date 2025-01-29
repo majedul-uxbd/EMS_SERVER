@@ -9,25 +9,24 @@
  * 
  */
 
+const { setServerResponse } = require("../../common/set-server-response");
 const {
     isValidUserFirstName,
     isValidUserLastName,
     isValidEmail,
     isValidUserContact,
     isValidUserPosition,
-    isValidUserRole,
     isValidUserCompany,
 } = require("../../common/user-data-validator");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 const _ = require('lodash');
 
 const updateVisitorDataValidator = (req, res, next) => {
-    const errors = [];
-
+    const lgKey = req.body.jg;
     const visitor = {
+        lg: req.body.lg,
         firstName: req.body.firstName,
         lastName: req.body.lastName,
-        email: req.body.email,
         contact: req.body.contact,
         company: req.body.company,
         position: req.body.position,
@@ -36,45 +35,62 @@ const updateVisitorDataValidator = (req, res, next) => {
 
     if (!_.isNil(visitor.firstName)) {
         if (!isValidUserFirstName(visitor.firstName)) {
-            errors.push("Invalid user first name");
+            return res.status(API_STATUS_CODE.BAD_REQUEST).send(
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'invalid_user_first_name',
+                    lgKey
+                )
+            );
         }
     }
 
     if (!_.isNil(visitor.lastName)) {
         if (!isValidUserLastName(visitor.lastName)) {
-            errors.push("Invalid user last name");
-        }
-    }
-
-    if (!_.isNil(visitor.email)) {
-        if (!isValidEmail(visitor.email)) {
-            errors.push("Invalid user email address");
+            return res.status(API_STATUS_CODE.BAD_REQUEST).send(
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'invalid_user_last_name',
+                    lgKey
+                )
+            );
         }
     }
 
     if (!_.isNil(visitor.contact)) {
         if (!isValidUserContact(visitor.contact)) {
-            errors.push("Invalid user contact number");
+            return res.status(API_STATUS_CODE.BAD_REQUEST).send(
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'invalid_user_contact_number',
+                    lgKey
+                )
+            );
         }
     }
 
     if (!_.isNil(visitor.company)) {
         if (!isValidUserCompany(visitor.company)) {
-            errors.push("Invalid user company number");
+            return res.status(API_STATUS_CODE.BAD_REQUEST).send(
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'invalid_user_company_name',
+                    lgKey
+                )
+            );
         }
     }
 
     if (!_.isNil(visitor.position)) {
         if (!isValidUserPosition(visitor.position)) {
-            errors.push("Invalid user position");
+            return res.status(API_STATUS_CODE.BAD_REQUEST).send(
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'invalid_user_position',
+                    lgKey
+                )
+            );
         }
-    }
-
-    if (errors.length > 0) {
-        return res.status(API_STATUS_CODE.BAD_REQUEST).send({
-            status: "failed",
-            message: errors,
-        });
     }
     // console.log("🚀 ~ validateAddUserData ~ user:", user)
     // return

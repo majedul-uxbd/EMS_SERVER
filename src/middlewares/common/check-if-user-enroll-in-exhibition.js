@@ -10,6 +10,7 @@
  */
 
 const { pool } = require("../../../database/db");
+const { setServerResponse } = require("../../common/set-server-response");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
 
@@ -70,6 +71,7 @@ const checkIfUserIsEnrolledInAExhibitionQuery = async (authData, bodyData) => {
 const checkIfUserIsEnrolledInAExhibition = async (req, res, next) => {
     const authData = req.auth;
     const bodyData = req.body;
+    const lgKey = bodyData.lg;
 
     if (authData.role === 'organizer') {
         next();
@@ -79,16 +81,22 @@ const checkIfUserIsEnrolledInAExhibition = async (req, res, next) => {
         if (isEnrolled) {
             next();
         } else {
-            return res.status(API_STATUS_CODE.BAD_REQUEST).send({
-                status: 'failed',
-                message: 'You are not enrolled in this exhibition'
-            })
+            return res.status(API_STATUS_CODE.BAD_REQUEST).send(
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'you_are_not_enrolled__in_this_exhibition',
+                    lgKey,
+                )
+            )
         }
     } else {
-        return res.status(API_STATUS_CODE.BAD_REQUEST).send({
-            status: 'failed',
-            message: 'You are not allowed to generate an ID card'
-        })
+        return res.status(API_STATUS_CODE.BAD_REQUEST).send(
+            setServerResponse(
+                API_STATUS_CODE.BAD_REQUEST,
+                'you_are_not_allowed_to_generate_an_id_card',
+                lgKey,
+            )
+        )
     }
 }
 

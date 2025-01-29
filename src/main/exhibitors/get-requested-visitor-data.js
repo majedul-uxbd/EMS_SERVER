@@ -10,7 +10,7 @@
  */
 
 const { pool } = require("../../../database/db");
-const { setRejectMessage } = require("../../common/set-reject-message");
+const { setServerResponse } = require("../../common/set-server-response");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
 
@@ -30,9 +30,7 @@ const getCompanyId = async (authData) => {
             return result[0].companies_id;
         }
     } catch (error) {
-        return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Operation failed')
-        );
+        return Promise.reject(error);
     }
 }
 
@@ -57,9 +55,7 @@ const getNumberOfRowsQuery = async (companyId) => {
         const [result] = await pool.query(_query, companyId);
         return result[0];
     } catch (error) {
-        return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Operation failed')
-        );
+        return Promise.reject(error);
     }
 }
 
@@ -75,17 +71,20 @@ const getRequestedVisitorDataQuery = async (companyId, paginationData) => {
             visitor.position,
             project.id,
             project.project_name,
+            ex.id AS exhibition_id,
+            ex.exhibitions_title,
             ad.created_at
         FROM
             approved_document AS ad
-        LEFT JOIN 
-            visitors AS visitor
+        LEFT JOIN visitors AS visitor
         ON
             ad.visitor_id = visitor.id
-        LEFT JOIN
-            projects as project
-        ON 
+        LEFT JOIN projects AS project
+        ON
             ad.project_id = project.id
+        LEFT JOIN
+            exhibitions AS ex 
+        ON ad.exhibition_id = ex.id
         WHERE
             ad.company_id = ?
         LIMIT ? OFFSET ?;
@@ -98,36 +97,45 @@ const getRequestedVisitorDataQuery = async (companyId, paginationData) => {
 
     try {
         const [result] = await pool.query(_query, _values);
-        if (result.length > 0) {
-            return result;
-        }
+        return Promise.resolve(result);
     } catch (error) {
-        return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Operation failed')
-        );
+        return Promise.reject(error);
     }
 }
 
 /**
  * @description This function is used to get those visitor data who are requested for project document 
  */
-const getRequestedVisitorData = async (authData, paginationData) => {
+const getRequestedVisitorData = async (authData, bodyData, paginationData) => {
+    const lgKey = bodyData.lg;
     try {
         const companyId = await getCompanyId(authData);
         if (companyId) {
             const totalRows = await getNumberOfRowsQuery(companyId);
             const visitorData = await getRequestedVisitorDataQuery(companyId, paginationData);
-            return Promise.resolve({
+            const result = {
                 metadata: {
                     totalRows: totalRows,
                 },
-                data: visitorData
-            });
+                visitorData
+            };
+            return Promise.resolve(
+                setServerResponse(
+                    API_STATUS_CODE.OK,
+                    'get_data_successfully',
+                    lgKey,
+                    result
+                )
+            );
         }
 
     } catch (error) {
         return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, 'Internal Server Error')
+            setServerResponse(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'internal_server_error',
+                lgKey,
+            )
         );
     }
 }

@@ -1,6 +1,28 @@
 const { pool } = require("../../../database/db");
-const { setRejectMessage } = require("../../common/set-reject-message");
+const { setServerResponse } = require("../../common/set-server-response");
 const { API_STATUS_CODE } = require("../../consts/error-status");
+
+const getExhibitionNameQuery = async () => {
+	const query = `
+    SELECT
+		exhibitions_title
+	FROM
+		exhibitions;
+    `;
+
+	try {
+		const [result] = await pool.query(query);
+		if (result.length > 0) {
+			return result;
+		} else {
+			return null;
+		}
+	} catch (error) {
+		// console.log('🚀 ~ file: add-exhibitions-info.js:23 ~ getExhibitionNameQuery ~ error:', error);
+		return Promise.reject(error);
+	}
+};
+
 
 const insertDataQuery = async (bodyData) => {
 	const query = `
@@ -69,8 +91,41 @@ const processExhibitionDates = (datesArray) => {
 	}));
 };
 
-const addExhibitionsInfo = async (bodyData) => {
 
+/**
+ * @param {string} str1 
+ * @param {string} str2 
+ * @param {boolean} caseInsensitive 
+ * @description This function will check if the str1 and str2 are the same string or not.
+ */
+const compareStrings = (str1, str2, caseInsensitive = true) => {
+	const splitStr1 = str1.trim().split(/\s+/);
+	const splitStr2 = str2.trim().split(/\s+/);
+
+	if (splitStr1.length === splitStr2.length) {
+		for (let i = 0; i < splitStr1.length; i++) {
+			if (caseInsensitive) {
+				if (splitStr1[i].toLowerCase() !== splitStr2[i].toLowerCase()) {
+					return false;
+				}
+			} else {
+				if (splitStr1[i] !== splitStr2[i]) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+	return false;
+}
+
+
+/**
+ * @description This function is used to create exhibition and exhibition days 
+ */
+const addExhibitionsInfo = async (bodyData) => {
+	const lgKey = bodyData.lg;
+	let isMatched = false;
 	const createdAt = new Date();
 
 	const newBodyData = {
@@ -81,6 +136,27 @@ const addExhibitionsInfo = async (bodyData) => {
 	};
 
 	try {
+		const exhibitionName = await getExhibitionNameQuery();
+		if (exhibitionName !== null) {
+			for (const exhibition of exhibitionName) {
+				const result = compareStrings(newBodyData.exhibitionTitle, exhibition.exhibitions_title);
+				if (result) {
+					// console.log(`Match found: ${newBodyData.exhibitionTitle} matches with ${exhibition.exhibitions_title}`);
+					isMatched = true;
+					break;
+				}
+			}
+			if (isMatched === true) {
+				return Promise.reject(
+					setServerResponse(
+						API_STATUS_CODE.BAD_REQUEST,
+						`exhibition_title_has_already_exists`,
+						lgKey,
+					)
+				);
+			}
+		}
+
 		const exhibitionId = await insertDataQuery(newBodyData);
 
 		if (exhibitionId) {
@@ -96,32 +172,36 @@ const addExhibitionsInfo = async (bodyData) => {
 
 				if (!dayInsertResult) {
 					return Promise.reject(
-						setRejectMessage(
-							API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-							`Failed to insert ${day.dayTitle}`
+						setServerResponse(
+							API_STATUS_CODE.BAD_REQUEST,
+							`failed_to_insert_data`,
+							lgKey,
 						)
 					);
 				}
 			}
-
-			return Promise.resolve({
-				status: 'success',
-				message: 'Exhibition created successfully'
-			});
+			return Promise.resolve(
+				setServerResponse(
+					API_STATUS_CODE.OK,
+					'exhibition_created_successfully',
+					lgKey,
+				)
+			);
 		}
-
 		return Promise.reject(
-			setRejectMessage(
-				API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-				"Insertion into exhibitions table failed"
+			setServerResponse(
+				API_STATUS_CODE.BAD_REQUEST,
+				'insertion_into_exhibitions_table_failed',
+				lgKey,
 			)
 		);
 	} catch (error) {
 		// console.error("🚀 ~ addExhibitionsInfo ~ error:", error);
 		return Promise.reject(
-			setRejectMessage(
+			setServerResponse(
 				API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-				"Operation failed"
+				'internal_server_error',
+				lgKey,
 			)
 		);
 	}

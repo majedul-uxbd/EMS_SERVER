@@ -10,7 +10,7 @@
  */
 
 const { pool } = require("../../../database/db");
-const { setRejectMessage } = require("../../common/set-reject-message");
+const { setServerResponse } = require("../../common/set-server-response");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
 const checkCompanyIdValidityQuery = async (companyData) => {
@@ -32,10 +32,7 @@ const checkCompanyIdValidityQuery = async (companyData) => {
         return false;
     } catch (error) {
         // console.log("🚀 ~ getUserData ~ error:", error)
-        return res.status(API_STATUS_CODE.BAD_REQUEST).send({
-            status: "failed",
-            message: "Operation failed",
-        });
+        return Promise.reject(error);
     }
 }
 
@@ -59,10 +56,7 @@ const deleteCompanyInfoQuery = async (companyData) => {
         return false;
     } catch (error) {
         // console.log("🚀 ~ getUserData ~ error:", error)
-        return res.status(API_STATUS_CODE.BAD_REQUEST).send({
-            status: "failed",
-            message: "Operation failed",
-        });
+        return Promise.reject(error);
     }
 }
 
@@ -79,15 +73,12 @@ const disableUserOfTheCompany = async (companyData) => {
     try {
         const [result] = await pool.query(_query, companyData.id);
         if (result.affectedRows > 0) {
-            return Promise.resolve(result);
+            return true;
         }
         return false;
     } catch (error) {
         // console.log("🚀 ~ getUserData ~ error:", error)
-        return res.status(API_STATUS_CODE.BAD_REQUEST).send({
-            status: "failed",
-            message: "Operation failed",
-        });
+        return Promise.reject(error);
     }
 }
 
@@ -112,10 +103,7 @@ const isSystemAdminDeletingOwnCompany = async (authData, companyData) => {
         }
         return false;
     } catch (error) {
-        return res.status(API_STATUS_CODE.BAD_REQUEST).send({
-            status: "failed",
-            message: "Operation failed",
-        });
+        return Promise.reject(error);
     }
 };
 
@@ -124,7 +112,7 @@ const isSystemAdminDeletingOwnCompany = async (authData, companyData) => {
  * @description This function will delete company information
  */
 const deleteCompanyInfo = async (companyData, authData) => {
-    // console.log("🚀 ~ deleteUserInfo ~ userData:", userData)
+    const lgKey = companyData.lg;
     try {
         const isCompanyAvailable = await checkCompanyIdValidityQuery(companyData);
         if (isCompanyAvailable) {
@@ -132,31 +120,50 @@ const deleteCompanyInfo = async (companyData, authData) => {
                 const isMatch = await isSystemAdminDeletingOwnCompany(authData, companyData);
                 if (isMatch) {
                     return Promise.reject(
-                        setRejectMessage(API_STATUS_CODE.FORBIDDEN, "System admin cannot delete their own company")
+                        setServerResponse(
+                            API_STATUS_CODE.BAD_REQUEST,
+                            'system_admin_cannot_delete_their_own_company',
+                            lgKey,
+                        )
                     );
                 }
             }
             const isCompanyDelete = await deleteCompanyInfoQuery(companyData);
             if (isCompanyDelete) {
                 const isUserDeactivated = await disableUserOfTheCompany(companyData);
-                return Promise.resolve({
-                    status: "success",
-                    message: "Company deleted successfully",
-                });
+                return Promise.resolve(
+                    setServerResponse(
+                        API_STATUS_CODE.OK,
+                        'company_deactivated_successfully',
+                        lgKey,
+                    )
+                );
             } else {
                 return Promise.reject(
-                    setRejectMessage(API_STATUS_CODE.BAD_REQUEST, "Company not found")
+                    setServerResponse(
+                        API_STATUS_CODE.BAD_REQUEST,
+                        'company_not_found',
+                        lgKey,
+                    )
                 )
             }
         }
         else {
             return Promise.reject(
-                setRejectMessage(API_STATUS_CODE.BAD_REQUEST, "Company not found")
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'company_not_found',
+                    lgKey,
+                )
             )
         }
     } catch (error) {
         return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, "Internal Server Error")
+            setServerResponse(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'internal_server_error',
+                lgKey,
+            )
         );
     }
 }

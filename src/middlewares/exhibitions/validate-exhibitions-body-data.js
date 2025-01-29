@@ -11,6 +11,7 @@
 
 const _ = require("lodash");
 const { API_STATUS_CODE } = require("../../consts/error-status");
+const { setServerResponse } = require("../../common/set-server-response");
 
 
 /**
@@ -19,6 +20,7 @@ const { API_STATUS_CODE } = require("../../consts/error-status");
 const validateExhibitionsBodyData = (req, res, next) => {
 	const errors = [];
 	const bodyData = {
+		lg: req.body.lg,
 		id: req.body.id,
 		exhibitionTitle: exhibitionTitle,
 		exhibitionDates: exhibitionDates,
@@ -28,15 +30,24 @@ const validateExhibitionsBodyData = (req, res, next) => {
 
 	if (_.isNil(bodyData)) {
 		// console.log({ bodyData })
-		return res.status(API_STATUS_CODE.BAD_REQUEST).send({
-			status: 'failed',
-			message: "invalid-data"
-		})
+		return res.status(API_STATUS_CODE.BAD_REQUEST).send(
+			setServerResponse(
+				API_STATUS_CODE.BAD_REQUEST,
+				'invalid_data',
+				lgKey,
+			)
+		)
 	}
 
 	if (req.originalUrl === "/exhibitions/update") {
 		if (_.isNil(bodyData.id) || !_.isNumber(bodyData.id)) {
-			errors.push("Invalid exhibition ID ");
+			return res.status(API_STATUS_CODE.BAD_REQUEST).send(
+				setServerResponse(
+					API_STATUS_CODE.BAD_REQUEST,
+					'exhibition_id_is_required',
+					bodyData.lg,
+				)
+			)
 		}
 	} else {
 		delete bodyData.id;
@@ -59,10 +70,13 @@ const validateExhibitionsBodyData = (req, res, next) => {
 	}
 
 	if (errors.length > 0) {
-		return res.status(API_STATUS_CODE.BAD_REQUEST).send({
-			status: 'failed',
-			message: errors
-		})
+		return res.status(API_STATUS_CODE.BAD_REQUEST).send(
+			setServerResponse(
+				API_STATUS_CODE.OK,
+				'invalid_data',
+				bodyData.lg,
+			)
+		)
 	}
 
 	req.body.bodyData = bodyData;

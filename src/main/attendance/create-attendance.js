@@ -1,34 +1,58 @@
+const _ = require('lodash');
 const { pool } = require("../../../database/db");
-const { setRejectMessage } = require("../../common/set-reject-message");
+const { setServerResponse } = require("../../common/set-server-response");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
 
-
-const getExhibitionDayIdByDate = async () => {
+const checkIsOrganizerEnrolled = async (authData, attendanceData) => {
 	const query = `
-        SELECT id 
-        FROM exhibition_days 
-        WHERE exhibition_date = CURDATE();
+        SELECT 
+			id
+        FROM 
+			exhibitions_has_organizer 
+        WHERE 
+			exhibition_id = ? AND
+			organizer_id = ?;
+    `;
+
+	const values = [
+		attendanceData.exhibitionId,
+		authData.id
+	]
+	try {
+		const [result] = await pool.query(query, values);
+		return result.length > 0 ? true : false;
+	} catch (error) {
+		// console.error("🚀 ~ getExhibitionDayIdByDate ~ error:", error);
+		return Promise.reject(error);
+	}
+};
+
+
+const getExhibitionDayIdByDate = async (exhibitionId) => {
+	const query = `
+        SELECT 
+			id,
+			exhibition_date
+        FROM 
+			exhibition_days 
+        WHERE 
+			exhibitions_id = ?;
     `;
 
 	try {
-		const [result] = await pool.query(query);
-		return result.length > 0 ? result[0].id : null;
+		const [result] = await pool.query(query, exhibitionId);
+		return result.length > 0 ? result : null;
 	} catch (error) {
 		// console.error("🚀 ~ getExhibitionDayIdByDate ~ error:", error);
-		return Promise.reject(
-			setRejectMessage(
-				API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-				"Failed to fetch exhibition day ID"
-			)
-		);
+		return Promise.reject(error);
 	}
 };
 
 /**
  * This function will check whether the visitor or exhibitor attendance has already taken or not
  */
-const checkAttendanceAlreadyTaken = async (attendanceData) => {
+const checkAttendanceAlreadyTaken = async (attendanceData, dayId) => {
 	let attendeeId = '';
 	if (attendanceData.visitors_id !== null) {
 		attendeeId = 'visitors_id';
@@ -41,18 +65,19 @@ const checkAttendanceAlreadyTaken = async (attendanceData) => {
 
 	const _query = `
     SELECT
-      id
+      	id
     FROM
-      attendances
+      	attendances
 	WHERE
 		${attendeeId} = ? AND
-		exhibitions_day = CURDATE() AND
+		exhibition_days_id = ? AND
 		attend = ?;
   `;
 
 	const _values = [
 		attendanceData.visitors_id ||
 		attendanceData.exhibitor_id,
+		dayId,
 		1
 	]
 	// console.log({ _query, _values });
@@ -74,12 +99,12 @@ const insertAttendanceDataQuery = async (authData, attendanceData) => {
 	const _query = `
         INSERT INTO attendances (
             exhibition_days_id,
-            taken_by,
             visitors_id,
-            exhibitor_id,
-            attend,
             exhibitions_day,
 			time,
+            exhibitor_id,
+            taken_by,
+            attend,
             created_at
         )
         VALUES (?, ?, ?, ?, ?, ?, ?, ?);
@@ -87,12 +112,12 @@ const insertAttendanceDataQuery = async (authData, attendanceData) => {
 
 	const _values = [
 		attendanceData.exhibition_days_id,
-		authData.id,
 		attendanceData.visitors_id || null,
-		attendanceData.exhibitor_id || null,
-		1,
 		attendanceData.exhibitionsDay,
 		attendanceData.time,
+		attendanceData.exhibitor_id || null,
+		authData.id,
+		1,
 		attendanceData.createdAt,
 	];
 
@@ -105,9 +130,7 @@ const insertAttendanceDataQuery = async (authData, attendanceData) => {
 		}
 	} catch (error) {
 		// console.error("🚀 ~ insertAttendanceDataQuery ~ error:", error);
-		return Promise.reject(
-			setRejectMessage(API_STATUS_CODE.BAD_REQUEST, "Operation failed")
-		);
+		return Promise.reject(error);
 	}
 };
 
@@ -125,6 +148,7 @@ const validateAttendee = async (attendee_id, attendee_role) => {
 		query = `SELECT id FROM user WHERE id = ? AND role = ? AND is_user_active = ${1}`;
 	}
 
+
 	const _values = [
 		attendee_id,
 		attendee_role
@@ -138,20 +162,52 @@ const validateAttendee = async (attendee_id, attendee_role) => {
 		}
 	} catch (error) {
 		//console.error("🚀 ~ validateAttendee ~ error:", error);
-		return Promise.reject(
-			setRejectMessage(
-				API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-				"Validation failed"
-			)
-		);
+		return Promise.reject(error);
 	}
 };
+
 
 /**
  * This function is used to create attendance data
  */
 const createAttendanceData = async (authData, attendanceData) => {
+	const lgKey = attendanceData.lg;
+	const today = new Date();
+	let startDate;
+	let endDate;
+	let dayId;
 	// console.log({ authData, attendanceData })
+	if (attendanceData.attendee_role !== "visitor" &&
+		attendanceData.attendee_role !== "exhibitor" &&
+		attendanceData.attendee_role !== "exhibitor_admin") {
+		return Promise.reject(
+			setServerResponse(
+				API_STATUS_CODE.BAD_REQUEST,
+				'invalid_attendee_role',
+				lgKey
+			)
+		)
+	}
+	if (_.isNil(attendanceData.exhibitionId)) {
+		return Promise.reject(
+			setServerResponse(
+				API_STATUS_CODE.BAD_REQUEST,
+				'exhibition_id_is_required',
+				lgKey
+			)
+		)
+	}
+
+	if (_.isNil(attendanceData.attendee_id)) {
+		return Promise.reject(
+			setServerResponse(
+				API_STATUS_CODE.BAD_REQUEST,
+				'attendee_id_is_required',
+				lgKey
+			)
+		)
+	}
+
 	const createdAt = new Date();
 
 	attendanceData = {
@@ -162,17 +218,50 @@ const createAttendanceData = async (authData, attendanceData) => {
 	};
 
 	try {
-		const exhibitionDayId = await getExhibitionDayIdByDate();
-		if (!exhibitionDayId) {
+		const isOrganizerEnrolled = await checkIsOrganizerEnrolled(authData, attendanceData);
+		if (!isOrganizerEnrolled) {
 			return Promise.reject(
-				setRejectMessage(
+				setServerResponse(
 					API_STATUS_CODE.BAD_REQUEST,
-					"No exhibition matches the current date"
+					'you_are_not_assigned_in_this_exhibition',
+					lgKey
+				)
+			)
+		}
+
+		const exhibitionDayInfo = await getExhibitionDayIdByDate(attendanceData.exhibitionId);
+		if (_.isNil(exhibitionDayInfo)) {
+			return Promise.reject(
+				setServerResponse(
+					API_STATUS_CODE.BAD_REQUEST,
+					'exhibition_is_not_found',
+					lgKey,
+				)
+			)
+		}
+		startDate = exhibitionDayInfo[0]?.exhibition_date;
+		endDate = exhibitionDayInfo[exhibitionDayInfo.length - 1]?.exhibition_date;
+
+		const normalizedToday = new Date(today).toISOString().split('T')[0];
+
+		// Check if any exhibition_date matches today's date
+		const isMatch = exhibitionDayInfo.some(day => {
+			const exhibitionDate = new Date(day.exhibition_date).toISOString().split('T')[0];
+			dayId = day.id;
+			return exhibitionDate === normalizedToday;
+		});
+
+		if (!isMatch) {
+			return Promise.reject(
+				setServerResponse(
+					API_STATUS_CODE.BAD_REQUEST,
+					`this_is_not_your_current_enrolled_exhibition`,
+					lgKey,
 				)
 			);
 		}
-
-		attendanceData.exhibition_days_id = exhibitionDayId;
+		// console.log({ currentDate: dayId })
+		attendanceData.exhibition_days_id = dayId;
 
 		const isAttendeeValid = await validateAttendee(
 			attendanceData.attendee_id,
@@ -181,9 +270,10 @@ const createAttendanceData = async (authData, attendanceData) => {
 
 		if (!isAttendeeValid) {
 			return Promise.reject(
-				setRejectMessage(
+				setServerResponse(
 					API_STATUS_CODE.BAD_REQUEST,
-					"Attendee is either inactive or not found"
+					'no_user_found_or_user_is_not_active',
+					lgKey,
 				)
 			);
 		}
@@ -197,12 +287,13 @@ const createAttendanceData = async (authData, attendanceData) => {
 			attendanceData.visitors_id = null;
 		}
 
-		const isAttendanceAlreadyTaken = await checkAttendanceAlreadyTaken(attendanceData);
+		const isAttendanceAlreadyTaken = await checkAttendanceAlreadyTaken(attendanceData, dayId);
 		if (isAttendanceAlreadyTaken) {
 			return Promise.reject(
-				setRejectMessage(
+				setServerResponse(
 					API_STATUS_CODE.BAD_REQUEST,
-					"Attendance already taken"
+					'attendance_already_taken',
+					lgKey,
 				)
 			);
 		}
@@ -213,17 +304,21 @@ const createAttendanceData = async (authData, attendanceData) => {
 		);
 
 		if (isInsertData) {
-			return Promise.resolve({
-				status: "success",
-				message: "Attendance data successfully inserted",
-			});
+			return Promise.resolve(
+				setServerResponse(
+					API_STATUS_CODE.OK,
+					'attendance_data_successfully_taken',
+					lgKey,
+				)
+			);
 		}
 	} catch (error) {
 		// console.error("🚀 ~ createAttendanceData ~ error:", error);
 		return Promise.reject(
-			setRejectMessage(
+			setServerResponse(
 				API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-				"Internal Server Error"
+				'internal_server_error',
+				lgKey,
 			)
 		);
 	}

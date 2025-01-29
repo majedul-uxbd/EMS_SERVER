@@ -10,6 +10,7 @@
  */
 
 const { API_STATUS_CODE } = require("../../consts/error-status");
+const { setServerResponse } = require("../set-server-response");
 
 const userRole = Object.freeze({
 	SYSTEM_ADMIN: "system_admin",
@@ -24,13 +25,17 @@ const userRole = Object.freeze({
  */
 const isUserRoleAdmin = (req, res, next) => {
 	const userData = req.auth;
+	const lgKey = req.body.lg;
 	if (userData.role === userRole.SYSTEM_ADMIN) {
 		next();
 	} else {
-		return res.status(API_STATUS_CODE.NOT_ACCEPTABLE).send({
-			status: "failed",
-			message: "User role is not allowed for the request",
-		});
+		return res.status(API_STATUS_CODE.NOT_ACCEPTABLE).send(
+			setServerResponse(
+				API_STATUS_CODE.NOT_ACCEPTABLE,
+				'user_role_is_not_allowed_for_the_request',
+				lgKey,
+			)
+		);
 	}
 };
 
@@ -39,16 +44,21 @@ const isUserRoleAdmin = (req, res, next) => {
  */
 const isUserRoleExhibitorAdminOrExhibitor = (req, res, next) => {
 	const userData = req.auth;
+	const lgKey = req.body.lg;
+
 	if (
 		userData.role === userRole.EXHIBITOR_ADMIN ||
 		userData.role === userRole.EXHIBITOR
 	) {
 		next();
 	} else {
-		return res.status(API_STATUS_CODE.NOT_ACCEPTABLE).send({
-			status: "failed",
-			message: "User role is not allowed for the request",
-		});
+		return res.status(API_STATUS_CODE.NOT_ACCEPTABLE).send(
+			setServerResponse(
+				API_STATUS_CODE.NOT_ACCEPTABLE,
+				'user_role_is_not_allowed_for_the_request',
+				lgKey,
+			)
+		);
 	}
 };
 
@@ -57,13 +67,18 @@ const isUserRoleExhibitorAdminOrExhibitor = (req, res, next) => {
  */
 const isUserRoleExhibitorAdmin = (req, res, next) => {
 	const userData = req.auth;
+	const lgKey = req.body.lg;
+
 	if (userData.role === userRole.EXHIBITOR_ADMIN) {
 		next();
 	} else {
-		return res.status(API_STATUS_CODE.NOT_ACCEPTABLE).send({
-			status: "failed",
-			message: "User role is not allowed for the request",
-		});
+		return res.status(API_STATUS_CODE.NOT_ACCEPTABLE).send(
+			setServerResponse(
+				API_STATUS_CODE.NOT_ACCEPTABLE,
+				'user_role_is_not_allowed_for_the_request',
+				lgKey,
+			)
+		);
 	}
 };
 
@@ -72,13 +87,18 @@ const isUserRoleExhibitorAdmin = (req, res, next) => {
  */
 const isUserRoleOrganizer = (req, res, next) => {
 	const userData = req.auth;
+	const lgKey = req.body.lg;
+
 	if (userData.role === userRole.ORGANIZER) {
 		next();
 	} else {
-		return res.status(API_STATUS_CODE.NOT_ACCEPTABLE).send({
-			status: "failed",
-			message: "User role is not allowed for the request",
-		});
+		return res.status(API_STATUS_CODE.NOT_ACCEPTABLE).send(
+			setServerResponse(
+				API_STATUS_CODE.NOT_ACCEPTABLE,
+				'user_role_is_not_allowed_for_the_request',
+				lgKey,
+			)
+		);
 	}
 };
 
@@ -87,13 +107,18 @@ const isUserRoleOrganizer = (req, res, next) => {
  */
 const isUserRoleExhibitor = (req, res, next) => {
 	const userData = req.auth;
+	const lgKey = req.body.lg;
+
 	if (userData.role === userRole.EXHIBITOR) {
 		next();
 	} else {
-		return res.status(API_STATUS_CODE.NOT_ACCEPTABLE).send({
-			status: "failed",
-			message: "User role is not allowed for the request",
-		});
+		return res.status(API_STATUS_CODE.NOT_ACCEPTABLE).send(
+			setServerResponse(
+				API_STATUS_CODE.NOT_ACCEPTABLE,
+				'user_role_is_not_allowed_for_the_request',
+				lgKey,
+			)
+		);
 	}
 };
 
@@ -102,13 +127,18 @@ const isUserRoleExhibitor = (req, res, next) => {
  */
 const isUserRoleVisitor = (req, res, next) => {
 	const userData = req.auth;
+	const lgKey = req.body.lg;
+
 	if (userData.role === userRole.VISITOR) {
 		next();
 	} else {
-		return res.status(API_STATUS_CODE.NOT_ACCEPTABLE).send({
-			status: "failed",
-			message: "User role is not allowed for the request",
-		});
+		return res.status(API_STATUS_CODE.NOT_ACCEPTABLE).send(
+			setServerResponse(
+				API_STATUS_CODE.NOT_ACCEPTABLE,
+				'user_role_is_not_allowed_for_the_request',
+				lgKey,
+			)
+		);
 	}
 };
 
@@ -117,13 +147,18 @@ const isUserRoleVisitor = (req, res, next) => {
  */
 const isUserRoleExhibitorOrVisitor = (req, res, next) => {
 	const userData = req.auth;
+	const lgKey = req.body.lg;
+
 	if (userData.role === userRole.VISITOR || userData.role === userRole.EXHIBITOR || userData.role === userRole.EXHIBITOR_ADMIN) {
 		next();
 	} else {
-		return res.status(API_STATUS_CODE.NOT_ACCEPTABLE).send({
-			status: "failed",
-			message: "User role is not allowed for the request",
-		});
+		return res.status(API_STATUS_CODE.NOT_ACCEPTABLE).send(
+			setServerResponse(
+				API_STATUS_CODE.NOT_ACCEPTABLE,
+				'user_role_is_not_allowed_for_the_request',
+				lgKey,
+			)
+		);
 	}
 };
 
@@ -132,16 +167,21 @@ const isUserRoleExhibitorOrVisitor = (req, res, next) => {
  */
 const isUserRoleAdminOrOrganizer = (req, res, next) => {
 	const userData = req.auth;
+	const lgKey = req.body.lg;
+
 	if (
 		userData.role === userRole.SYSTEM_ADMIN ||
 		userData.role === userRole.ORGANIZER
 	) {
 		next();
 	} else {
-		return res.status(API_STATUS_CODE.NOT_ACCEPTABLE).send({
-			status: "failed",
-			message: "User role is not allowed for the request",
-		});
+		return res.status(API_STATUS_CODE.NOT_ACCEPTABLE).send(
+			setServerResponse(
+				API_STATUS_CODE.NOT_ACCEPTABLE,
+				'user_role_is_not_allowed_for_the_request',
+				lgKey,
+			)
+		);
 	}
 };
 
@@ -150,16 +190,21 @@ const isUserRoleAdminOrOrganizer = (req, res, next) => {
  */
 const isUserRoleAdminOrExhibitorAdmin = (req, res, next) => {
 	const userData = req.auth;
+	const lgKey = req.body.lg;
+
 	if (
 		userData.role === userRole.SYSTEM_ADMIN ||
 		userData.role === userRole.EXHIBITOR_ADMIN
 	) {
 		next();
 	} else {
-		return res.status(API_STATUS_CODE.NOT_ACCEPTABLE).send({
-			status: "failed",
-			message: "User role is not allowed for the request",
-		});
+		return res.status(API_STATUS_CODE.NOT_ACCEPTABLE).send(
+			setServerResponse(
+				API_STATUS_CODE.NOT_ACCEPTABLE,
+				'user_role_is_not_allowed_for_the_request',
+				lgKey,
+			)
+		);
 	}
 };
 
@@ -168,16 +213,21 @@ const isUserRoleAdminOrExhibitorAdmin = (req, res, next) => {
  */
 const isUserRoleAdminOrVisitor = (req, res, next) => {
 	const userData = req.auth;
+	const lgKey = req.body.lg;
+
 	if (
 		userData.role === userRole.SYSTEM_ADMIN ||
 		userData.role === userRole.VISITOR
 	) {
 		next();
 	} else {
-		return res.status(API_STATUS_CODE.NOT_ACCEPTABLE).send({
-			status: "failed",
-			message: "User role is not allowed for the request",
-		});
+		return res.status(API_STATUS_CODE.NOT_ACCEPTABLE).send(
+			setServerResponse(
+				API_STATUS_CODE.NOT_ACCEPTABLE,
+				'user_role_is_not_allowed_for_the_request',
+				lgKey,
+			)
+		);
 	}
 };
 
@@ -186,6 +236,8 @@ const isUserRoleAdminOrVisitor = (req, res, next) => {
  */
 const isUserRoleAdminOrExhibitorAdminOrExhibitor = (req, res, next) => {
 	const userData = req.auth;
+	const lgKey = req.body.lg;
+
 	if (
 		userData.role === userRole.SYSTEM_ADMIN ||
 		userData.role === userRole.EXHIBITOR_ADMIN ||
@@ -193,10 +245,13 @@ const isUserRoleAdminOrExhibitorAdminOrExhibitor = (req, res, next) => {
 	) {
 		next();
 	} else {
-		return res.status(API_STATUS_CODE.NOT_ACCEPTABLE).send({
-			status: "failed",
-			message: "User role is not allowed for the request",
-		});
+		return res.status(API_STATUS_CODE.NOT_ACCEPTABLE).send(
+			setServerResponse(
+				API_STATUS_CODE.NOT_ACCEPTABLE,
+				'user_role_is_not_allowed_for_the_request',
+				lgKey,
+			)
+		);
 	}
 };
 
@@ -205,6 +260,8 @@ const isUserRoleAdminOrExhibitorAdminOrExhibitor = (req, res, next) => {
  */
 const isUserRoleExhibitorAdminOrExhibitorOrVisitor = (req, res, next) => {
 	const userData = req.auth;
+	const lgKey = req.body.lg;
+
 	if (
 		userData.role === userRole.EXHIBITOR_ADMIN ||
 		userData.role === userRole.EXHIBITOR ||
@@ -212,10 +269,13 @@ const isUserRoleExhibitorAdminOrExhibitorOrVisitor = (req, res, next) => {
 	) {
 		next();
 	} else {
-		return res.status(API_STATUS_CODE.NOT_ACCEPTABLE).send({
-			status: "failed",
-			message: "User role is not allowed for the request",
-		});
+		return res.status(API_STATUS_CODE.NOT_ACCEPTABLE).send(
+			setServerResponse(
+				API_STATUS_CODE.NOT_ACCEPTABLE,
+				'user_role_is_not_allowed_for_the_request',
+				lgKey,
+			)
+		);
 	}
 };
 
@@ -225,6 +285,8 @@ const isUserRoleExhibitorAdminOrExhibitorOrVisitor = (req, res, next) => {
  */
 const isUserRoleOrganizerOrExhibitorOrVisitor = (req, res, next) => {
 	const userData = req.auth;
+	const lgKey = req.body.lg;
+
 	if (
 		userData.role === userRole.ORGANIZER ||
 		userData.role === userRole.EXHIBITOR_ADMIN ||
@@ -233,10 +295,13 @@ const isUserRoleOrganizerOrExhibitorOrVisitor = (req, res, next) => {
 	) {
 		next();
 	} else {
-		return res.status(API_STATUS_CODE.NOT_ACCEPTABLE).send({
-			status: "failed",
-			message: "User role is not allowed for the request",
-		});
+		return res.status(API_STATUS_CODE.NOT_ACCEPTABLE).send(
+			setServerResponse(
+				API_STATUS_CODE.NOT_ACCEPTABLE,
+				'user_role_is_not_allowed_for_the_request',
+				lgKey,
+			)
+		);
 	}
 };
 

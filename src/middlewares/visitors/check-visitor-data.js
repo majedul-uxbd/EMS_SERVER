@@ -21,14 +21,16 @@ const {
     isValidUserCompany,
 } = require("../../common/user-data-validator");
 const { API_STATUS_CODE } = require("../../consts/error-status");
+const { setServerResponse } = require('../../common/set-server-response');
 
 
 /**
  * This function will validate user data
  */
 const validateVisitorData = (req, res, next) => {
-    const errors = [];
+    const lgKey = req.body.lg;
     const visitor = {
+        lg: req.body.lg,
         firstName: req.body.firstName,
         lastName: req.body.lastName,
         email: req.body.email,
@@ -41,48 +43,79 @@ const validateVisitorData = (req, res, next) => {
     };
 
     if (!isValidUserFirstName(visitor.firstName)) {
-        errors.push("Invalid user first name");
+        return res.status(API_STATUS_CODE.BAD_REQUEST).send(
+            setServerResponse(
+                API_STATUS_CODE.BAD_REQUEST,
+                'invalid_user_first_name',
+                lgKey
+            )
+        );
     }
 
     if (!isValidUserLastName(visitor.lastName)) {
-        errors.push("Invalid user last name");
+        return res.status(API_STATUS_CODE.BAD_REQUEST).send(
+            setServerResponse(
+                API_STATUS_CODE.BAD_REQUEST,
+                'invalid_user_last_name',
+                lgKey
+            )
+        );
     }
 
     if (!isValidEmail(visitor.email)) {
-        errors.push("Invalid user email address");
+        return res.status(API_STATUS_CODE.BAD_REQUEST).send(
+            setServerResponse(
+                API_STATUS_CODE.BAD_REQUEST,
+                'invalid_user_email_address',
+                lgKey
+            )
+        );
     }
 
     if (!isValidUserContact(visitor.contact)) {
-        errors.push("Invalid user contact number");
+        return res.status(API_STATUS_CODE.BAD_REQUEST).send(
+            setServerResponse(
+                API_STATUS_CODE.BAD_REQUEST,
+                'invalid_user_contact_number',
+                lgKey
+            )
+        );
     }
 
     if (!isValidUserCompany(visitor.company)) {
-        errors.push("Invalid user company name");
+        return res.status(API_STATUS_CODE.BAD_REQUEST).send(
+            setServerResponse(
+                API_STATUS_CODE.BAD_REQUEST,
+                'invalid_company_name',
+                lgKey
+            )
+        );
     }
 
     if (!isValidUserPosition(visitor.position)) {
-        errors.push("Invalid user position");
+        return res.status(API_STATUS_CODE.BAD_REQUEST).send(
+            setServerResponse(
+                API_STATUS_CODE.BAD_REQUEST,
+                'invalid_user_position',
+                lgKey
+            )
+        );
     }
 
-    if (!_.isNil(visitor.role)) {
-        if (!isValidUserRole(visitor.role)) {
-            errors.push("Invalid user role");
-        }
-    } else {
-        visitor.role = 'visitor';
-    }
+    // set visitor default role
+    visitor.role = 'visitor';
+
 
     if (!isValidPassword(visitor.password)) {
-        errors.push("Invalid user password");
+        return res.status(API_STATUS_CODE.BAD_REQUEST).send(
+            setServerResponse(
+                API_STATUS_CODE.BAD_REQUEST,
+                'invalid_user_password',
+                lgKey
+            )
+        );
     }
-    // console.log("🚀 ~ validateAddUserData ~ errors:", errors)
 
-    if (errors.length > 0) {
-        return res.status(API_STATUS_CODE.BAD_REQUEST).send({
-            status: "failed",
-            message: errors,
-        });
-    }
     // console.log("🚀 ~ validateAddUserData ~ visitor:", visitor)
     req.body.visitor = visitor;
     next();

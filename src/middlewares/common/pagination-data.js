@@ -11,6 +11,7 @@ const { API_STATUS_CODE } = require("../../consts/error-status");
  * 
  */
 const paginationData = (req, res, next) => {
+    const lgKey = req.body.lg;
     const itemsPerPageDefault = 5;
     const currentPageNumberDefault = 0;
     const filterBy = "";
@@ -42,11 +43,13 @@ const paginationData = (req, res, next) => {
     // console.log('errors: ', errors);
     // return
     if (errors.length >= 1) {
-        return res.status(API_STATUS_CODE.NOT_ACCEPTABLE).send({
-            status: "failed",
-            message: "invalid-pagination-data",
-            errors: errors
-        });
+        return res.status(API_STATUS_CODE.BAD_REQUEST).send(
+            setServerResponse(
+                API_STATUS_CODE.BAD_REQUEST,
+                'invalid_pagination_data',
+                lgKey,
+            )
+        );
     }
 
     const paginationData = {

@@ -11,9 +11,8 @@
 
 const { pool } = require("../../../database/db");
 const _ = require('lodash');
-const { format } = require('date-fns');
 
-const { setRejectMessage } = require("../../common/set-reject-message");
+const { setServerResponse } = require("../../common/set-server-response");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
 
@@ -34,12 +33,7 @@ const getExhibitorCompanyQuery = async (authData) => {
         }
     } catch (error) {
         // console.log('🚀 ~ userLoginQuery ~ error:', error);
-        return Promise.reject(
-            setRejectMessage(
-                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-                'operation_failed'
-            )
-        );
+        return Promise.reject(error);
     }
 }
 
@@ -69,10 +63,7 @@ const checkExhibitorIsExistOrNotQuery = async (companyId, authData) => {
         return false;
     } catch (error) {
         // console.log("🚀 ~ getUserData ~ error:", error)
-        return res.status(API_STATUS_CODE.BAD_REQUEST).send({
-            status: "failed",
-            message: "Operation failed",
-        });
+        return Promise.reject(error);
     }
 }
 
@@ -134,6 +125,8 @@ const updateUserInfoQuery = (exhibitorData, authData) => {
  */
 const updateExhibitorData = async (exhibitorData, authData) => {
     const updatedAt = new Date();
+    const lgKey = exhibitorData.lg;
+
 
     exhibitorData = { ...exhibitorData, updated_at: updatedAt }
     try {
@@ -144,25 +137,40 @@ const updateExhibitorData = async (exhibitorData, authData) => {
                 const [_query, values] = await updateUserInfoQuery(exhibitorData, authData);
                 const [isUpdateUser] = await pool.query(_query, values);
                 if (isUpdateUser.affectedRows > 0) {
-                    return Promise.resolve({
-                        status: 'success',
-                        message: 'User info updated successfully'
-                    });
+                    return Promise.resolve(
+                        setServerResponse(
+                            API_STATUS_CODE.OK,
+                            'user_info_updated_successfully',
+                            lgKey
+                        )
+                    );
                 } else {
                     return Promise.reject(
-                        setRejectMessage(API_STATUS_CODE.BAD_REQUEST, "Failed to update user")
+                        setServerResponse(
+                            API_STATUS_CODE.BAD_REQUEST,
+                            'failed_to_update_user',
+                            lgKey
+                        )
                     )
                 }
             } else {
                 return Promise.reject(
-                    setRejectMessage(API_STATUS_CODE.BAD_REQUEST, "User not found")
+                    setServerResponse(
+                        API_STATUS_CODE.BAD_REQUEST,
+                        'user_not_found',
+                        lgKey
+                    )
                 )
             }
         }
     } catch (error) {
-        console.log("🚀 ~ updateUserInfo ~ error:", error)
+        // console.log("🚀 ~ updateUserInfo ~ error:", error)
         return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, "Internal Server Error")
+            setServerResponse(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'internal_server_error',
+                lgKey
+            )
         )
     }
 };

@@ -40,7 +40,7 @@ const fileTypes = [
 /**
  * @description Upload file maximum size
  */
-const uploadFileSize = 10000000; //10MB
+const uploadFileSize = 10240000; //10MB
 
 module.exports = {
   imageDir,

@@ -9,6 +9,7 @@
  * 
  */
 
+const { setServerResponse } = require("../../common/set-server-response");
 const {
     isValidUserFirstName,
     isValidUserLastName,
@@ -26,10 +27,11 @@ const updateExhibitorDataValidator = (req, res, next) => {
     const errors = [];
 
     const exhibitorData = {
+        lg: req.body.lg,
         id: req.body.id,
         firstName: req.body.firstName,
         lastName: req.body.lastName,
-        email: req.body.email,
+        // email: req.body.email,
         contact: req.body.contact,
         position: req.body.position,
         profileImg: req.body.profileImg,
@@ -55,11 +57,11 @@ const updateExhibitorDataValidator = (req, res, next) => {
         }
     }
 
-    if (!_.isNil(exhibitorData.email)) {
-        if (!isValidEmail(exhibitorData.email)) {
-            errors.push("Invalid user email address");
-        }
-    }
+    // if (!_.isNil(exhibitorData.email)) {
+    //     if (!isValidEmail(exhibitorData.email)) {
+    //         errors.push("Invalid user email address");
+    //     }
+    // }
 
     if (!_.isNil(exhibitorData.contact)) {
         if (!isValidUserContact(exhibitorData.contact)) {
@@ -74,10 +76,13 @@ const updateExhibitorDataValidator = (req, res, next) => {
     }
 
     if (errors.length > 0) {
-        return res.status(API_STATUS_CODE.BAD_REQUEST).send({
-            status: "failed",
-            message: errors,
-        });
+        return res.status(API_STATUS_CODE.BAD_REQUEST).send(
+            setServerResponse(
+                API_STATUS_CODE.BAD_REQUEST,
+                'invalid_data',
+                exhibitorData.lg,
+            )
+        );
     }
     // console.log("🚀 ~ validateAddUserData ~ user:", user)
     // return

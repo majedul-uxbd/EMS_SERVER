@@ -10,9 +10,40 @@
  */
 
 const { pool } = require("../../../database/db");
-const { setRejectMessage } = require("../../common/set-reject-message");
+const { setServerResponse } = require("../../common/set-server-response");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
+
+/**
+ * This function will check whether the user is enrolled in this exhibition or not.
+ */
+const checkIsUserEnrolled = async (scannerData) => {
+    const _query = `
+    SELECT
+        id
+    FROM 
+        exhibitions_has_visitor
+    WHERE
+        visitor_id = ? AND
+        exhibition_id = ?;
+    `;
+
+    const _values = [
+        scannerData.visitorId,
+        scannerData.exhibitionId
+    ]
+
+    try {
+        const [result] = await pool.query(_query, _values);
+        if (result.length > 0) {
+            return true;
+        }
+        return false;
+    } catch (error) {
+        // console.log("🚀 ~ checkIsDocumentExist ~ error:", error);
+        return Promise.reject(error);
+    }
+}
 
 /**
  * This function will check whether the visitor is already requested for the project or not.
@@ -43,9 +74,7 @@ const checkIsProjectAlreadyRequested = async (scannerData) => {
         return false;
     } catch (error) {
         // console.log("🚀 ~ checkIsDocumentExist ~ error:", error);
-        return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Operation failed')
-        )
+        return Promise.reject(error)
     }
 }
 
@@ -53,7 +82,7 @@ const checkIsProjectAlreadyRequested = async (scannerData) => {
 /**
  * This function will insert data into the database
  */
-const insertScannerData = async (authData, scannerData) => {
+const insertScannerData = async (scannerData) => {
     const _query = `
     INSERT INTO
         approved_document
@@ -62,7 +91,7 @@ const insertScannerData = async (authData, scannerData) => {
             company_id,
             project_id,
             is_approved,
-            approve_or_disapprove_by,
+            exhibition_id,
             created_at
         )
     VALUES( ?, ?, ?, ?, ?, ? );
@@ -73,7 +102,7 @@ const insertScannerData = async (authData, scannerData) => {
         scannerData.companyId,
         scannerData.projectId,
         scannerData.isApproved,
-        authData.id,
+        scannerData.exhibitionId,
         scannerData.createdAt
     ];
 
@@ -85,39 +114,59 @@ const insertScannerData = async (authData, scannerData) => {
         return false;
     } catch (error) {
         // console.log("🚀 ~ insertScannerData ~ error:", error);
-        return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Operation failed')
-        )
+        return Promise.reject(error)
     }
 }
 
 /**
  * @description This function is used to send project document to the visitor immediately
  */
-const insertRequestedDocumentData = async (authData, scannerData) => {
+const insertRequestedDocumentData = async (scannerData) => {
+    const lgKey = scannerData.lg;
+
     const createdAt = new Date();
     scannerData = { ...scannerData, isApproved: '1', createdAt: createdAt };
 
     try {
+        const isEnrolled = await checkIsUserEnrolled(scannerData);
+        if (!isEnrolled) {
+            return Promise.reject(
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'visitor_is_not_enrolled_in_this_exhibition',
+                    lgKey,
+                )
+            )
+        }
         const isAlreadyRequested = await checkIsProjectAlreadyRequested(scannerData);
         if (isAlreadyRequested) {
             return Promise.reject(
-                setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'You have already requested for the project')
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'visitor_has_already_requested_for_the_project',
+                    lgKey,
+                )
             )
         } else {
-            const isDataInserted = await insertScannerData(authData, scannerData);
+            const isDataInserted = await insertScannerData(scannerData);
             if (isDataInserted) {
-                return Promise.resolve({
-                    status: 'success',
-                    message: 'Your request is sent successfully'
-                })
+                return Promise.resolve(
+                    setServerResponse(
+                        API_STATUS_CODE.OK,
+                        'your_request_is_sent_successfully',
+                        lgKey,
+                    )
+                )
             }
         }
     } catch (error) {
         // console.log("🚀 ~ insertDocumentRequestData ~ error:", error)
         return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, 'Internal server error')
-        )
+            setServerResponse(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'internal_server_error',
+                lgKey,
+            ))
     }
 };
 

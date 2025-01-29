@@ -13,7 +13,6 @@ const express = require("express");
 const visitorsRouter = express.Router();
 const { API_STATUS_CODE } = require("../../consts/error-status");
 const authenticateToken = require("../../middlewares/jwt");
-const { checkUserIdValidity } = require("../../middlewares/check-user-id-validity");
 const { isUserRoleVisitor, isUserRoleExhibitorAdminOrExhibitorOrVisitor } = require("../../common/utilities/check-user-role");
 const { validateVisitorData } = require("../../middlewares/visitors/check-visitor-data");
 const { addVisitor } = require("../../main/visitor/add-visitors-data");
@@ -26,6 +25,7 @@ const { getRequestedDocumentData } = require("../../main/document/get-requested-
 const { generatePDFReport } = require("../../main/document/visitors_document-list");
 const { paginationData } = require("../../middlewares/common/pagination-data");
 const { enrollVisitorInExhibition } = require("../../main/visitor/enroll-visitor-in-exhibition");
+const { setServerResponse } = require("../../common/set-server-response");
 
 /**
  * Through this API, visitors can register themselves
@@ -35,15 +35,16 @@ visitorsRouter.post("/add",
 	async (req, res) => {
 		addVisitor(req.body.visitor)
 			.then((data) => {
-				return res.status(API_STATUS_CODE.ACCEPTED).send({
-					status: data.status,
-					message: data.message,
+				const { statusCode, status, message } = data;
+				return res.status(statusCode).send({
+					status: status,
+					message: message
 				});
 			})
 			.catch((error) => {
-				const { statusCode, message } = error;
+				const { statusCode, status, message } = error;
 				return res.status(statusCode).send({
-					status: "failed",
+					status: status,
 					message: message,
 				});
 			});
@@ -57,18 +58,19 @@ visitorsRouter.post(
 	authenticateToken,
 	isUserRoleVisitor,
 	async (req, res) => {
-		getVisitorData(req.auth)
+		getVisitorData(req.auth, req.body)
 			.then((data) => {
-				return res.status(API_STATUS_CODE.OK).send({
-					status: "success",
-					message: data.message,
-					...data,
+				const { statusCode, status, message, result } = data;
+				return res.status(statusCode).send({
+					status: status,
+					message: message,
+					data: result
 				});
 			})
 			.catch((error) => {
-				const { statusCode, message } = error;
+				const { statusCode, status, message } = error;
 				return res.status(statusCode).send({
-					status: "failed",
+					status: status,
 					message: message,
 				});
 			});
@@ -82,20 +84,20 @@ visitorsRouter.post(
 	"/update",
 	authenticateToken,
 	isUserRoleVisitor,
-	checkUserIdValidity,
 	updateVisitorDataValidator,
 	async (req, res) => {
 		updateVisitorData(req.body.visitor, req.auth)
 			.then((data) => {
-				return res.status(API_STATUS_CODE.OK).send({
-					status: "success",
-					message: "Visitor Data updated successfully",
+				const { statusCode, status, message } = data;
+				return res.status(statusCode).send({
+					status: status,
+					message: message
 				});
 			})
 			.catch((error) => {
-				const { statusCode, message } = error;
+				const { statusCode, status, message } = error;
 				return res.status(statusCode).send({
-					status: "failed",
+					status: status,
 					message: message,
 				});
 			});
@@ -108,20 +110,21 @@ visitorsRouter.post(
 visitorsRouter.post(
 	"/scan-project",
 	authenticateToken,
-	isUserRoleExhibitorAdminOrExhibitorOrVisitor,
+	isUserRoleVisitor,
 	validateScannerBodyData,
 	async (req, res) => {
 		insertDocumentRequestData(req.auth, req.body.scannerData)
 			.then((data) => {
-				return res.status(API_STATUS_CODE.OK).send({
-					status: data.status,
-					message: data.message,
+				const { statusCode, status, message } = data;
+				return res.status(statusCode).send({
+					status: status,
+					message: message
 				});
 			})
 			.catch((error) => {
-				const { statusCode, message } = error;
+				const { statusCode, status, message } = error;
 				return res.status(statusCode).send({
-					status: "failed",
+					status: status,
 					message: message,
 				});
 			});
@@ -137,18 +140,19 @@ visitorsRouter.post(
 	isUserRoleVisitor,
 	paginationData,
 	async (req, res) => {
-		getRequestedDocumentData(req.auth, req.body.paginationData)
+		getRequestedDocumentData(req.auth, req.body, req.body.paginationData)
 			.then((data) => {
-				return res.status(API_STATUS_CODE.OK).send({
-					status: "success",
-					message: "Get requested data successfully",
-					...data,
+				const { statusCode, status, message, result } = data;
+				return res.status(statusCode).send({
+					status: status,
+					message: message,
+					...result
 				});
 			})
 			.catch((error) => {
-				const { statusCode, message } = error;
+				const { statusCode, status, message } = error;
 				return res.status(statusCode).send({
-					status: "failed",
+					status: status,
 					message: message,
 				});
 			});
@@ -165,10 +169,13 @@ visitorsRouter.post(
 		const { lg, data } = req.body;
 
 		if (!Array.isArray(data)) {
-			return res.status(API_STATUS_CODE.BAD_REQUEST).send({
-				status: "failed",
-				message: "Data is required and must be an array",
-			});
+			return res.status(API_STATUS_CODE.BAD_REQUEST).send(
+				setServerResponse(
+					API_STATUS_CODE.BAD_REQUEST,
+					'data_is_required_and_must_be_an_array',
+					lg
+				)
+			);
 		}
 
 		try {
@@ -201,15 +208,16 @@ visitorsRouter.post(
 	async (req, res) => {
 		enrollVisitorInExhibition(req.auth, req.body)
 			.then((data) => {
-				return res.status(API_STATUS_CODE.OK).send({
-					status: data.status,
-					message: data.message,
+				const { statusCode, status, message } = data;
+				return res.status(statusCode).send({
+					status: status,
+					message: message
 				});
 			})
 			.catch((error) => {
-				const { statusCode, message } = error;
+				const { statusCode, status, message } = error;
 				return res.status(statusCode).send({
-					status: "failed",
+					status: status,
 					message: message,
 				});
 			});

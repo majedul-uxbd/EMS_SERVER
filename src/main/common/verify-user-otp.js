@@ -10,7 +10,7 @@
  */
 
 const { pool } = require("../../../database/db");
-const { setRejectMessage } = require("../../common/set-reject-message");
+const { setServerResponse } = require("../../common/set-server-response");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
 
@@ -42,12 +42,7 @@ const checkIsOtpCorrect = async (otpData) => {
         } return false;
     } catch (error) {
         // console.log("🚀 ~ userLoginQuery ~ error:", error)
-        return Promise.reject(
-            setRejectMessage(
-                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-                'Operation failed'
-            )
-        );
+        return Promise.reject(error);
     }
 }
 
@@ -56,24 +51,36 @@ const checkIsOtpCorrect = async (otpData) => {
  * @description This function is used to verity user OTP
  */
 const verifyUserOtp = async (otpData) => {
+    const lgKey = otpData.lg;
     const now = new Date();
     otpData = { ...otpData, now };
     try {
         const isOtpCorrect = await checkIsOtpCorrect(otpData);
         if (isOtpCorrect.otp === String(otpData.otp)) {
-            return Promise.resolve({
-                status: 'success',
-                message: 'OTP is Valid'
-            })
+            return Promise.resolve(
+                setServerResponse(
+                    API_STATUS_CODE.OK,
+                    'otp_is_valid',
+                    lgKey,
+                )
+            )
         } else {
             return Promise.reject(
-                setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Invalid OTP')
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'otp_is_invalid',
+                    lgKey,
+                )
             )
         }
     } catch (error) {
+        // console.log('🚀 ~ file: verify-user-otp.js:82 ~ verifyUserOtp ~ error:', error);
         return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, 'Internal Server Error')
-        )
+            setServerResponse(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'internal_server_error',
+                lgKey,
+            ))
     }
 
 }

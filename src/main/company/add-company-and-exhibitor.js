@@ -1,7 +1,7 @@
 const { API_STATUS_CODE } = require("../../consts/error-status");
 const { pool } = require("../../../database/db");
 const { generateRandomString } = require("../../common/utilities/generate-random-string");
-const setRejectMessage = (statusCode, message) => ({ statusCode, message });
+const { setServerResponse } = require("../../common/set-server-response");
 
 const checkDuplicateName = async () => {
     const _query = `
@@ -19,9 +19,7 @@ const checkDuplicateName = async () => {
         return false;
     } catch (error) {
         // console.log("🚀 ~ userLoginQuery ~ error:", error)
-        return Promise.reject(
-            setRejectMessage(error)
-        )
+        return Promise.reject(error)
     }
 };
 
@@ -53,7 +51,7 @@ const compareStrings = (str1, str2, caseInsensitive = true) => {
     return false;
 }
 
-const addCompanyWithExhibitor = async (companyData, exhibitor) => {
+const addCompanyWithExhibitor = async (lg, companyData, exhibitor) => {
     let isMatched = false;
 
     const connection = await pool.getConnection();
@@ -61,23 +59,37 @@ const addCompanyWithExhibitor = async (companyData, exhibitor) => {
     try {
         await connection.beginTransaction();
         const companyName = await checkDuplicateName();
-        for (const company of companyName) {
-            const result = compareStrings(companyData.companyName, company.name);
-            if (result) {
-                // console.log(`Match found: ${companyData.companyName} matches with ${company.name}`);
-                isMatched = true;
-                break;
+
+        if (companyName !== false) {
+            for (const company of companyName) {
+                const result = compareStrings(companyData.companyName, company.name);
+
+                if (result) {
+                    // console.log(`Match found: ${companyData.companyName} matches with ${company.name}`);
+                    isMatched = true;
+                    break;
+                }
             }
         }
         if (isMatched === true) {
             return Promise.reject(
-                setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Company name has already exists')
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'company_name_has_already_exist',
+                    lg
+                )
             );
         }
         // Step 1: Create Company
         const companyResult = await addCompanyData(companyData, connection);
         if (companyResult.status !== 'success') {
-            throw setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Failed to create company');
+            return Promise.reject(
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'failed_to_create_company',
+                    lg
+                )
+            );
         }
 
         // Step 2: Generate Password and Create Exhibitor (without hashing)
@@ -85,9 +97,15 @@ const addCompanyWithExhibitor = async (companyData, exhibitor) => {
         exhibitor.password = exhibitorPassword; // Removed password hashing
         exhibitor.companyId = companyResult.companyId;
 
-        const exhibitorResult = await addExhibitor(exhibitor, connection);
+        const exhibitorResult = await addExhibitor(lg, exhibitor, connection);
         if (exhibitorResult.status !== 'success') {
-            throw setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Failed to create exhibitor');
+            return Promise.reject(
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'failed_to_create_exhibitor',
+                    lg
+                )
+            );
         }
 
         await connection.commit();
@@ -113,9 +131,10 @@ const addCompanyData = async (companyData, connection) => {
             website_link, 
             address, 
             email, 
-            created_at,
-            is_active
-        ) VALUES (?, ?, ?, ?, ?, 0);
+            is_active,
+            current_status,
+            created_at
+        ) VALUES (?, ?, ?, ?, 0, 1, ?);
     `;
     const values = [
         companyData.companyName,
@@ -133,30 +152,40 @@ const addCompanyData = async (companyData, connection) => {
                 companyId: result.insertId
             };
         }
-        throw setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Failed to create company');
+        throw setServerResponse(
+            API_STATUS_CODE.BAD_REQUEST,
+            'failed_to_create_company',
+            lgKey
+        )
     } catch (error) {
         if (error.code === 'ER_DUP_ENTRY') {
-            throw setRejectMessage(
+            throw setServerResponse(
                 API_STATUS_CODE.BAD_REQUEST,
-                'Company with this email already exists'
+                'company_with_this_email_already_exists',
+                lgKey
             );
         }
-        throw setRejectMessage(
+        throw setServerResponse(
             API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-            'Internal Server Error'
-        );
+            'internal_server_error',
+            lgKey
+        )
     }
 };
 
 // Add Exhibitor
-const addExhibitor = async (exhibitor, connection) => {
+const addExhibitor = async (lg, exhibitor, connection) => {
     const createdAt = new Date();
 
     try {
         const isDuplicateEmail = await checkDuplicateEmail(exhibitor.email, connection);
 
         if (isDuplicateEmail) {
-            throw setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Email already exists');
+            throw setServerResponse(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'email_already_exists',
+                lg
+            );
         }
 
         const query = `
@@ -194,12 +223,17 @@ const addExhibitor = async (exhibitor, connection) => {
                 exhibitorId: result.insertId
             };
         }
-        throw setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Failed to create exhibitor');
+        throw setServerResponse(
+            API_STATUS_CODE.BAD_REQUEST,
+            'failed_to_create_exhibitor',
+            lg
+        );
     } catch (error) {
         if (error.statusCode) throw error;
-        throw setRejectMessage(
-            API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-            'Internal Server Error'
+        throw setServerResponse(
+            API_STATUS_CODE.BAD_REQUEST,
+            'internal_server_error',
+            lg
         );
     }
 };
@@ -211,10 +245,7 @@ const checkDuplicateEmail = async (email, connection) => {
         const [result] = await (connection || pool).query(query, [email]);
         return result.length > 0;
     } catch (error) {
-        throw setRejectMessage(
-            API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-            'Operation failed while checking email'
-        );
+        throw setRejectMessage(error);
     }
 };
 

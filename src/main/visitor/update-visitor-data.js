@@ -10,10 +10,10 @@
  */
 
 const { pool } = require("../../../database/db");
-const { setRejectMessage } = require("../../common/set-reject-message");
+const { setServerResponse } = require("../../common/set-server-response");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
-const updateUserInfoQuery = (bodyData, userData) => {
+const updateUserInfoQuery = (bodyData, authData) => {
 
     let _query = `UPDATE visitors SET `;
     const _values = [];
@@ -30,13 +30,6 @@ const updateUserInfoQuery = (bodyData, userData) => {
         _query += 'l_name = ? ';
         _values.push(bodyData.lastName);
     }
-    if (bodyData.email) {
-        if (_values.length > 0) {
-            _query += ', ';
-        }
-        _query += 'email = ? ';
-        _values.push(bodyData.email);
-    }
 
     if (bodyData.contact) {
         if (_values.length > 0) {
@@ -44,6 +37,14 @@ const updateUserInfoQuery = (bodyData, userData) => {
         }
         _query += 'contact_no = ? ';
         _values.push(bodyData.contact);
+    }
+
+    if (bodyData.company) {
+        if (_values.length > 0) {
+            _query += ', ';
+        }
+        _query += 'company = ? ';
+        _values.push(bodyData.company);
     }
 
     if (bodyData.position) {
@@ -60,29 +61,44 @@ const updateUserInfoQuery = (bodyData, userData) => {
     }
 
     _query += 'WHERE id  =?';
-    _values.push(userData.id);
+    _values.push(authData.id);
 
     return [_query, _values];
 };
 
-const updateVisitorData = async (bodyData, userData) => {
+const updateVisitorData = async (bodyData, authData) => {
+    const lgKey = bodyData.lg;
     const updatedAt = new Date();
 
     bodyData = { ...bodyData, updated_at: updatedAt }
     try {
-        const [_query, values] = await updateUserInfoQuery(bodyData, userData);
+        const [_query, values] = await updateUserInfoQuery(bodyData, authData);
         const [isUpdateUser] = await pool.query(_query, values);
         if (isUpdateUser.affectedRows > 0) {
-            return Promise.resolve();
+            return Promise.resolve(
+                setServerResponse(
+                    API_STATUS_CODE.OK,
+                    'user_info_updated_successfully',
+                    lgKey,
+                )
+            );
         } else {
             return Promise.reject(
-                setRejectMessage(API_STATUS_CODE.BAD_REQUEST, "Failed to update user information")
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'failed_to_update_user_information',
+                    lgKey,
+                )
             )
         }
     } catch (error) {
         // console.log("🚀 ~ updateUserInfo ~ error:", error)
         return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, "Internal Server Error")
+            setServerResponse(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'internal_server_error',
+                lgKey,
+            )
         )
     }
 };

@@ -10,9 +10,10 @@
  */
 
 const { pool } = require("../../database/db");
+const { setServerResponse } = require("../common/set-server-response");
 const { API_STATUS_CODE } = require("../consts/error-status");
 
-const getUserData = async (userData) => {
+const getUserData = async (userData, lgKey) => {
     // console.log("🚀 ~ getUserData ~ userData:", userData)
     const tableName = [];
     if (userData.role === 'visitor') {
@@ -47,27 +48,37 @@ const getUserData = async (userData) => {
         return false;
     } catch (error) {
         // console.log("🚀 ~ getUserData ~ error:", error)
-        return res.status(API_STATUS_CODE.BAD_REQUEST).send({
-            status: "failed",
-            message: "Operation failed",
-        });
+        return res.status(API_STATUS_CODE.BAD_REQUEST).send(
+            setServerResponse(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'internal_server_error',
+                lgKey
+            )
+        );
     }
 }
 
-
+/**
+ * @description This function is use to check is user valid or not 
+ */
 const checkUserIdValidity = async (req, res, next) => {
     const userData = req.auth;
+    const lgKey = req.body.lg;
 
     try {
-        const isUserValid = await getUserData(userData);
+        const isUserValid = await getUserData(userData, lgKey);
         if (!isUserValid) {
-            return res.status(API_STATUS_CODE.BAD_REQUEST).send({
-                status: "failed",
-                message: "Invalid user",
-            });
+            return res.status(API_STATUS_CODE.BAD_REQUEST).send(
+                setServerResponse(
+                    API_STATUS_CODE.OK,
+                    'user_not_found',
+                    lgKey,
+                )
+            );
         }
         next();
     } catch (error) {
+        // console.log('🚀 ~ file: check-user-id-validity.js:71 ~ checkUserIdValidity ~ error:', error);
         return res.status(API_STATUS_CODE.INTERNAL_SERVER_ERROR).send({
             status: "failed",
             message: "Internal server error",

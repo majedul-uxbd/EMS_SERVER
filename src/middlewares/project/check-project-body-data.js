@@ -21,7 +21,7 @@ const checkProjectBodyData = (req, res, next) => {
         companiesId: req.body.companiesId,
         projectName: req.body.projectName,
     }
-    console.log("🚀 ~ checkProjectBodyData ~ projectData:", projectData)
+    // console.log("🚀 ~ checkProjectBodyData ~ projectData:", projectData)
 
     if (_.isNil(projectData.exhibitorId)) {
         errors.push('Exhibitor ID is required');
@@ -33,7 +33,7 @@ const checkProjectBodyData = (req, res, next) => {
         errors.push('Project name is invalid');
     }
 
-    console.log("🚀 ~ checkProjectBodyData ~ errors:", errors)
+    // console.log("🚀 ~ checkProjectBodyData ~ errors:", errors)
     if (errors.length > 0) {
         return res.status(API_STATUS_CODE.BAD_REQUEST).send({
             status: "failed",

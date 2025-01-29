@@ -10,7 +10,7 @@
  */
 
 const { pool } = require("../../../database/db");
-const { setRejectMessage } = require("../../common/set-reject-message");
+const { setServerResponse } = require("../../common/set-server-response");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
 const getCompanyId = async (exhibitionId) => {
@@ -143,6 +143,8 @@ const getProjectData = async (companyId) => {
 
 
 const getGraph2Data = async (bodyData) => {
+    const lgKey = bodyData.lg;
+
     let attendedUserCount = [];
     let projectCount = [];
     let dayWiseUserCount = [];
@@ -150,16 +152,22 @@ const getGraph2Data = async (bodyData) => {
         const companyId = await getCompanyId(bodyData.exhibitionId);
         const exhibitionDaysId = await getExhibitionDaysId(bodyData.exhibitionId);
         if (companyId === false) {
-            return Promise.resolve({
-                status: 'success',
-                message: 'No data found'
-            })
+            return Promise.resolve(
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'data_is_not_found',
+                    lgKey
+                )
+            )
         }
         if (exhibitionDaysId === false) {
-            return Promise.resolve({
-                status: 'success',
-                message: 'No data found'
-            })
+            return Promise.resolve(
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'data_is_not_found',
+                    lgKey
+                )
+            )
         }
         for (let i = 0; i < exhibitionDaysId.length; i++) {
             const dayWiseAttendance = await getDayWiseAttendanceData(exhibitionDaysId[i].id);
@@ -192,15 +200,22 @@ const getGraph2Data = async (bodyData) => {
             projectCount,
             dayWiseUserCount
         }
-        return Promise.resolve({
-            status: 'success',
-            message: 'Get data successfully',
-            totalCount: totalCount
-        })
+        return Promise.resolve(
+            setServerResponse(
+                API_STATUS_CODE.OK,
+                'get_data_successfully',
+                lgKey,
+                totalCount
+            )
+        )
     } catch (error) {
         // console.log('🚀 ~ file: get-graph-2-data.js:167 ~ getGraph2Data ~ error:', error);
         return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, 'Internal Server Error')
+            setServerResponse(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'internal_server_error',
+                lgKey,
+            )
         );
     }
 

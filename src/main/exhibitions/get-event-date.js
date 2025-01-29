@@ -10,12 +10,11 @@
  */
 
 const { pool } = require("../../../database/db");
-const { setRejectMessage } = require("../../common/set-reject-message");
+const { setServerResponse } = require("../../common/set-server-response");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
 
 const getEventDateQuery = async (bodyData) => {
-    console.log('🚀 ~ file: get-event-date.js:16 ~ getEventDateQuery ~ bodyData:', bodyData);
     const _query = `
         SELECT
             id,
@@ -38,14 +37,24 @@ const getEventDateQuery = async (bodyData) => {
 
 
 const getEventDate = async (bodyData) => {
+    const lgKey = bodyData.lg;
+
     try {
-        const getDate = await getEventDateQuery(bodyData);
-        return Promise.resolve({
-            eventDates: getDate
-        })
+        const eventDates = await getEventDateQuery(bodyData);
+        return Promise.resolve(
+            setServerResponse(
+                API_STATUS_CODE.OK,
+                'get_data_successfully',
+                lgKey,
+                eventDates
+            ))
     } catch (error) {
         return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, 'Internal Server Error')
+            setServerResponse(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'internal_server_error',
+                lgKey
+            )
         )
     }
 };

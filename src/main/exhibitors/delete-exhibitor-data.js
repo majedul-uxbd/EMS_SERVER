@@ -11,7 +11,7 @@
 
 const { pool } = require("../../../database/db");
 const _ = require('lodash');
-const { setRejectMessage } = require("../../common/set-reject-message");
+const { setServerResponse } = require("../../common/set-server-response");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
 
@@ -133,11 +133,17 @@ const deleteUserInfoQuery = async (exhibitorData) => {
  * @description This function is used to delete exhibitor
  */
 const deleteExhibitorData = async (authData, exhibitorData) => {
+    const lgKey = exhibitorData.lg;
+
     try {
         const checkRole = await checkExhibitorRole(exhibitorData);
         if (checkRole === 'exhibitor_admin') {
             return Promise.reject(
-                setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Exhibitor admin can not be de-activated')
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'exhibitor_admin_can_not_be_de_activated',
+                    lgKey,
+                )
             )
         }
         const companyId = await getExhibitorCompanyQuery(authData);
@@ -145,22 +151,33 @@ const deleteExhibitorData = async (authData, exhibitorData) => {
             const isExhibitorExist = await checkExhibitorAlreadyDeActiveOrNot(companyId, exhibitorData);
             if (isExhibitorExist) {
                 return Promise.reject(
-                    setRejectMessage(API_STATUS_CODE.BAD_REQUEST, "User has already de-activated")
+                    setServerResponse(
+                        API_STATUS_CODE.BAD_REQUEST,
+                        'user_has_already_deactivated_or_not_found',
+                        lgKey,
+                    )
                 )
             }
             const isUserDelete = await deleteUserInfoQuery(exhibitorData);
             if (isUserDelete) {
-                return Promise.resolve({
-                    status: 'success',
-                    message: 'User deleted successfully'
-                });
+                return Promise.resolve(
+                    setServerResponse(
+                        API_STATUS_CODE.OK,
+                        'user_deactivated_successfully',
+                        lgKey,
+                    )
+                );
             }
 
         }
     } catch (error) {
         // console.log("🚀 ~ deleteExhibitorData ~ error:", error)
         return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, "Internal Server Error")
+            setServerResponse(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'internal_server_error',
+                lgKey,
+            )
         );
     }
 }

@@ -10,7 +10,7 @@
  */
 
 const { pool } = require("../../../database/db");
-const { setRejectMessage } = require("../../common/set-reject-message");
+const { setServerResponse } = require("../../common/set-server-response");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
 const updateUserInfoQuery = (bodyData, authData) => {
@@ -97,6 +97,8 @@ const updateUserInfoQuery = (bodyData, authData) => {
  * This function is used to update user data
  */
 const updatePersonalInfo = async (bodyData, authData) => {
+    const lgKey = bodyData.lg;
+
     const updatedAt = new Date();
 
     bodyData = { ...bodyData, updated_at: updatedAt }
@@ -104,19 +106,31 @@ const updatePersonalInfo = async (bodyData, authData) => {
         const [_query, values] = await updateUserInfoQuery(bodyData, authData);
         const [isUpdateUser] = await pool.query(_query, values);
         if (isUpdateUser.affectedRows > 0) {
-            return Promise.resolve({
-                status: 'success',
-                message: 'User info updated successfully'
-            });
+            return Promise.resolve(
+                setServerResponse(
+                    API_STATUS_CODE.OK,
+                    'user_info_updated_successfully',
+                    lgKey,
+                    bodyData
+                )
+            );
         } else {
             return Promise.reject(
-                setRejectMessage(API_STATUS_CODE.BAD_REQUEST, "Failed to update user information")
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'failed_to_update_user_information',
+                    lgKey,
+                )
             )
         }
     } catch (error) {
         // console.log("🚀 ~ updateUserInfo ~ error:", error)
         return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, "Internal Server Error")
+            setServerResponse(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'internal_server_error',
+                lgKey,
+            )
         )
     }
 };

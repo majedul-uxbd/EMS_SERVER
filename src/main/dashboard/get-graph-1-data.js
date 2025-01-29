@@ -10,7 +10,7 @@
  */
 
 const { pool } = require("../../../database/db");
-const { setRejectMessage } = require("../../common/set-reject-message");
+const { setRejectMessage, setServerResponse } = require("../../common/set-server-response");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
 const getExhibitionsId = async () => {
@@ -116,7 +116,8 @@ const getProjectData = async (exhibitionId) => {
 }
 
 
-const getGraph1Data = async () => {
+const getGraph1Data = async (bodyData) => {
+    const lgKey = bodyData.lg;
     const today = new Date();
 
     let attendedUserCount = [];
@@ -126,10 +127,13 @@ const getGraph1Data = async () => {
         const exhibitionId = await getExhibitionsId();
 
         if (exhibitionId.length <= 0) {
-            return Promise.resolve({
-                status: 'success',
-                message: 'Exhibitions not found'
-            })
+            return Promise.resolve(
+                setServerResponse(
+                    API_STATUS_CODE.OK,
+                    'exhibition_is_not_found',
+                    lgKey
+                )
+            )
         }
 
         const previousExhibitions = exhibitionId.filter(exhibition => {
@@ -168,22 +172,31 @@ const getGraph1Data = async () => {
                 companyCount,
                 projectCount,
             }
-            return Promise.resolve({
-                status: 'success',
-                message: 'Get data successfully',
-                totalCount: totalCount
-            })
+            return Promise.resolve(
+                setServerResponse(
+                    API_STATUS_CODE.OK,
+                    'get_data_successfully',
+                    lgKey,
+                    totalCount
+                )
+            )
         } else {
-            return Promise.resolve({
-                status: 'success',
-                message: 'No exhibitions found'
-            })
-
+            return Promise.resolve(
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'exhibition_is_not_found',
+                    lgKey
+                )
+            )
         }
     } catch (error) {
         // console.log('🚀 ~ file: get-graph-1-data.js:33 ~ getGraph1Data ~ error:', error);
         return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, 'Internal Server Error')
+            setServerResponse(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'internal_server_error',
+                lgKey,
+            ),
         );
     }
 

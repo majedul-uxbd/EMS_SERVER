@@ -10,7 +10,7 @@
  */
 
 const { pool } = require("../../../database/db");
-const { setRejectMessage } = require("../../common/set-reject-message");
+const { setRejectMessage, setServerResponse } = require("../../common/set-server-response");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
 const exhibitionDataForOrganizer = async () => {
@@ -103,75 +103,90 @@ const exhibitionDataForVisitor = async (authData) => {
 /**
  * @description 
  */
-const getExhibitionDataForUsers = async (authData) => {
-    const userRole = authData.role;
+const getExhibitionDataForUsers = async (bodyData) => {
+    const lgKey = bodyData.lg;
+    // const userRole = authData.role;
     const today = new Date();
 
     try {
-        if (userRole === 'organizer') {
-            const exhibitionData = await exhibitionDataForOrganizer();
+        // if (userRole === 'organizer') {
+        const exhibitionData = await exhibitionDataForOrganizer();
 
-            const exhibitions = exhibitionData.filter(exhibition => {
-                const dates = JSON.parse(exhibition.exhibition_dates);
+        const exhibitions = exhibitionData.filter(exhibition => {
+            const dates = JSON.parse(exhibition.exhibition_dates);
 
-                // Check if any date matches today or if the first date is in the future
-                const hasMatchingOrUpcomingDate = dates.some(date => {
-                    const exhibitionDate = new Date(date);
-                    const normalizedToday = new Date(
-                        today.getFullYear(),
-                        today.getMonth(),
-                        today.getDate()
-                    );
-                    return exhibitionDate >= normalizedToday;
-                });
-                return hasMatchingOrUpcomingDate;
+            // Check if any date matches today or if the first date is in the future
+            const hasMatchingOrUpcomingDate = dates.some(date => {
+                const exhibitionDate = new Date(date);
+                const normalizedToday = new Date(
+                    today.getFullYear(),
+                    today.getMonth(),
+                    today.getDate()
+                );
+                return exhibitionDate >= normalizedToday;
             });
+            return hasMatchingOrUpcomingDate;
+        });
 
-            if (exhibitions.length > 0) {
-                return Promise.resolve({
-                    data: exhibitions
-                })
-            } else {
-                return Promise.reject(
-                    setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'No exhibitions found')
-                )
-            }
-        }
-        else if (userRole === 'exhibitor' || userRole === 'exhibitor_admin') {
-            const exhibitions = await exhibitionDataForExhibitor(authData);
-            if (exhibitions.length > 0) {
-                return Promise.resolve({
-                    data: exhibitions
-                })
-            } else {
-                return Promise.reject(
-                    setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'No exhibitions found')
-                )
-            }
+        if (exhibitions.length > 0) {
 
-        }
-        else if (userRole === 'visitor') {
-            const exhibitions = await exhibitionDataForVisitor(authData);
-            if (exhibitions.length > 0) {
-                return Promise.resolve({
-                    data: exhibitions
-                })
-            } else {
-                return Promise.reject(
-                    setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'No exhibitions found')
+            return Promise.resolve(
+                setServerResponse(
+                    API_STATUS_CODE.OK,
+                    'get_data_successfully',
+                    lgKey,
+                    exhibitions
                 )
-            }
-        }
-        else {
+            )
+        } else {
             return Promise.reject(
-                setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Invalid User Role')
-            );
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'exhibition_not_found',
+                    lgKey,
+                )
+            )
         }
-    } catch (error) {
+    }
+    // else if (userRole === 'exhibitor' || userRole === 'exhibitor_admin') {
+    //     const exhibitions = await exhibitionDataForExhibitor(authData);
+    //     if (exhibitions.length > 0) {
+    //         return Promise.resolve({
+    //             data: exhibitions
+    //         })
+    //     } else {
+    //         return Promise.reject(
+    //             setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'No exhibitions found')
+    //         )
+    //     }
+
+    // }
+    // else if (userRole === 'visitor') {
+    //     const exhibitions = await exhibitionDataForVisitor(authData);
+    //     if (exhibitions.length > 0) {
+    //         return Promise.resolve({
+    //             data: exhibitions
+    //         })
+    //     } else {
+    //         return Promise.reject(
+    //             setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'No exhibitions found')
+    //         )
+    //     }
+    // }
+    // else {
+    //     return Promise.reject(
+    //         setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Invalid User Role')
+    //     );
+    // }
+    catch (error) {
         // console.log('🚀 ~ file: get-exhibition-data.js:94 ~ getExhibitionData ~ error:', error);
         return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Internal Server Error')
-        );
+            setServerResponse(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'internal_server_error',
+                lgKey,
+            )
+        )
     }
 };
 

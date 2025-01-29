@@ -10,7 +10,7 @@
  */
 
 const { pool } = require("../../../database/db");
-const { setRejectMessage } = require("../../common/set-reject-message");
+const { setServerResponse } = require("../../common/set-server-response");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
 const checkUserIdValidityQuery = async (userData) => {
@@ -38,10 +38,11 @@ const checkUserIdValidityQuery = async (userData) => {
         }
         return false;
     } catch (error) {
+        const { statusCode, status, message } = error;
         // console.log("🚀 ~ getUserData ~ error:", error)
-        return res.status(API_STATUS_CODE.BAD_REQUEST).send({
-            status: "failed",
-            message: "Operation failed",
+        return res.status(statusCode).send({
+            status: status,
+            message: message,
         });
     }
 }
@@ -72,9 +73,10 @@ const deleteUserInfoQuery = async (userData) => {
         return false;
     } catch (error) {
         // console.log("🚀 ~ getUserData ~ error:", error)
-        return res.status(API_STATUS_CODE.BAD_REQUEST).send({
-            status: "failed",
-            message: "Operation failed",
+        const { statusCode, status, message } = error;
+        return res.status(statusCode).send({
+            status: status,
+            message: message,
         });
     }
 }
@@ -83,26 +85,38 @@ const deleteUserInfoQuery = async (userData) => {
  * @description This function will delete visitor and user data
  */
 const deleteUserInfo = async (userData) => {
-    // console.log("🚀 ~ deleteUserInfo ~ userData:", userData)
+    const lgKey = userData.lg;
+
     try {
         const isUserAvailable = await checkUserIdValidityQuery(userData);
         if (isUserAvailable) {
             const isUserDelete = await deleteUserInfoQuery(userData);
             if (isUserDelete) {
-                return Promise.resolve({
-                    status: 'success',
-                    message: 'User deleted successfully'
-                });
+                return Promise.resolve(
+                    setServerResponse(
+                        API_STATUS_CODE.OK,
+                        'user_deactivated_successfully',
+                        lgKey
+                    )
+                );
             }
         }
         else {
             return Promise.reject(
-                setRejectMessage(API_STATUS_CODE.BAD_REQUEST, "No user found or user in not active")
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'user_not_found',
+                    lgKey
+                )
             )
         }
     } catch (error) {
         return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, "Internal Server Error")
+            setServerResponse(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'internal_server_error',
+                lgKey
+            )
         );
     }
 }

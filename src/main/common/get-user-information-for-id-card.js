@@ -11,6 +11,7 @@
 
 
 const { pool } = require('../../../database/db');
+const { setServerResponse } = require('../../common/set-server-response');
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
 
@@ -121,6 +122,7 @@ const getExhibitionsDate = async (bodyData) => {
 const getUserInformationForIdCard = async (req, res, next) => {
     const authData = req.auth;
     const bodyData = req.body;
+    const lgKey = bodyData.lg;
 
     try {
 
@@ -130,18 +132,24 @@ const getUserInformationForIdCard = async (req, res, next) => {
         if (userInfo) {
             req.body.user = userInfo;
         } else {
-            return res.status(API_STATUS_CODE.BAD_REQUEST).send({
-                status: 'failed',
-                message: 'User data is not found'
-            })
+            return res.status(API_STATUS_CODE.BAD_REQUEST).send(
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'user_not_found',
+                    lgKey,
+                )
+            )
         }
         if (exhibitionData) {
             req.body.exhibitionData = exhibitionData;
         } else {
-            return res.status(API_STATUS_CODE.BAD_REQUEST).send({
-                status: 'failed',
-                message: 'Exhibition data is not found'
-            })
+            return res.status(API_STATUS_CODE.BAD_REQUEST).send(
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'exhibition_is_not_found',
+                    lgKey,
+                )
+            )
         }
         req.body.eventDetails = eventDetails;
         // console.log({ userInfo, exhibitionData, eventDetails });
@@ -149,10 +157,13 @@ const getUserInformationForIdCard = async (req, res, next) => {
 
     } catch (error) {
         // console.log("🚀 ~ getUserInformationForIdCard ~ error:", error)
-        return res.status(API_STATUS_CODE.INTERNAL_SERVER_ERROR).send({
-            status: 'failed',
-            message: 'Internal server error'
-        })
+        return res.status(API_STATUS_CODE.INTERNAL_SERVER_ERROR).send(
+            setServerResponse(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'internal_server_error',
+                lgKey,
+            )
+        )
     }
 }
 

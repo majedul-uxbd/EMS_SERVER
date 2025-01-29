@@ -11,13 +11,13 @@
 
 
 const { pool } = require("../../../database/db");
-const { setRejectMessage } = require("../../common/set-reject-message");
+const { setServerResponse } = require("../../common/set-server-response");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
-const getNumberOfRowsQuery = async () => {
+const getNumberOfRowsQuery = async (authData) => {
 	const _query = `
     SELECT count(*) AS totalRows
-		FROM
+	FROM
 		attendances
 	LEFT JOIN(
 		SELECT
@@ -52,24 +52,31 @@ const getNumberOfRowsQuery = async () => {
 		visitors.id = attendances.visitors_id
 	LEFT JOIN user AS taken_by
 	ON
-		attendances.taken_by = taken_by.id;
+		attendances.taken_by = taken_by.id
+	LEFT JOIN exhibition_days AS ed
+	ON
+		attendances.exhibition_days_id = ed.id
+	LEFT JOIN
+		exhibitions AS ex
+	ON
+		ed.exhibitions_id = ex.id
+    LEFT JOIN
+        exhibitions_has_organizer AS eho
+    ON ex.id = eho.exhibition_id
+	WHERE 
+    	eho.organizer_id = ?
     `;
 
 	try {
-		const [result] = await pool.query(_query);
+		const [result] = await pool.query(_query, authData.id);
 		return Promise.resolve(result[0]);
 	} catch (error) {
 		// console.log('🚀 ~ userLoginQuery ~ error:', error);
-		return Promise.reject(
-			setRejectMessage(
-				API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-				'operation_failed'
-			)
-		);
+		return Promise.reject(error);
 	}
 }
 
-const getAttendanceData = async (paginationData) => {
+const getAttendanceData = async (authData, paginationData) => {
 	const _query = `
 	SELECT
 		attendances.time,
@@ -133,19 +140,25 @@ const getAttendanceData = async (paginationData) => {
 		exhibitions AS ex
 	ON
 		ed.exhibitions_id = ex.id
+    LEFT JOIN
+        exhibitions_has_organizer AS eho
+    ON ex.id = eho.exhibition_id
+	WHERE 
+    	eho.organizer_id = ?
 	LIMIT ?
     OFFSET ?;
   `;
 
 	const _values = [
+		authData.id,
 		paginationData.itemsPerPage,
 		paginationData.offset
 	]
 	try {
 		const [result] = await pool.query(_query, _values);
-		return result
+		return Promise.resolve(result)
 	} catch (error) {
-		// console.log("🚀 ~ getAttendenceData ~ error:", error)
+		// console.log('🚀 ~ file: get-all-attendance.js:148 ~ getAttendanceData ~ error:', error);
 		return Promise.reject(error);
 	}
 }
@@ -153,23 +166,35 @@ const getAttendanceData = async (paginationData) => {
 /**
  * @description This function is used to get all attendance data
  */
-const getAllAttendanceData = async (paginationData) => {
 
+const getAllAttendanceData = async (authData, bodyData, paginationData) => {
+	const lgKey = bodyData.lg;
 	try {
-		const totalRows = await getNumberOfRowsQuery();
-		const attendanceData = await getAttendanceData(paginationData);
-		return Promise.resolve({
+		const totalRows = await getNumberOfRowsQuery(authData);
+		const attendanceData = await getAttendanceData(authData, paginationData);
+		const result = {
 			metadata: {
 				totalRows: totalRows,
 			},
-			data: attendanceData
-		});
+			attendanceData
+		}
+		return Promise.resolve(
+			setServerResponse(
+				API_STATUS_CODE.OK,
+				'get_data_successfully',
+				lgKey,
+				result
+			)
+		);
 	} catch (error) {
 		// console.error("🚀 ~ getAttendanceDetails ~ error:", error);
-		throw setRejectMessage(
-			API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-			"Failed to retrieve attendance details"
-		);
+		return Promise.reject(
+			setServerResponse(
+				API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+				'internal_server_error',
+				lgKey,
+			)
+		)
 	}
 };
 module.exports = {

@@ -11,7 +11,7 @@
 const _ = require('lodash');
 const { pool } = require('../../../database/db');
 const { API_STATUS_CODE } = require('../../consts/error-status');
-const { setRejectMessage } = require('../../common/set-reject-message');
+const { setServerResponse } = require('../../common/set-server-response');
 
 
 const getExhibitorCompanyQuery = async (authData) => {
@@ -31,12 +31,7 @@ const getExhibitorCompanyQuery = async (authData) => {
         }
     } catch (error) {
         // console.log('🚀 ~ userLoginQuery ~ error:', error);
-        return Promise.reject(
-            setRejectMessage(
-                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-                'operation_failed'
-            )
-        );
+        return Promise.reject(error);
     }
 }
 
@@ -65,12 +60,7 @@ const getNumberOfRowsQuery = async (companyId) => {
         return Promise.resolve(result[0]);
     } catch (error) {
         // console.log('🚀 ~ userLoginQuery ~ error:', error);
-        return Promise.reject(
-            setRejectMessage(
-                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-                'operation_failed'
-            )
-        );
+        return Promise.reject(error);
     }
 }
 
@@ -113,40 +103,47 @@ const getExhibitorDataQuery = async (companyId, paginationData) => {
 
     try {
         const [result] = await pool.query(query, values);
-        if (result.length > 0) {
-            return Promise.resolve(result);
-        }
+        return Promise.resolve(result);
     } catch (error) {
         // console.log('🚀 ~ userLoginQuery ~ error:', error);
-        return Promise.reject(
-            setRejectMessage(
-                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-                'operation_failed'
-            )
-        );
+        return Promise.reject(error);
     }
 };
 
 /**
  * @description This function is used to get exhibitor data
  */
-const getExhibitorData = async (authData, paginationData) => {
+const getExhibitorData = async (authData, bodyData) => {
+    const paginationData = bodyData.paginationData;
+    const lgKey = bodyData.lg;
     try {
         const companyId = await getExhibitorCompanyQuery(authData);
         if (!_.isNil(companyId)) {
             const totalRows = await getNumberOfRowsQuery(companyId);
             const exhibitorInfo = await getExhibitorDataQuery(companyId, paginationData);
-            return Promise.resolve({
+
+            const result = {
                 metadata: {
                     totalRows: totalRows,
                 },
-                data: exhibitorInfo
-            });
+                exhibitorInfo
+            };
+            return Promise.resolve(
+                setServerResponse(
+                    API_STATUS_CODE.OK,
+                    'get_data_successfully',
+                    lgKey,
+                    result
+                )
+            );
         }
     } catch (error) {
-        // console.log("🚀 ~ userLogin ~ error:", error)
         return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, 'Internal Server Error')
+            setServerResponse(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'internal_server_error',
+                lgKey
+            )
         );
     }
 };

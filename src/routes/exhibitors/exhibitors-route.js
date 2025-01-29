@@ -14,10 +14,7 @@ const exhibitorsRouter = express.Router();
 
 const { API_STATUS_CODE } = require("../../consts/error-status");
 const authenticateToken = require("../../middlewares/jwt");
-const { checkUserIdValidity } = require("../../middlewares/check-user-id-validity");
 const {
-	isUserRoleExhibitor,
-	isUserRoleAdminOrExhibitorAdmin,
 	isUserRoleExhibitorAdmin,
 	isUserRoleExhibitorAdminOrExhibitor,
 } = require("../../common/utilities/check-user-role");
@@ -36,7 +33,8 @@ const { insertRequestedDocumentData } = require("../../main/exhibitors/insert-re
 const { getRequestedVisitorData } = require("../../main/exhibitors/get-requested-visitor-data");
 const { generateRequestedVisitorPDF } = require("../../main/exhibitors/create_requested_data-pdf");
 const { enrollCompanyInExhibition } = require("../../main/exhibitors/enroll-company-in-exhibitions");
-
+const { getEnrollExhibitionData } = require("../../main/exhibitors/get-enrolled-exhibitions-data");
+const fs = require("fs");
 
 exhibitorsRouter.use(authenticateToken);
 
@@ -46,21 +44,22 @@ exhibitorsRouter.use(authenticateToken);
  */
 exhibitorsRouter.post(
 	'/add',
-	isUserRoleExhibitorAdmin,
+	// isUserRoleExhibitorAdmin,
 	validateExhibitorsData,
 	async (req, res) => {
 
 		addExhibitor(req.body.exhibitor, req.auth)
 			.then((data) => {
-				return res.status(API_STATUS_CODE.ACCEPTED).send({
-					status: data.status,
-					message: data.message,
+				const { statusCode, status, message } = data;
+				return res.status(statusCode).send({
+					status: status,
+					message: message
 				});
 			})
 			.catch((error) => {
-				const { statusCode, message } = error;
+				const { statusCode, status, message } = error;
 				return res.status(statusCode).send({
-					status: 'failed',
+					status: status,
 					message: message,
 				});
 			});
@@ -76,18 +75,19 @@ exhibitorsRouter.post('/get-exhibitor-data',
 	isUserRoleExhibitorAdminOrExhibitor,
 	paginationData,
 	async (req, res) => {
-		getExhibitorData(req.auth, req.body.paginationData)
+		getExhibitorData(req.auth, req.body)
 			.then((data) => {
-				return res.status(API_STATUS_CODE.OK).send({
-					status: 'success',
-					message: 'Get exhibitor data successfully',
-					...data,
+				const { statusCode, status, message, result } = data;
+				return res.status(statusCode).send({
+					status: status,
+					message: message,
+					...result
 				});
 			})
 			.catch((error) => {
-				const { statusCode, message } = error;
+				const { statusCode, status, message } = error;
 				return res.status(statusCode).send({
-					status: 'failed',
+					status: status,
 					message: message,
 				});
 			});
@@ -99,21 +99,21 @@ exhibitorsRouter.post('/get-exhibitor-data',
  */
 exhibitorsRouter.post(
 	"/update-all",
-	checkUserIdValidity,
 	isUserRoleExhibitorAdmin,
 	updateExhibitorDataValidator,
 	async (req, res) => {
 		updateAllExhibitorData(req.body.exhibitorData, req.auth)
 			.then((data) => {
-				return res.status(API_STATUS_CODE.OK).send({
-					status: data.status,
-					message: data.message,
+				const { statusCode, status, message } = data;
+				return res.status(statusCode).send({
+					status: status,
+					message: message
 				});
 			})
 			.catch((error) => {
-				const { statusCode, message } = error;
+				const { statusCode, status, message } = error;
 				return res.status(statusCode).send({
-					status: "failed",
+					status: status,
 					message: message,
 				});
 			});
@@ -125,21 +125,21 @@ exhibitorsRouter.post(
  */
 exhibitorsRouter.post(
 	"/update-personal",
-	checkUserIdValidity,
 	isUserRoleExhibitorAdminOrExhibitor,
 	updateExhibitorDataValidator,
 	async (req, res) => {
 		updateExhibitorData(req.body.exhibitorData, req.auth)
 			.then((data) => {
-				return res.status(API_STATUS_CODE.OK).send({
-					status: data.status,
-					message: data.message,
+				const { statusCode, status, message } = data;
+				return res.status(statusCode).send({
+					status: status,
+					message: message
 				});
 			})
 			.catch((error) => {
-				const { statusCode, message } = error;
+				const { statusCode, status, message } = error;
 				return res.status(statusCode).send({
-					status: "failed",
+					status: status,
 					message: message,
 				});
 			});
@@ -154,38 +154,40 @@ exhibitorsRouter.post("/active",
 	async (req, res) => {
 		activeExhibitorData(req.auth, req.body)
 			.then((data) => {
-				return res.status(API_STATUS_CODE.OK).send({
-					status: data.status,
-					message: data.message,
+				const { statusCode, status, message } = data;
+				return res.status(statusCode).send({
+					status: status,
+					message: message
 				});
 			})
 			.catch((error) => {
-				const { statusCode, message } = error;
+				const { statusCode, status, message } = error;
 				return res.status(statusCode).send({
-					status: "failed",
+					status: status,
 					message: message,
 				});
 			});
 	});
 
 /**
- * This API will allow Exhibitor Admin to de-active activated exhibitor
- */
+* This API will allow Exhibitor Admin to de-active activated exhibitor
+*/
 exhibitorsRouter.post(
 	"/de-active",
 	isUserRoleExhibitorAdmin,
 	async (req, res) => {
 		deleteExhibitorData(req.auth, req.body)
 			.then((data) => {
-				return res.status(API_STATUS_CODE.OK).send({
-					status: data.status,
-					message: data.message,
+				const { statusCode, status, message } = data;
+				return res.status(statusCode).send({
+					status: status,
+					message: message
 				});
 			})
 			.catch((error) => {
-				const { statusCode, message } = error;
+				const { statusCode, status, message } = error;
 				return res.status(statusCode).send({
-					status: "failed",
+					status: status,
 					message: message,
 				});
 			});
@@ -201,15 +203,16 @@ exhibitorsRouter.post(
 	async (req, res) => {
 		approveOrRejectRequest(req.auth, req.body)
 			.then((data) => {
-				return res.status(API_STATUS_CODE.OK).send({
-					status: data.status,
-					message: data.message,
+				const { statusCode, status, message } = data;
+				return res.status(statusCode).send({
+					status: status,
+					message: message
 				});
 			})
 			.catch((error) => {
-				const { statusCode, message } = error;
+				const { statusCode, status, message } = error;
 				return res.status(statusCode).send({
-					status: "failed",
+					status: status,
 					message: message,
 				});
 			});
@@ -225,17 +228,18 @@ exhibitorsRouter.post(
 	isUserRoleExhibitorAdminOrExhibitor,
 	validateVisitorScannerBodyData,
 	async (req, res) => {
-		insertRequestedDocumentData(req.auth, req.body.scannerData)
+		insertRequestedDocumentData(req.body.scannerData)
 			.then((data) => {
-				return res.status(API_STATUS_CODE.OK).send({
-					status: data.status,
-					message: data.message,
+				const { statusCode, status, message } = data;
+				return res.status(statusCode).send({
+					status: status,
+					message: message
 				});
 			})
 			.catch((error) => {
-				const { statusCode, message } = error;
+				const { statusCode, status, message } = error;
 				return res.status(statusCode).send({
-					status: "failed",
+					status: status,
 					message: message,
 				});
 			});
@@ -251,18 +255,19 @@ exhibitorsRouter.post(
 	isUserRoleExhibitorAdminOrExhibitor,
 	paginationData,
 	async (req, res) => {
-		getRequestedVisitorData(req.auth, req.body.paginationData)
+		getRequestedVisitorData(req.auth, req.body, req.body.paginationData)
 			.then((data) => {
-				return res.status(API_STATUS_CODE.OK).send({
-					status: "success",
-					message: "Get visitor data successfully",
-					...data,
+				const { statusCode, status, message, result } = data;
+				return res.status(statusCode).send({
+					status: status,
+					message: message,
+					...result
 				});
 			})
 			.catch((error) => {
-				const { statusCode, message } = error;
+				const { statusCode, status, message } = error;
 				return res.status(statusCode).send({
-					status: "failed",
+					status: status,
 					message: message,
 				});
 			});
@@ -277,24 +282,33 @@ exhibitorsRouter.post(
 	async (req, res) => {
 		try {
 			const data = req.body;
-			const pdfBuffer = await generateRequestedVisitorPDF(data);
+			const pdfFilePath = await generateRequestedVisitorPDF(data);
+
+			// Read the generated PDF file
+			const pdfBuffer = await fs.promises.readFile(pdfFilePath);
 
 			// Set response headers for PDF
 			res.setHeader('Content-Type', 'application/pdf');
 			res.setHeader('Content-Disposition', 'inline; filename=Interested_Visitor_List.pdf');
 
-			// Send the PDF buffer directly
+			// Send the PDF buffer
 			res.status(API_STATUS_CODE.OK).send(pdfBuffer);
+
+			// Clean up the temporary file
+			try {
+				await fs.promises.unlink(pdfFilePath);
+			} catch (cleanupError) {
+				console.error('Error cleaning up PDF file:', cleanupError);
+			}
 		} catch (error) {
 			console.error("Error generating PDF report:", error);
-			res.status(API_STATUS_CODE.INTERNAL_SERVER_ERROR).json({
+			res.status(error.statusCode || API_STATUS_CODE.INTERNAL_SERVER_ERROR).json({
 				status: "failed",
-				message: "Failed to generate PDF report",
+				message: error.message || "Failed to generate PDF report",
 			});
 		}
 	}
 );
-
 
 /**
  * Through this API, exhibitor admin will enroll his company in an exhibition
@@ -306,15 +320,44 @@ exhibitorsRouter.post(
 	async (req, res) => {
 		enrollCompanyInExhibition(req.auth, req.body)
 			.then((data) => {
-				return res.status(API_STATUS_CODE.OK).send({
-					status: data.status,
-					message: data.message,
+				const { statusCode, status, message } = data;
+				return res.status(statusCode).send({
+					status: status,
+					message: message
 				});
 			})
 			.catch((error) => {
-				const { statusCode, message } = error;
+				const { statusCode, status, message } = error;
 				return res.status(statusCode).send({
-					status: "failed",
+					status: status,
+					message: message,
+				});
+			});
+	}
+);
+
+
+/**
+ * Through this API, exhibitor admin will see the list of enrolled exhibition
+ */
+exhibitorsRouter.post(
+	"/get-enrolled-exhibition",
+	authenticateToken,
+	isUserRoleExhibitorAdminOrExhibitor,
+	async (req, res) => {
+		getEnrollExhibitionData(req.auth, req.body)
+			.then((data) => {
+				const { statusCode, status, message, result } = data;
+				return res.status(statusCode).send({
+					status: status,
+					message: message,
+					exhibitionData: result
+				});
+			})
+			.catch((error) => {
+				const { statusCode, status, message } = error;
+				return res.status(statusCode).send({
+					status: status,
 					message: message,
 				});
 			});

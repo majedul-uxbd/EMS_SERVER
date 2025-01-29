@@ -19,6 +19,7 @@ const PDFDocument = require('pdfkit');
 const qr = require('qr-image');
 const _ = require('lodash');
 const { format } = require('date-fns');
+
 const { getUserInformationForIdCard } = require('../../main/common/get-user-information-for-id-card');
 const { checkEmailAndSendOtp } = require('../../main/common/check-email-and-send-otp');
 const { API_STATUS_CODE } = require('../../consts/error-status');
@@ -27,10 +28,12 @@ const { resetUserPassword } = require('../../main/common/reset-user-password');
 const { checkIfFileSavePathExist } = require('../../common/utilities/file-upload/check-file-path-exist');
 const { idCardDir } = require('../../common/utilities/file-upload/upload-file-const-value');
 const { getUpcomingExhibitions } = require('../../main/common/get-upcoming-exhibitions');
-const { isUserRoleExhibitorOrVisitor, isUserRoleOrganizerOrExhibitorOrVisitor } = require('../../common/utilities/check-user-role');
 const { getExhibitionDataForUsers } = require('../../main/common/get-exhibition-data');
 const { checkIfUserIsEnrolledInAExhibition } = require('../../middlewares/common/check-if-user-enroll-in-exhibition');
 const { getExhibitionData } = require('../../main/exhibitions/get-exhibitions-data');
+const { setServerResponse } = require('../../common/set-server-response');
+const { changeUserPassword } = require('../../main/common/change-user-password');
+const { determineFont } = require('../../common/utilities/detect-language');
 
 // commonRouter.use(authenticateToken);
 
@@ -39,19 +42,20 @@ const { getExhibitionData } = require('../../main/exhibitions/get-exhibitions-da
  * @description This API is used for send OTP to the user Email Address
  */
 commonRouter.post('/send-otp', async (req, res) => {
-    checkEmailAndSendOtp(req.body.email)
+    checkEmailAndSendOtp(req.body)
         .then(data => {
-            return res.status(API_STATUS_CODE.OK).send({
-                status: data.status,
-                message: data.message,
-            })
+            const { statusCode, status, message } = data;
+            return res.status(statusCode).send({
+                status: status,
+                message: message,
+            });
         })
         .catch(error => {
-            const { statusCode, message } = error;
+            const { statusCode, status, message } = error;
             return res.status(statusCode).send({
-                status: 'failed',
+                status: status,
                 message: message,
-            })
+            });
         })
 })
 
@@ -63,17 +67,18 @@ commonRouter.post('/send-otp', async (req, res) => {
 commonRouter.post('/verify-otp', async (req, res) => {
     verifyUserOtp(req.body)
         .then(data => {
-            return res.status(API_STATUS_CODE.OK).send({
-                status: data.status,
-                message: data.message,
-            })
+            const { statusCode, status, message } = data;
+            return res.status(statusCode).send({
+                status: status,
+                message: message,
+            });
         })
         .catch(error => {
-            const { statusCode, message } = error;
+            const { statusCode, status, message } = error;
             return res.status(statusCode).send({
-                status: 'failed',
+                status: status,
                 message: message,
-            })
+            });
         })
 })
 
@@ -84,19 +89,44 @@ commonRouter.post('/verify-otp', async (req, res) => {
 commonRouter.post('/reset-password', async (req, res) => {
     resetUserPassword(req.body)
         .then(data => {
-            return res.status(API_STATUS_CODE.OK).send({
-                status: data.status,
-                message: data.message,
-            })
+            const { statusCode, status, message } = data;
+            return res.status(statusCode).send({
+                status: status,
+                message: message,
+            });
         })
         .catch(error => {
-            const { statusCode, message } = error;
+            const { statusCode, status, message } = error;
             return res.status(statusCode).send({
-                status: 'failed',
+                status: status,
                 message: message,
-            })
-        })
+            });
+        });
 });
+
+
+/**
+ * @description This API is used for change user password
+ */
+commonRouter.post('/change-password',
+    authenticateToken,
+    async (req, res) => {
+        changeUserPassword(req.auth, req.body)
+            .then(data => {
+                const { statusCode, status, message } = data;
+                return res.status(statusCode).send({
+                    status: status,
+                    message: message,
+                });
+            })
+            .catch(error => {
+                const { statusCode, status, message } = error;
+                return res.status(statusCode).send({
+                    status: status,
+                    message: message,
+                });
+            });
+    });
 
 
 /**
@@ -104,23 +134,24 @@ commonRouter.post('/reset-password', async (req, res) => {
 */
 commonRouter.post('/get-exhibition-data',
     authenticateToken,
-    isUserRoleExhibitorOrVisitor,
+    // isUserRoleExhibitorOrVisitor,
     async (req, res) => {
 
         getExhibitionData(req.body)
-            .then(data => {
-                return res.status(API_STATUS_CODE.OK).send({
-                    status: 'success',
-                    message: 'Get exhibitions data successfully',
-                    ...data
-                })
-            })
-            .catch(error => {
-                const { statusCode, message } = error;
+            .then((data) => {
+                const { statusCode, status, message, result } = data;
                 return res.status(statusCode).send({
-                    status: 'failed',
+                    status: status,
                     message: message,
-                })
+                    exhibitionInfo: result
+                });
+            })
+            .catch((error) => {
+                const { statusCode, status, message } = error;
+                return res.status(statusCode).send({
+                    status: status,
+                    message: message,
+                });
             });
     });
 
@@ -129,47 +160,49 @@ commonRouter.post('/get-exhibition-data',
 /**
  * @description This API is used to see upcoming events information
  */
-commonRouter.get('/upcoming-exhibitions',
+commonRouter.post('/upcoming-exhibitions',
     authenticateToken,
     async (req, res) => {
-        getUpcomingExhibitions()
-            .then(data => {
-                return res.status(API_STATUS_CODE.OK).send({
-                    status: 'success',
-                    message: 'Get Upcoming Exhibitions Successfully',
-                    ...data
-                })
-            })
-            .catch(error => {
-                const { statusCode, message } = error;
+        getUpcomingExhibitions(req.body)
+            .then((data) => {
+                const { statusCode, status, message, result } = data;
                 return res.status(statusCode).send({
-                    status: 'failed',
+                    status: status,
                     message: message,
-                })
+                    upcomingExhibitions: result
+                });
             })
+            .catch((error) => {
+                const { statusCode, status, message } = error;
+                return res.status(statusCode).send({
+                    status: status,
+                    message: message,
+                });
+            });
     })
 
 
 /**
  * This API is used to get exhibition information for organizer, exhibitor and visitor
  */
-commonRouter.get(
+commonRouter.post(
     '/get-exhibitions',
     authenticateToken,
     // isUserRoleOrganizerOrExhibitorOrVisitor,
     async (req, res) => {
         getExhibitionDataForUsers(req.auth)
             .then((data) => {
-                return res.status(API_STATUS_CODE.ACCEPTED).send({
-                    status: 'success',
-                    message: 'Get exhibitions information successfully',
-                    ...data
+                const { statusCode, status, message, result } = data;
+                return res.status(statusCode).send({
+                    status: status,
+                    message: message,
+                    data: result
                 });
             })
             .catch((error) => {
-                const { statusCode, message } = error;
+                const { statusCode, status, message } = error;
                 return res.status(statusCode).send({
-                    status: 'failed',
+                    status: status,
                     message: message,
                 });
             });
@@ -185,9 +218,24 @@ commonRouter.post('/generate-id-card',
     getUserInformationForIdCard,
     checkIfFileSavePathExist,
     async (req, res) => {
+        const lgKey = req.body.lg;
         const user = req.body.user;
+        let fontType;
+        let eventDetails = null;
         const exhibitionData = req.body.exhibitionData;
-        const eventDetails = req.body.eventDetails;
+        const eventData = req.body.eventDetails;
+
+        if (eventData !== null) {
+            const sortByExhibitionDay = async (eventData) => {
+                return eventData.sort((a, b) => {
+                    const dayA = parseInt(a.exhibition_day.replace('Day ', ''), 10);
+                    const dayB = parseInt(b.exhibition_day.replace('Day ', ''), 10);
+                    return dayA - dayB;
+                });
+            };
+            eventDetails = await sortByExhibitionDay(eventData);
+        }
+
         const filePath = idCardDir;
         const visitorBgColor = '#1e3a8a';
         const organizerBgColor = '#164e63';
@@ -215,14 +263,9 @@ commonRouter.post('/generate-id-card',
         const scaleFactor = 1;
         const scaledFontSize = 10 * scaleFactor;
 
-        doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Bold.ttf'))
+        doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Regular.ttf'))
             .fontSize(scaledFontSize)
             .fillColor('black');
-
-        const textHeight = doc.heightOfString(fullName, {
-            width: 171,
-            align: 'center'
-        });
 
         switch (user.role) {
             case 'visitor':
@@ -312,7 +355,8 @@ commonRouter.post('/generate-id-card',
             doc.stroke();
 
             // User Name1
-            doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Bold.ttf'))
+            fontType = await determineFont(fullName, true);
+            doc.font(fontType)
                 .fontSize(10)
                 .fillColor('black')
                 .text(fullName, x_axis_1, y_axis_1, {
@@ -321,7 +365,7 @@ commonRouter.post('/generate-id-card',
                 });
 
             // User Name2
-            doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Bold.ttf'))
+            doc.font(fontType)
                 .fontSize(10)
                 .fillColor('black')
                 .text(fullName, x_axis_2, y_axis_2, {
@@ -330,7 +374,8 @@ commonRouter.post('/generate-id-card',
                 });
 
             // User Role1
-            doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Bold.ttf'))
+            fontType = await determineFont(userRole, true);
+            doc.font(fontType)
                 .fontSize(18)
                 .fillColor('#ffffff')
                 .text(userRole, 0, 538, {
@@ -339,7 +384,7 @@ commonRouter.post('/generate-id-card',
                 });
 
             // User Role2
-            doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Bold.ttf'))
+            doc.font(fontType)
                 .fontSize(18)
                 .fillColor('#ffffff')
                 .text(userRole, 295, 538, {
@@ -348,7 +393,8 @@ commonRouter.post('/generate-id-card',
                 });
 
             // Position1
-            doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Regular.ttf'))
+            fontType = await determineFont(position);
+            doc.font(fontType)
                 .fontSize(9)
                 .fillColor('black')
                 .text(position, x_axis_1, y_axis_1 + 28, {
@@ -357,7 +403,7 @@ commonRouter.post('/generate-id-card',
                 });
 
             // Position2
-            doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Regular.ttf'))
+            doc.font(fontType)
                 .fontSize(9)
                 .fillColor('black')
                 .text(position, x_axis_2, y_axis_2 + 28, {
@@ -366,7 +412,8 @@ commonRouter.post('/generate-id-card',
                 });
 
             // Company Name1
-            doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Regular.ttf'))
+            fontType = await determineFont(companyName);
+            doc.font(fontType)
                 .fontSize(9)
                 .fillColor('black')
                 .text(companyName, x_axis_1, y_axis_1 + 55, {
@@ -375,7 +422,7 @@ commonRouter.post('/generate-id-card',
                 });
 
             // Company Name2
-            doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Regular.ttf'))
+            doc.font(fontType)
                 .fontSize(9)
                 .fillColor('black')
                 .text(companyName, x_axis_2, y_axis_1 + 55, {
@@ -402,7 +449,8 @@ commonRouter.post('/generate-id-card',
             doc.image(profileImgUrl, centerX_2 - radius, centerY_2 - radius, { width: radius * 2, height: radius * 2 });
 
             // Exhibition Title
-            doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Bold.ttf'))
+            fontType = await determineFont(exhibitionData.exhibitions_title, true);
+            doc.font(fontType)
                 .fontSize(15)
                 .fillColor('white')
                 .text(exhibitionData.exhibitions_title, 300, 30, {
@@ -416,10 +464,11 @@ commonRouter.post('/generate-id-card',
             const lastDate = exhibitionDate[exhibitionDate.length - 1];// last value
 
             // Create a date range string
-            const dateRangeText = `${firstDate} - ${lastDate}`;
+            const dateRangeText = `${firstDate} to ${lastDate}`;
 
             // Exhibition venue
-            doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Bold.ttf'))
+            fontType = await determineFont(exhibitionData.exhibitions_title, true);
+            doc.font(fontType)
                 .fontSize(7)
                 .fillColor('white')
                 .text(`Venue : ${exhibitionData.exhibition_venue}`, 300, 125, {
@@ -428,7 +477,7 @@ commonRouter.post('/generate-id-card',
                 });
 
             // Exhibition date range
-            doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Bold.ttf'))
+            doc.font(fontType)
                 .fontSize(7)
                 .fillColor('white')
                 .text(`Date : ${dateRangeText}`, 441, 125, {
@@ -461,27 +510,29 @@ commonRouter.post('/generate-id-card',
                         const dayInfo = `${event.exhibition_day}: ${dayDate}`;
 
                         // Adjust the horizontal position (startX) for each event in the rectangle
-                        doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Bold.ttf'))
-                            .fontSize(9)
+                        fontType = await determineFont(dayInfo, true);
+                        doc.font(fontType)
+                            .fontSize(8)
                             .fillColor('black')
                             .text(dayInfo, startX + j * 150, currentY + 8, {
                                 width: 140,
                                 align: 'center',
                             });
-
-                        doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Bold.ttf'))
+                        fontType = await determineFont(event.title);
+                        doc.font(fontType)
                             .fontSize(7)
                             .fillColor('black')
                             .text(event.title, startX + j * 150, currentY + 23, {
-                                width: 140,
+                                width: 130,
                                 align: 'center',
                             });
 
-                        doc.font(path.join(currentPathName, '/src/common/utilities/font/NotoSansJP-Bold.ttf'))
+                        fontType = await determineFont(event.descriptions);
+                        doc.font(fontType)
                             .fontSize(7)
                             .fillColor('black')
                             .text(event.descriptions, startX + j * 150, currentY + 40, {
-                                width: 140,
+                                width: 130,
                                 align: 'center',
                             });
                     }
@@ -491,7 +542,8 @@ commonRouter.post('/generate-id-card',
             const codeText = `
            {
                id:${user.id},
-               role: ${user.role}
+               role: ${user.role},
+               exhibitionId: ${req.body.exhibitionId}
            }`;
             const qrImage = qr.imageSync(codeText, { type: 'png', ec_level: 'H', margin: 3 });
             //QR code image1
@@ -522,22 +574,29 @@ commonRouter.post('/generate-id-card',
             setTimeout(() => {
                 res.download(fileFullPath, (downloadErr) => {
                     if (downloadErr) {
-                        return res.status(400).send({
-                            status: 'failed',
-                            message: 'Failed to download user ID card'
-                        });
+                        return res.status(400).send(
+                            setServerResponse(
+                                API_STATUS_CODE.BAD_REQUEST,
+                                'failed_to_download_user_id_card',
+                                lgKey,
+                            )
+                        );
                     }
                 });
             }, 1000); // 1000 ms = 1 seconds
         } catch (error) {
-            // console.log(error)
-            return res.status(API_STATUS_CODE.BAD_REQUEST).send({
-                status: "failed",
-                message: "Failed to generate user ID card"
-            })
+            console.log(error)
+            return res.status(API_STATUS_CODE.BAD_REQUEST).send(
+                setServerResponse(
+                    API_STATUS_CODE.BAD_REQUEST,
+                    'failed_to_download_user_id_card',
+                    lgKey,
+                )
+            )
         }
     }
 )
+
 
 module.exports = {
     commonRouter

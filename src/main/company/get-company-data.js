@@ -11,7 +11,7 @@
 
 const _ = require("lodash");
 const { pool } = require("../../../database/db");
-const { setRejectMessage } = require("../../common/set-reject-message");
+const { setServerResponse } = require("../../common/set-server-response");
 const { API_STATUS_CODE } = require("../../consts/error-status");
 
 
@@ -26,21 +26,10 @@ const getNumberOfRowsQuery = async () => {
 
     try {
         const [result] = await pool.query(_query);
-        if (result.length > 0) {
-            return Promise.resolve(result[0]);
-        } else {
-            return Promise.reject(
-                setRejectMessage(API_STATUS_CODE.BAD_REQUEST, 'Company not found')
-            )
-        }
+        return Promise.resolve(result[0]);
     } catch (error) {
         // console.log('🚀 ~ userLoginQuery ~ error:', error);
-        return Promise.reject(
-            setRejectMessage(
-                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-                'operation_failed'
-            )
-        );
+        return Promise.reject(error);
     }
 }
 
@@ -72,33 +61,40 @@ const getCompanyDataQuery = async (paginationData) => {
         return Promise.resolve(result);
     } catch (error) {
         // console.log('🚀 ~ userLoginQuery ~ error:', error);
-        return Promise.reject(
-            setRejectMessage(
-                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
-                'operation_failed'
-            )
-        );
+        return Promise.reject(error);
     }
 }
 
 /**
  * @description This function will get all company account information
  */
-const getCompanyTableData = async (paginationData) => {
+const getCompanyTableData = async (bodyData, paginationData) => {
+    const lgKey = bodyData.lg;
     try {
         const totalRows = await getNumberOfRowsQuery();
-        const result = await getCompanyDataQuery(paginationData);
-
-        return Promise.resolve({
+        const companyData = await getCompanyDataQuery(paginationData);
+        const result = {
             metadata: {
                 totalRows: totalRows,
             },
-            data: result
-        });
+            data: companyData
+        }
+        return Promise.resolve(
+            setServerResponse(
+                API_STATUS_CODE.OK,
+                'get_data_successfully',
+                lgKey,
+                result
+            )
+        );
     } catch (error) {
         // console.log("🚀 ~ getAllUserTableData ~ error:", error)
         return Promise.reject(
-            setRejectMessage(API_STATUS_CODE.INTERNAL_SERVER_ERROR, 'Internal server error')
+            setServerResponse(
+                API_STATUS_CODE.INTERNAL_SERVER_ERROR,
+                'Internal_server_error',
+                lgKey
+            )
         );
 
     }
