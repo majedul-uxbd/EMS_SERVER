@@ -598,7 +598,7 @@ systemAdminRouter.post(
                 return res.status(statusCode).send({
                     status: status,
                     message: message,
-                    exhibitionData: result
+                    data: result
                 });
             })
             .catch((error) => {

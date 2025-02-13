@@ -23,6 +23,7 @@ const { getExhibitionDaysData } = require('../../main/exhibitions/get-exhibition
 const { getExhibitionDayWiseAttendanceData } = require('../../main/exhibitions/get-exhibition-days-wise-attendance');
 const { paginationData } = require('../../middlewares/common/pagination-data');
 const { updateEventDetails } = require('../../main/exhibitions/update-event-details');
+const { getCurrentExhibitionData } = require('../../main/exhibitions/get-current-exhibition-data');
 
 exhibitionsRouter.use(authenticateToken);
 
@@ -206,7 +207,30 @@ exhibitionsRouter.post('/update-event-details',
     });
 
 
+/**
+* Through this API admin can see current exhibition data
+*/
+exhibitionsRouter.post('/current-exhibition',
+    isUserRoleAdmin,
+    async (req, res) => {
 
+        getCurrentExhibitionData(req.body)
+            .then((data) => {
+                const { statusCode, status, message, result } = data;
+                return res.status(statusCode).send({
+                    status: status,
+                    message: message,
+                    data: result
+                });
+            })
+            .catch((error) => {
+                const { statusCode, status, message } = error;
+                return res.status(statusCode).send({
+                    status: status,
+                    message: message,
+                });
+            });
+    });
 
 module.exports = {
     exhibitionsRouter,

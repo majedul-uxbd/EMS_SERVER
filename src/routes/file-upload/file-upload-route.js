@@ -58,10 +58,11 @@ fileUploadRouter.post('/file-upload',
 
 fileUploadRouter.post('/upload-image',
     checkIfFileSavePathExist,
-    uploadImageValidator.single('upload_image'),
+    uploadImageValidator.single('photo'),
     errorCheck,
     async (req, res) => {
         const buffer = req.file?.buffer;
+        console.warn('🚀 ~ buffer:', buffer);
 
         insertImageData(buffer, req.auth, req.body)
             .then((data) => {
@@ -80,6 +81,8 @@ fileUploadRouter.post('/upload-image',
                 });
             });
     })
+
+
 
 module.exports = {
     fileUploadRouter

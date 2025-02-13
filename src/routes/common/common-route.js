@@ -169,7 +169,7 @@ commonRouter.post('/upcoming-exhibitions',
                 return res.status(statusCode).send({
                     status: status,
                     message: message,
-                    upcomingExhibitions: result
+                    data: result
                 });
             })
             .catch((error) => {

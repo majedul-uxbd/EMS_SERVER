@@ -19,6 +19,8 @@ const sharp = require('sharp');
 
 
 const insertImageDataQuery = async (bodyData, authData) => {
+    console.warn('🚀 ~ insertImageDataQuery ~ authData:', authData);
+
     let tableName = '';
 
     if (authData.role === 'visitor') {
@@ -31,17 +33,19 @@ const insertImageDataQuery = async (bodyData, authData) => {
         ${tableName}
     SET
         profile_img = ?,
-        updated_by_ip = ?,
         updated_at = ?
     WHERE
         id = ?;
     `;
+    console.warn('🚀 ~ insertImageDataQuery ~ _query:', _query);
+
     const _values = [
         bodyData.filePath,
-        bodyData.ipAddress,
         bodyData.updatedAt,
         authData.id
     ]
+    console.warn('🚀 ~ insertImageDataQuery ~ _values:', _values);
+
 
     try {
         const [result] = await pool.query(_query, _values);
@@ -63,11 +67,13 @@ const insertImageData = async (buffer, authData, bodyData) => {
     const updatedAt = new Date();
     bodyData = { ...bodyData, filePath, updatedAt: updatedAt }
 
+
     try {
         const resizeImage = await sharp(buffer)
             .resize(700, 700)
             .jpeg({ mozjpeg: true })
             .toBuffer();
+        console.warn('🚀 ~ insertImageData ~ resizeImage:', resizeImage);
 
         fs.writeFileSync(filePath, resizeImage);
 
@@ -91,7 +97,7 @@ const insertImageData = async (buffer, authData, bodyData) => {
             );
         }
     } catch (error) {
-        // console.log('🚀 ~ file: upload-profile-image-info.js:88 ~ insertImageData ~ error:', error);
+        console.log('🚀 ~ file: upload-profile-image-info.js:88 ~ insertImageData ~ error:', error);
         return Promise.reject(
             setServerResponse(
                 API_STATUS_CODE.INTERNAL_SERVER_ERROR,

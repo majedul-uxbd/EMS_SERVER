@@ -34,44 +34,45 @@ const getExhibitionQuery = async () => {
     }
 }
 
-const getUpcomingExhibitions = async (bodyData) => {
+const getCurrentExhibitionData = async (bodyData) => {
     const lgKey = bodyData.lg;
     const today = new Date();
     try {
         const exhibitionInfo = await getExhibitionQuery();
 
-        const upcomingExhibitions = exhibitionInfo.filter(exhibition => {
+        const currentExhibitions = exhibitionInfo.filter(exhibition => {
             const dates = JSON.parse(exhibition.exhibition_dates);
-            // Check if 1st date is after today
-            const normalizedToday = new Date(
-                today.getFullYear(),
-                today.getMonth(),
-                today.getDate()
-            );
-            const hasUpcomingDate = new Date(dates[0]) > normalizedToday;
+            // Normalize today to ignore time
+            const normalizedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
-            return hasUpcomingDate;
+            // Check if any date in the exhibition's dates array matches the normalizedToday
+            const hasMatchingDate = dates.some(date => new Date(date).toDateString() === normalizedToday.toDateString());
+
+            return hasMatchingDate;
         });
 
-        if (upcomingExhibitions.length > 0) {
+        console.warn('🚀 ~ getCurrentExhibitionData ~ currentExhibitions:', currentExhibitions);
+
+        if (currentExhibitions.length > 0) {
             return Promise.resolve(
                 setServerResponse(
                     API_STATUS_CODE.OK,
                     'get_upcoming_exhibitions_successfully',
                     lgKey,
-                    upcomingExhibitions
+                    currentExhibitions
                 ))
         } else {
-            return Promise.reject(
+            return Promise.resolve(
                 setServerResponse(
-                    API_STATUS_CODE.BAD_REQUEST,
-                    'no_upcoming_exhibitions',
+                    API_STATUS_CODE.OK,
+                    'no_current_exhibitions',
                     lgKey,
+                    currentExhibitions
                 )
             )
         }
     } catch (error) {
-        // console.log('🚀 ~ file: get-upcoming-exhibitions.js:80 ~ getUpcomingExhibitions ~ error:', error);
+        // console.log('🚀 ~ file: get-upcoming-exhibitions.js:80 ~ getCurrentExhibitionData ~ error:', error);
         return Promise.reject(
             setServerResponse(
                 API_STATUS_CODE.INTERNAL_SERVER_ERROR,
@@ -84,5 +85,5 @@ const getUpcomingExhibitions = async (bodyData) => {
 }
 
 module.exports = {
-    getUpcomingExhibitions
+    getCurrentExhibitionData
 }

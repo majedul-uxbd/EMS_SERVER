@@ -90,6 +90,7 @@
     "user_status_is_updated_successfully": "User status is updated successfully",
     "project_deleted_successfully": "Project deleted successfully",
     "no_upcoming_exhibitions": "No upcoming exhibitions",
+    "no_current_exhibitions": "No current exhibitions",
     "event_details_already_exists": "Event details already exists",
     "get_data_successfully": "Get data successfully",
     "no_company_enrolled_in_this_exhibition": "No company enrolled in this exhibition",
@@ -390,6 +391,8 @@
     "previous_exhibition_can_not_update": "前の展示会は更新できません",
     "failed_to_create_exhibition_days": "展示会日の作成に失敗しました",
     "failed_to_update_exhibition": "展示会の更新に失敗しました",
-    "unauthorized_user": "許可されていないユーザー"
+    "unauthorized_user": "許可されていないユーザー",
+    "no_current_exhibitions": "現在の展示会はありません"
+
   }
 }
